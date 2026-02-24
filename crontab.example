@@ -1,0 +1,17 @@
+# Alive Church Camp Booking System - Cron Jobs
+# Copy these lines to your crontab: crontab -e
+
+# Process scheduled payments - Daily at 9am
+0 9 * * * /usr/bin/php /path/to/campbooking/cron/process-payments.php >> /path/to/campbooking/logs/cron.log 2>&1
+
+# Send payment reminders - Daily at 10am
+0 10 * * * /usr/bin/php /path/to/campbooking/cron/send-reminders.php >> /path/to/campbooking/logs/cron.log 2>&1
+
+# Check and retry failed payments - Daily at 11am
+0 11 * * * /usr/bin/php /path/to/campbooking/cron/check-failed-payments.php >> /path/to/campbooking/logs/cron.log 2>&1
+
+# Database backup - Daily at 2am (optional)
+0 2 * * * mysqldump -u DB_USER -pDB_PASS DB_NAME | gzip > /backups/campbooking_$(date +\%Y\%m\%d).sql.gz
+
+# Note: Replace /path/to/campbooking with your actual path
+# Note: Replace DB_USER, DB_PASS, DB_NAME with your database credentials
