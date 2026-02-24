@@ -2,8 +2,8 @@
 .env
 
 # Composer
-/vendor/
-composer.lock
+# Note: vendor/ is committed for easier deployment to GoDaddy shared hosting
+# composer.lock
 
 # Logs
 /logs/*.log
