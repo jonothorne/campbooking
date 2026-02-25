@@ -187,7 +187,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <body>
     <div class="login-container">
         <div class="logo">
-            <img src="<?php echo url('public/assets/images/logo.png'); ?>" alt="Alive Church">
+            <img src="/book/public/assets/images/logo.png" alt="Alive Church">
             <h1><?php echo e(EVENT_NAME); ?></h1>
             <p class="subtitle">Admin Panel</p>
         </div>
@@ -233,7 +233,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </form>
 
         <div class="back-link">
-            <a href="<?php echo url('index.php'); ?>">← Back to Booking Form</a>
+            <a href="/book/">← Back to Booking Form</a>
         </div>
 
         <div class="footer">

@@ -10,11 +10,19 @@ RewriteEngine On
 RewriteCond %{REQUEST_URI} ^/$
 RewriteRule ^$ /book/ [R=301,L]
 
+# Route /admin to admin panel (don't redirect)
+# This allows /admin to work without /book prefix
+RewriteCond %{REQUEST_URI} ^/admin
+RewriteRule ^admin/(.*)$ /admin/$1 [L]
+
 # Route /book to index.php
 RewriteRule ^book/?$ /index.php [L]
 
-# Route /book/something to /something (for admin, assets, etc.)
-RewriteRule ^book/(.+)$ /$1 [L]
+# Route /book/public to public folder (for assets)
+RewriteRule ^book/public/(.+)$ /public/$1 [L]
+
+# Prevent /book/admin from working (redirect to /admin)
+RewriteRule ^book/admin/?(.*)$ /admin/$1 [R=301,L]
 
 # ============================================
 # Force HTTPS (Uncomment in production)
