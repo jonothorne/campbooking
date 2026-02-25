@@ -14,7 +14,7 @@ require_once __DIR__ . '/includes/functions.php';
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Payment Cancelled - <?php echo e(EVENT_NAME); ?></title>
-    <link rel="stylesheet" href="public/assets/css/main.css">
+    <link rel="stylesheet" href="/book/public/assets/css/main.css">
     <style>
         .cancel-icon {
             width: 80px;
@@ -44,7 +44,7 @@ require_once __DIR__ . '/includes/functions.php';
             </p>
 
             <div style="margin-top: 30px;">
-                <a href="index.php" class="btn btn-primary">Try Again</a>
+                <a href="/book/" class="btn btn-primary">Try Again</a>
             </div>
         </div>
 

@@ -56,7 +56,7 @@ $returnUrl = url('payment-success.php?booking=' . $bookingReference);
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Complete Payment - <?php echo e(EVENT_NAME); ?></title>
-    <link rel="stylesheet" href="public/assets/css/main.css">
+    <link rel="stylesheet" href="/book/public/assets/css/main.css">
     <script src="https://js.stripe.com/v3/"></script>
     <style>
         .payment-container {
@@ -267,7 +267,7 @@ $returnUrl = url('payment-success.php?booking=' . $bookingReference);
         <a href="payment-cancel.php" class="cancel-link">Cancel Payment</a>
     </div>
 
-    <script src="public/assets/js/stripe-handler.js"></script>
+    <script src="/book/public/assets/js/stripe-handler.js"></script>
     <script>
         // Initialize Stripe
         const stripeHandler = new StripePaymentHandler('<?php echo $stripePublicKey; ?>');
