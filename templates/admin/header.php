@@ -24,6 +24,11 @@ requireAuth();
         <nav class="top-nav">
             <div class="top-nav-content">
                 <div class="top-nav-left">
+                    <button class="mobile-menu-toggle" id="mobile-menu-toggle" aria-label="Toggle menu">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </button>
                     <img src="/book/public/assets/images/logo.png" alt="Alive Church" class="admin-logo">
                     <div class="top-nav-text">
                         <h1 class="site-title"><?php echo e(EVENT_NAME); ?></h1>
@@ -40,6 +45,9 @@ requireAuth();
         </nav>
 
         <div class="admin-layout">
+            <!-- Mobile Overlay -->
+            <div class="mobile-overlay" id="mobile-overlay"></div>
+
             <!-- Sidebar Navigation -->
             <?php include __DIR__ . '/sidebar.php'; ?>
 
