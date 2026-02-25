@@ -6,6 +6,10 @@
 # ============================================
 RewriteEngine On
 
+# Redirect root to /book
+RewriteCond %{REQUEST_URI} ^/$
+RewriteRule ^$ /book/ [R=301,L]
+
 # Route /book to index.php
 RewriteRule ^book/?$ /index.php [L]
 
