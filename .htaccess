@@ -4,17 +4,15 @@
 # ============================================
 # Subdomain Routing
 # ============================================
-<IfModule mod_rewrite.c>
-    RewriteEngine On
+RewriteEngine On
 
-    # Redirect root to /book
-    RewriteCond %{REQUEST_URI} ^/$
-    RewriteRule ^$ /book/ [R=301,L]
+# Redirect root to /book
+RewriteCond %{REQUEST_URI} ^/$
+RewriteRule ^$ /book/ [R=301,L]
 
-    # Route /book requests to public folder
-    RewriteCond %{REQUEST_URI} ^/book/
-    RewriteRule ^book/(.*)$ /public/$1 [L]
-</IfModule>
+# Route /book requests to public folder
+RewriteCond %{REQUEST_URI} ^/book/
+RewriteRule ^book/(.*)$ /public/$1 [L]
 
 # ============================================
 # Force HTTPS (Uncomment in production)
@@ -41,85 +39,55 @@ AddDefaultCharset UTF-8
 
 # Protect .env file
 <FilesMatch "^\.env">
-    Order allow,deny
-    Deny from all
+    Require all denied
 </FilesMatch>
 
 # Protect .git directory
 <DirectoryMatch "^\.git">
-    Order allow,deny
-    Deny from all
+    Require all denied
 </DirectoryMatch>
 
 # Protect composer files
 <FilesMatch "(composer\.(json|lock)|package(-lock)?\.json)">
-    Order allow,deny
-    Deny from all
+    Require all denied
 </FilesMatch>
 
 # Protect README and documentation
 <FilesMatch "README\.md">
-    Order allow,deny
-    Deny from all
+    Require all denied
 </FilesMatch>
 
 # Protect log files
 <FilesMatch "\.log$">
-    Order allow,deny
-    Deny from all
+    Require all denied
 </FilesMatch>
 
 # ============================================
 # Block Access to Directories
 # ============================================
-
 # Protect config directory
-<IfModule mod_rewrite.c>
-    RewriteEngine On
-    RewriteRule ^config/ - [F,L]
-</IfModule>
+RewriteRule ^config/ - [F,L]
 
 # Protect includes directory
-<IfModule mod_rewrite.c>
-    RewriteEngine On
-    RewriteRule ^includes/ - [F,L]
-</IfModule>
+RewriteRule ^includes/ - [F,L]
 
 # Protect classes directory
-<IfModule mod_rewrite.c>
-    RewriteEngine On
-    RewriteRule ^classes/ - [F,L]
-</IfModule>
+RewriteRule ^classes/ - [F,L]
 
 # Protect templates directory
-<IfModule mod_rewrite.c>
-    RewriteEngine On
-    RewriteRule ^templates/ - [F,L]
-</IfModule>
+RewriteRule ^templates/ - [F,L]
 
 # Protect logs directory
-<IfModule mod_rewrite.c>
-    RewriteEngine On
-    RewriteRule ^logs/ - [F,L]
-</IfModule>
+RewriteRule ^logs/ - [F,L]
 
 # Protect install directory (remove after installation)
-<IfModule mod_rewrite.c>
-    RewriteEngine On
-    RewriteRule ^install/ - [F,L]
-</IfModule>
+RewriteRule ^install/ - [F,L]
 
 # Protect vendor directory
-<IfModule mod_rewrite.c>
-    RewriteEngine On
-    RewriteRule ^vendor/ - [F,L]
-</IfModule>
+RewriteRule ^vendor/ - [F,L]
 
 # Protect cron directory
-<IfModule mod_rewrite.c>
-    RewriteEngine On
-    RewriteRule ^cron/ - [F,L]
-</IfModule>
+RewriteRule ^cron/ - [F,L]
 
 # ============================================
 # PHP Security Settings
