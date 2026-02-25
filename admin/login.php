@@ -29,7 +29,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($result['success']) {
             // Check if there's a redirect parameter
             $redirectTo = $_GET['redirect'] ?? 'dashboard.php';
-            redirect(url('admin/' . $redirectTo));
+
+            // Build redirect URL
+            $redirectUrl = url('admin/' . $redirectTo);
+
+            // Log for debugging
+            error_log("Login successful, redirecting to: " . $redirectUrl);
+
+            redirect($redirectUrl);
         } else {
             $error = $result['error'];
         }
