@@ -234,7 +234,7 @@ try {
         </div>
 
         <div style="text-align: center; margin: 30px 0;">
-            <a href="index.php" class="btn btn-secondary">Make Another Booking</a>
+            <a href="/book/" class="btn btn-secondary">Make Another Booking</a>
         </div>
     </div>
 </body>
