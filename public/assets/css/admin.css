@@ -71,15 +71,16 @@
 }
 
 .mobile-menu-toggle {
-    display: none;
+    display: none !important; /* Hidden on desktop */
     flex-direction: column;
-    justify-content: space-between;
+    justify-content: space-around;
+    align-items: stretch;
     background: none;
     border: none;
     cursor: pointer;
-    padding: 5px;
-    width: 30px;
-    height: 24px;
+    padding: 8px;
+    width: 36px;
+    height: 30px;
 }
 
 .mobile-menu-toggle span {
@@ -89,6 +90,7 @@
     background: white;
     border-radius: 2px;
     transition: all 0.3s;
+    flex-shrink: 0;
 }
 
 .mobile-menu-toggle.active span:nth-child(1) {
@@ -679,7 +681,7 @@
    ============================================ */
 @media (max-width: 768px) {
     .mobile-menu-toggle {
-        display: flex;
+        display: flex !important; /* Show on mobile */
     }
 
     .admin-sidebar {
