@@ -22,10 +22,11 @@ RewriteRule ^book/admin/?(.*)$ /admin/$1 [R=301,L]
 # ============================================
 # Force HTTPS (Required for live Stripe keys)
 # ============================================
-<IfModule mod_rewrite.c>
-    RewriteCond %{HTTPS} off
-    RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
-</IfModule>
+# TEMPORARILY DISABLED - Uncomment when SSL certificate is active
+# <IfModule mod_rewrite.c>
+#     RewriteCond %{HTTPS} off
+#     RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+# </IfModule>
 
 # ============================================
 # Prevent Directory Listing
