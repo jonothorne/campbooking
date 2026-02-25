@@ -31,6 +31,7 @@ $eventDates = getEventDatesFormatted();
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Book Your Place - <?php echo e(EVENT_NAME); ?></title>
     <link rel="stylesheet" href="/book/public/assets/css/main.css">
+    <link rel="stylesheet" href="/book/public/assets/css/enhancements.css">
 </head>
 <body>
     <!-- Hero Section -->
@@ -504,5 +505,6 @@ $eventDates = getEventDatesFormatted();
     </template>
 
     <script src="/book/public/assets/js/booking-form.js"></script>
+    <script src="/book/public/assets/js/enhancements.js"></script>
 </body>
 </html>
