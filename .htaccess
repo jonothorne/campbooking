@@ -6,13 +6,11 @@
 # ============================================
 RewriteEngine On
 
-# Redirect root to /book
-RewriteCond %{REQUEST_URI} ^/$
-RewriteRule ^$ /book/ [R=301,L]
+# Route /book to index.php
+RewriteRule ^book/?$ /index.php [L]
 
-# Route /book requests to public folder
-RewriteCond %{REQUEST_URI} ^/book/
-RewriteRule ^book/(.*)$ /public/$1 [L]
+# Route /book/something to /something (for admin, assets, etc.)
+RewriteRule ^book/(.+)$ /$1 [L]
 
 # ============================================
 # Force HTTPS (Uncomment in production)
