@@ -40,10 +40,8 @@ AddDefaultCharset UTF-8
     Require all denied
 </FilesMatch>
 
-# Protect .git directory
-<DirectoryMatch "^\.git">
-    Require all denied
-</DirectoryMatch>
+# Protect .git directory (using RewriteRule instead of DirectoryMatch)
+RewriteRule "^\.git" - [F,L]
 
 # Protect composer files
 <FilesMatch "(composer\.(json|lock)|package(-lock)?\.json)">
