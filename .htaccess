@@ -2,6 +2,21 @@
 # Apache Security Configuration
 
 # ============================================
+# Subdomain Routing
+# ============================================
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Redirect root to /book
+    RewriteCond %{REQUEST_URI} ^/$
+    RewriteRule ^$ /book/ [R=301,L]
+
+    # Route /book requests to public folder
+    RewriteCond %{REQUEST_URI} ^/book/
+    RewriteRule ^book/(.*)$ /public/$1 [L]
+</IfModule>
+
+# ============================================
 # Force HTTPS (Uncomment in production)
 # ============================================
 # <IfModule mod_rewrite.c>
