@@ -3,6 +3,75 @@
  * Handles dynamic attendees, price calculation, and form interactions
  */
 
+/**
+ * Video Modal Handler
+ */
+class VideoModal {
+    constructor() {
+        this.modal = document.getElementById('video-modal');
+        this.openBtn = document.getElementById('watch-promo-btn');
+        this.closeBtn = document.getElementById('close-video-btn');
+        this.bookNowBtn = document.getElementById('book-now-btn');
+        this.overlay = this.modal.querySelector('.video-modal-overlay');
+        this.iframe = document.getElementById('promo-video');
+
+        // Set your YouTube video ID here
+        this.videoId = 'dQw4w9WgXcQ'; // Replace with actual video ID
+
+        this.init();
+    }
+
+    init() {
+        // Open modal
+        this.openBtn.addEventListener('click', () => this.open());
+
+        // Close modal
+        this.closeBtn.addEventListener('click', () => this.close());
+        this.overlay.addEventListener('click', () => this.close());
+
+        // Book now button - close and scroll to form
+        this.bookNowBtn.addEventListener('click', () => {
+            this.close();
+            // Scroll to form after a short delay to allow modal to close
+            setTimeout(() => {
+                const form = document.getElementById('booking-form');
+                if (form) {
+                    form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }, 300);
+        });
+
+        // Close on ESC key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && this.modal.classList.contains('active')) {
+                this.close();
+            }
+        });
+    }
+
+    open() {
+        // Set YouTube iframe src with autoplay
+        this.iframe.src = `https://www.youtube.com/embed/${this.videoId}?autoplay=1&rel=0`;
+
+        // Show modal
+        this.modal.classList.add('active');
+
+        // Prevent body scroll
+        document.body.style.overflow = 'hidden';
+    }
+
+    close() {
+        // Stop video by clearing src
+        this.iframe.src = '';
+
+        // Hide modal
+        this.modal.classList.remove('active');
+
+        // Restore body scroll
+        document.body.style.overflow = '';
+    }
+}
+
 class BookingForm {
     constructor() {
         this.attendeeCount = 1;
@@ -470,5 +539,6 @@ class BookingForm {
 
 // Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
+    new VideoModal();
     new BookingForm();
 });

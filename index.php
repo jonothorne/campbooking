@@ -33,22 +33,92 @@ $eventDates = getEventDatesFormatted();
     <link rel="stylesheet" href="public/assets/css/main.css">
 </head>
 <body>
-    <div class="container">
-        <!-- Header -->
-        <header class="header">
-            <h1><?php echo e(EVENT_NAME); ?></h1>
-            <p class="event-dates">
-                <?php echo formatDate(EVENT_START_DATE, 'jS F'); ?> - <?php echo formatDate(EVENT_END_DATE, 'jS F Y'); ?>
-            </p>
-            <p class="event-subtitle">Book your place at camp</p>
-        </header>
-
-        <!-- Error Messages -->
-        <?php if ($error): ?>
-            <div class="alert alert-danger">
-                <strong>Error:</strong> <?php echo e($error); ?>
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-content">
+            <div class="hero-logo">
+                <img src="/public/assets/images/echo-logo.png" alt="ECHO2026"/>
             </div>
-        <?php endif; ?>
+            <div class="hero-verse">
+                <p>Revelation 22:17</p>
+                <p class="verse-text">The Spirit and the bride say, "Come!"</p>
+            </div>
+            <h1>HE CALLS.</h1>
+            <p class="hero-subtitle">We must respond.</p>
+            <button type="button" class="hero-cta" id="watch-promo-btn">WATCH THE PROMO</button>
+        </div>
+    </section>
+
+    <!-- Video Modal -->
+    <div id="video-modal" class="video-modal">
+        <div class="video-modal-overlay"></div>
+        <div class="video-modal-content">
+            <button type="button" class="video-modal-close" id="close-video-btn">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+            <div class="video-container">
+                <iframe
+                    id="promo-video"
+                    width="100%"
+                    height="100%"
+                    src=""
+                    frameborder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowfullscreen>
+                </iframe>
+            </div>
+            <div class="video-modal-cta">
+                <button type="button" class="btn" id="book-now-btn">BOOK IN NOW</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="booking-wrapper">
+            <!-- Sidebar -->
+            <aside class="sidebar">
+                <div class="sidebar-logo">
+                    <img src="/public/assets/images/echo-logo.png" alt="ECHO2026"/>
+                </div>
+
+                <div class="event-info">
+                    <h2>RESPOND TO THE CALL</h2>
+
+                    <div class="event-detail">
+                        <div class="event-detail-label">When</div>
+                        <div class="event-detail-value">
+                            <?php echo formatDate(EVENT_START_DATE, 'jS F'); ?> - <?php echo formatDate(EVENT_END_DATE, 'jS F Y'); ?>
+                        </div>
+                    </div>
+
+                    <div class="event-detail">
+                        <div class="event-detail-label">Where</div>
+                        <div class="event-detail-value">Second Hall</div>
+                    </div>
+
+                    <div class="event-detail">
+                        <div class="event-detail-label">Duration</div>
+                        <div class="event-detail-value">Three days, One call, A promise echoing the ages</div>
+                    </div>
+                </div>
+
+                <div class="call-section">
+                    <h3>This is no ordinary retreat.</h3>
+                    <p>This is an invitation extended across centuries—a call demanding response. Will you answer?</p>
+                </div>
+            </aside>
+
+            <!-- Form Container -->
+            <main class="form-container">
+                <!-- Error Messages -->
+                <?php if ($error): ?>
+                    <div class="alert alert-danger">
+                        <strong>Error:</strong> <?php echo e($error); ?>
+                    </div>
+                <?php endif; ?>
 
         <!-- Booking Form -->
         <form id="booking-form" method="POST" action="process-booking.php">
@@ -350,6 +420,8 @@ $eventDates = getEventDatesFormatted();
                 </button>
             </div>
         </form>
+            </main>
+        </div>
     </div>
 
     <!-- Attendee Template (for cloning) -->
