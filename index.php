@@ -30,7 +30,7 @@ $eventDates = getEventDatesFormatted();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Book Your Place - <?php echo e(EVENT_NAME); ?></title>
-    <link rel="stylesheet" href="public/assets/css/main.css">
+    <link rel="stylesheet" href="/book/public/assets/css/main.css">
 </head>
 <body>
     <!-- Hero Section -->
@@ -121,7 +121,7 @@ $eventDates = getEventDatesFormatted();
                 <?php endif; ?>
 
         <!-- Booking Form -->
-        <form id="booking-form" method="POST" action="process-booking.php">
+        <form id="booking-form" method="POST" action="/process-booking.php">
 
             <!-- Step 1: Your Details -->
             <section class="form-section">
@@ -503,6 +503,6 @@ $eventDates = getEventDatesFormatted();
         </div>
     </template>
 
-    <script src="public/assets/js/booking-form.js"></script>
+    <script src="/book/public/assets/js/booking-form.js"></script>
 </body>
 </html>
