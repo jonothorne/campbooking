@@ -40,7 +40,7 @@ include __DIR__ . '/../templates/admin/header.php';
         <h1 class="page-title">All Bookings</h1>
         <p class="page-subtitle"><?php echo count($bookings); ?> booking<?php echo count($bookings) !== 1 ? 's' : ''; ?> found</p>
     </div>
-    <a href="<?php echo url('index.php'); ?>" class="btn btn-primary" target="_blank">
+    <a href="/book/" class="btn btn-primary" target="_blank">
         New Booking
     </a>
 </div>
@@ -95,7 +95,7 @@ include __DIR__ . '/../templates/admin/header.php';
                 <?php endif; ?>
             </p>
             <?php if (empty($filters)): ?>
-                <a href="<?php echo url('index.php'); ?>" class="btn btn-primary" target="_blank">
+                <a href="/book/" class="btn btn-primary" target="_blank">
                     Create First Booking
                 </a>
             <?php endif; ?>

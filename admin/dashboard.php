@@ -30,7 +30,7 @@ include __DIR__ . '/../templates/admin/header.php';
         <h1 class="page-title">Dashboard</h1>
         <p class="page-subtitle">Overview of <?php echo e(EVENT_NAME); ?> bookings</p>
     </div>
-    <a href="<?php echo url('index.php'); ?>" class="btn btn-primary" target="_blank">
+    <a href="/book/" class="btn btn-primary" target="_blank">
         New Booking
     </a>
 </div>
@@ -153,7 +153,7 @@ include __DIR__ . '/../templates/admin/header.php';
             <div class="empty-state-icon">📋</div>
             <h3 class="empty-state-title">No Bookings Yet</h3>
             <p class="empty-state-text">Bookings will appear here once people start registering for camp.</p>
-            <a href="<?php echo url('index.php'); ?>" class="btn btn-primary" target="_blank">
+            <a href="/book/" class="btn btn-primary" target="_blank">
                 Create First Booking
             </a>
         </div>
