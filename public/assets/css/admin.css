@@ -71,22 +71,20 @@
 }
 
 .mobile-menu-toggle {
-    display: flex; /* Temporarily always show for debugging */
+    display: none;
     flex-direction: column;
-    gap: 4px;
+    justify-content: space-between;
     background: none;
     border: none;
     cursor: pointer;
-    padding: 8px;
-    width: 40px;
-    height: 40px;
-    justify-content: center;
-    align-items: center;
+    padding: 5px;
+    width: 30px;
+    height: 24px;
 }
 
 .mobile-menu-toggle span {
     display: block;
-    width: 24px;
+    width: 100%;
     height: 3px;
     background: white;
     border-radius: 2px;
@@ -94,7 +92,7 @@
 }
 
 .mobile-menu-toggle.active span:nth-child(1) {
-    transform: rotate(45deg) translateY(10px);
+    transform: rotate(45deg) translate(6px, 6px);
 }
 
 .mobile-menu-toggle.active span:nth-child(2) {
@@ -102,7 +100,7 @@
 }
 
 .mobile-menu-toggle.active span:nth-child(3) {
-    transform: rotate(-45deg) translateY(-10px);
+    transform: rotate(-45deg) translate(6px, -6px);
 }
 
 .admin-logo {
@@ -679,20 +677,6 @@
 /* ============================================
    Responsive
    ============================================ */
-/* Temporarily apply to all screen sizes for debugging */
-.admin-sidebar {
-    transition: transform 0.3s ease;
-    z-index: 1000;
-}
-
-.admin-sidebar.closed {
-    transform: translateX(-100%);
-}
-
-.admin-sidebar.open {
-    transform: translateX(0);
-}
-
 @media (max-width: 768px) {
     .mobile-menu-toggle {
         display: flex;
@@ -700,6 +684,8 @@
 
     .admin-sidebar {
         transform: translateX(-100%);
+        transition: transform 0.3s ease;
+        z-index: 1000;
     }
 
     .admin-sidebar.open {
