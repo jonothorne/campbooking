@@ -15,7 +15,7 @@ require_once __DIR__ . '/classes/Attendee.php';
 $bookingReference = $_GET['booking'] ?? null;
 
 if (!$bookingReference) {
-    redirect(url('index.php'));
+    redirect('/book/');
 }
 
 // Fetch booking
@@ -34,7 +34,7 @@ try {
     $attendees = $booking->getAttendees();
 
 } catch (Exception $e) {
-    redirect(url('index.php'));
+    redirect('/book/');
 }
 ?>
 <!DOCTYPE html>

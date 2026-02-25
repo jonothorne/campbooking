@@ -22,7 +22,7 @@ $clientSecret = $_SESSION['stripe_client_secret'] ?? null;
 $isSetupIntent = $_SESSION['stripe_is_setup_intent'] ?? false;
 
 if (!$bookingReference || !$clientSecret) {
-    redirect(url('index.php'));
+    redirect('/book/');
 }
 
 // Load booking
@@ -40,7 +40,7 @@ try {
     $booking = new Booking($bookingData['id']);
 
 } catch (Exception $e) {
-    redirect(url('index.php'));
+    redirect('/book/');
 }
 
 // Get Stripe public key

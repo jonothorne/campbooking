@@ -15,7 +15,7 @@ require_once __DIR__ . '/classes/StripeHandler.php';
 
 // Only allow POST requests
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    redirect(url('index.php'));
+    redirect('/book/');
 }
 
 // Start session for error messages
@@ -184,5 +184,5 @@ try {
     $_SESSION['booking_error'] = $e->getMessage();
 
     // Redirect back to form
-    redirect(url('index.php?error=1'));
+    redirect('/book/?error=1');
 }
