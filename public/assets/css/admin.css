@@ -71,13 +71,17 @@
 }
 
 .mobile-menu-toggle {
-    display: none;
+    display: flex; /* Temporarily always show for debugging */
     flex-direction: column;
     gap: 4px;
     background: none;
     border: none;
     cursor: pointer;
     padding: 8px;
+    width: 40px;
+    height: 40px;
+    justify-content: center;
+    align-items: center;
 }
 
 .mobile-menu-toggle span {
@@ -675,6 +679,20 @@
 /* ============================================
    Responsive
    ============================================ */
+/* Temporarily apply to all screen sizes for debugging */
+.admin-sidebar {
+    transition: transform 0.3s ease;
+    z-index: 1000;
+}
+
+.admin-sidebar.closed {
+    transform: translateX(-100%);
+}
+
+.admin-sidebar.open {
+    transform: translateX(0);
+}
+
 @media (max-width: 768px) {
     .mobile-menu-toggle {
         display: flex;
@@ -682,8 +700,6 @@
 
     .admin-sidebar {
         transform: translateX(-100%);
-        transition: transform 0.3s ease;
-        z-index: 1000;
     }
 
     .admin-sidebar.open {

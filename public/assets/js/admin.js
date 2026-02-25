@@ -5,20 +5,32 @@
 
 // Mobile Menu Toggle
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('Admin.js loaded');
+
     const menuToggle = document.getElementById('mobile-menu-toggle');
     const sidebar = document.querySelector('.admin-sidebar');
     const overlay = document.getElementById('mobile-overlay');
 
+    console.log('Menu toggle:', menuToggle);
+    console.log('Sidebar:', sidebar);
+    console.log('Overlay:', overlay);
+
     if (menuToggle && sidebar && overlay) {
+        console.log('All elements found, attaching event listeners');
+
         // Toggle menu
-        menuToggle.addEventListener('click', function() {
+        menuToggle.addEventListener('click', function(e) {
+            console.log('Menu toggle clicked');
+            e.preventDefault();
             menuToggle.classList.toggle('active');
             sidebar.classList.toggle('open');
             overlay.classList.toggle('active');
+            console.log('Sidebar classes:', sidebar.className);
         });
 
         // Close menu when clicking overlay
         overlay.addEventListener('click', function() {
+            console.log('Overlay clicked');
             menuToggle.classList.remove('active');
             sidebar.classList.remove('open');
             overlay.classList.remove('active');
@@ -33,6 +45,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     overlay.classList.remove('active');
                 }
             });
+        });
+    } else {
+        console.error('Missing elements:', {
+            menuToggle: !!menuToggle,
+            sidebar: !!sidebar,
+            overlay: !!overlay
         });
     }
 });
