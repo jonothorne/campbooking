@@ -16,39 +16,51 @@ class StripePaymentHandler {
      * Initialize payment element
      */
     async initializePaymentElement(clientSecret, isSetupIntent = false) {
-        this.clientSecret = clientSecret;
-        this.isSetupIntent = isSetupIntent;
+        try {
+            console.log('Initializing Stripe payment element...');
 
-        // Create elements instance
-        this.elements = this.stripe.elements({
-            clientSecret: clientSecret,
-            appearance: {
-                theme: 'stripe',
-                variables: {
-                    colorPrimary: '#667eea',
-                    colorBackground: '#ffffff',
-                    colorText: '#333333',
-                    colorDanger: '#df1b41',
-                    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                    spacingUnit: '4px',
-                    borderRadius: '8px',
+            this.clientSecret = clientSecret;
+            this.isSetupIntent = isSetupIntent;
+
+            // Create elements instance
+            this.elements = this.stripe.elements({
+                clientSecret: clientSecret,
+                appearance: {
+                    theme: 'stripe',
+                    variables: {
+                        colorPrimary: '#667eea',
+                        colorBackground: '#ffffff',
+                        colorText: '#333333',
+                        colorDanger: '#df1b41',
+                        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                        spacingUnit: '4px',
+                        borderRadius: '8px',
+                    }
                 }
-            }
-        });
+            });
 
-        // Create payment element
-        this.paymentElement = this.elements.create('payment');
-        this.paymentElement.mount('#stripe-payment-element');
+            console.log('Elements created, mounting payment element...');
 
-        // Handle element ready
-        this.paymentElement.on('ready', () => {
-            document.getElementById('stripe-loading')?.classList.add('hidden');
-        });
+            // Create payment element
+            this.paymentElement = this.elements.create('payment');
+            this.paymentElement.mount('#stripe-payment-element');
 
-        // Handle element change
-        this.paymentElement.on('change', (event) => {
-            this.handleElementChange(event);
-        });
+            // Handle element ready
+            this.paymentElement.on('ready', () => {
+                console.log('Stripe payment element ready');
+                document.getElementById('stripe-loading')?.classList.add('hidden');
+            });
+
+            // Handle element change
+            this.paymentElement.on('change', (event) => {
+                this.handleElementChange(event);
+            });
+
+            console.log('Payment element initialized successfully');
+        } catch (error) {
+            console.error('Error initializing Stripe payment element:', error);
+            throw error;
+        }
     }
 
     /**

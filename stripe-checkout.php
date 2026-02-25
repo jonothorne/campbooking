@@ -269,6 +269,12 @@ $returnUrl = url('payment-success.php?booking=' . $bookingReference);
 
     <script src="/book/public/assets/js/stripe-handler.js"></script>
     <script>
+        // Debug logging
+        console.log('Stripe Public Key:', '<?php echo substr($stripePublicKey, 0, 20); ?>...');
+        console.log('Client Secret:', '<?php echo $clientSecret ? substr($clientSecret, 0, 20) . '...' : 'EMPTY'; ?>');
+        console.log('Is Setup Intent:', <?php echo $isSetupIntent ? 'true' : 'false'; ?>);
+        console.log('Return URL:', '<?php echo $returnUrl; ?>');
+
         // Initialize Stripe
         const stripeHandler = new StripePaymentHandler('<?php echo $stripePublicKey; ?>');
 
@@ -276,7 +282,10 @@ $returnUrl = url('payment-success.php?booking=' . $bookingReference);
         stripeHandler.initializePaymentElement(
             '<?php echo $clientSecret; ?>',
             <?php echo $isSetupIntent ? 'true' : 'false'; ?>
-        );
+        ).catch(error => {
+            console.error('Failed to initialize Stripe:', error);
+            document.getElementById('stripe-loading').innerHTML = '<p style="color: red;">Failed to load payment form. Please check console for errors.</p>';
+        });
 
         // Handle form submission
         document.getElementById('payment-form').addEventListener('submit', async (e) => {
