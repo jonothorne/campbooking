@@ -96,7 +96,7 @@ $eventDates = getEventDatesFormatted();
 
                     <div class="event-detail">
                         <div class="event-detail-label">Where</div>
-                        <div class="event-detail-value">Second Hall</div>
+                        <div class="event-detail-value">Sizewell Hall, Sizewell, Leiston, Suffolk, IP16 4TX</div>
                     </div>
 
                     <div class="event-detail">
