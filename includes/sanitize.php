@@ -229,9 +229,15 @@ function sanitizeAttendeeData($attendee) {
         }
 
         $sanitized['day_ticket_dates'] = [];
+        $validEventDates = getEventDates(); // Get valid event dates (May 29-31, 2026)
+
         foreach ($dates as $date) {
             $cleanDate = sanitizeDate($date);
             if ($cleanDate) {
+                // Validate date is within event date range
+                if (!in_array($cleanDate, $validEventDates)) {
+                    return ['error' => 'Selected date is not within the event dates'];
+                }
                 $sanitized['day_ticket_dates'][] = $cleanDate;
             }
         }

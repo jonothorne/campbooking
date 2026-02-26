@@ -28,7 +28,27 @@ try {
     $stripe = new StripeHandler();
     $event = $stripe->constructWebhookEvent($payload, $sigHeader);
 
-    logMessage("[$timestamp] Event Type: {$event->type}", $logFile);
+    logMessage("[$timestamp] Event Type: {$event->type}, Event ID: {$event->id}", $logFile);
+
+    // Check for replay attack - verify event hasn't been processed before
+    $db = Database::getInstance();
+    $existing = $db->fetchOne(
+        "SELECT id FROM webhook_events WHERE stripe_event_id = ?",
+        [$event->id]
+    );
+
+    if ($existing) {
+        logMessage("[$timestamp] Duplicate event detected - already processed: {$event->id}", $logFile);
+        http_response_code(200); // Return 200 to acknowledge receipt
+        echo json_encode(['status' => 'duplicate', 'message' => 'Event already processed']);
+        exit;
+    }
+
+    // Record this event to prevent replay attacks
+    $db->insert(
+        "INSERT INTO webhook_events (stripe_event_id, event_type, processed_at) VALUES (?, ?, NOW())",
+        [$event->id, $event->type]
+    );
 
     // Handle different event types
     switch ($event->type) {
@@ -84,9 +104,20 @@ function handlePaymentIntentSucceeded($paymentIntent)
 
     try {
         $booking = new Booking((int)$bookingId);
+        $bookingData = $booking->getData();
         $amount = StripeHandler::formatAmountFromPence($paymentIntent->amount);
 
         logMessage("[$timestamp] Payment succeeded - Booking #{$bookingId}, Amount: £{$amount}", $logFile);
+
+        // Validate payment amount matches expected amount
+        $expectedAmount = $bookingData['total_amount'];
+        $amountDifference = abs($amount - $expectedAmount);
+
+        // Allow small rounding differences (1 penny)
+        if ($amountDifference > 0.01 && $paymentType === 'full_payment') {
+            logMessage("[$timestamp] WARNING: Amount mismatch! Expected: £{$expectedAmount}, Received: £{$amount}", $logFile);
+            // Continue processing but log the discrepancy for admin review
+        }
 
         // Record payment
         $paymentId = $booking->addPayment(
@@ -101,9 +132,10 @@ function handlePaymentIntentSucceeded($paymentIntent)
             ]
         );
 
-        // Update booking status to confirmed if fully paid
-        $bookingData = $booking->getData();
-        if ($bookingData['amount_outstanding'] <= 0) {
+        // Reload booking data to get updated amounts
+        $booking->getData(); // This calls load() internally
+        $updatedBookingData = $booking->getData();
+        if ($updatedBookingData['amount_outstanding'] <= 0) {
             $booking->update(['booking_status' => 'confirmed']);
         }
 
@@ -181,20 +213,27 @@ function handlePaymentIntentFailed($paymentIntent)
                 [$bookingId, $installmentNumber]
             );
 
-            // Get schedule for email
+            // Get updated schedule for email
             $schedule = $db->fetchOne(
                 "SELECT * FROM payment_schedules WHERE booking_id = ? AND installment_number = ?",
                 [$bookingId, $installmentNumber]
             );
 
-            // Send failed payment email if less than 3 attempts
-            if ($schedule && $schedule['attempt_count'] < 3) {
+            // Send failed payment email on all failures (up to 3 attempts)
+            if ($schedule && $schedule['attempt_count'] <= 3) {
                 try {
                     $email = new Email();
                     $email->sendPaymentFailed($schedule['id']);
+                    logMessage("[$timestamp] Failed payment email sent (attempt {$schedule['attempt_count']}/3)", $logFile);
                 } catch (Exception $e) {
                     logMessage("[$timestamp] Email error: " . $e->getMessage(), $logFile);
                 }
+            }
+
+            // After 3 failures, notify admin
+            if ($schedule && $schedule['attempt_count'] >= 3) {
+                logMessage("[$timestamp] ALERT: Payment failed 3 times for booking #{$bookingId}, installment #{$installmentNumber}", $logFile);
+                // TODO: Send admin alert email
             }
         }
 

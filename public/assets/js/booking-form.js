@@ -491,12 +491,31 @@ class BookingForm {
         const submitBtn = document.getElementById('submit-btn');
 
         form.addEventListener('submit', (e) => {
+            // Generate unique submission token to prevent duplicate submissions
+            const submissionToken = Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+            const tokenInput = document.createElement('input');
+            tokenInput.type = 'hidden';
+            tokenInput.name = 'submission_token';
+            tokenInput.value = submissionToken;
+            form.appendChild(tokenInput);
+
+            // Disable submit button to prevent double-click
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Processing...';
+            }
+
             // Basic validation
             const total = this.calculateTotal();
 
             if (total === 0) {
                 alert('Please add at least one paid attendee to your booking.');
                 e.preventDefault();
+                // Re-enable submit button
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Complete Booking';
+                }
                 return false;
             }
 

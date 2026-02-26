@@ -23,10 +23,14 @@ if (!$bookingReference) {
     redirect('/book/');
 }
 
+// Get email warning if present
+$emailWarning = $_SESSION['email_warning'] ?? null;
+
 // Clear saved booking form data since payment succeeded
 unset($_SESSION['booking_form_data']);
 unset($_SESSION['booking_reference']);
 unset($_SESSION['pending_booking_id']);
+unset($_SESSION['email_warning']);
 
 // Fetch booking
 try {
@@ -192,6 +196,12 @@ try {
 </head>
 <body>
     <div class="container">
+        <?php if ($emailWarning): ?>
+            <div style="background: #fef3c7; border: 1px solid #fde68a; color: #92400e; padding: 16px 20px; border-radius: 8px; margin-bottom: 20px; font-size: 14px;">
+                <strong>⚠ Note:</strong> <?php echo e($emailWarning); ?>
+            </div>
+        <?php endif; ?>
+
         <div class="form-section" style="text-align: center;">
             <div class="success-icon">✓</div>
             <h1>Booking Confirmed!</h1>

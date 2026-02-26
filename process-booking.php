@@ -23,6 +23,22 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
+// Verify CSRF token
+requireCsrfToken();
+
+// Prevent duplicate submission (double-click protection)
+$submissionToken = $_POST['submission_token'] ?? '';
+if (!empty($submissionToken) && isset($_SESSION['last_submission_token']) && $_SESSION['last_submission_token'] === $submissionToken) {
+    // Duplicate submission detected
+    $_SESSION['booking_error'] = 'This booking has already been submitted. Please check your booking confirmation.';
+    redirect('/book/?error=1');
+}
+
+// Store submission token to prevent duplicates
+if (!empty($submissionToken)) {
+    $_SESSION['last_submission_token'] = $submissionToken;
+}
+
 try {
     // ============================================
     // Step 1: Validate and Sanitize Booking Data
@@ -171,12 +187,18 @@ try {
         $booking->update(['booking_status' => 'confirmed']);
 
         // Send confirmation email
+        $emailSent = false;
         try {
             $email = new Email();
-            $email->sendBookingConfirmation($bookingId);
+            $emailSent = $email->sendBookingConfirmation($bookingId);
         } catch (Exception $e) {
             error_log("Email Error: " . $e->getMessage());
             // Don't fail the booking if email fails
+        }
+
+        // Store email failure warning in session
+        if (!$emailSent) {
+            $_SESSION['email_warning'] = 'Your booking was successful, but we couldn\'t send the confirmation email. Please contact us if you don\'t receive it within 24 hours.';
         }
 
         // Redirect to success page

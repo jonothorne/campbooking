@@ -148,6 +148,7 @@ $eventDates = getEventDatesFormatted();
 
         <!-- Booking Form -->
         <form id="booking-form" method="POST" action="/process-booking.php">
+            <?php csrfField(); ?>
 
             <!-- Step 1: Your Details -->
             <section class="form-section">
