@@ -55,6 +55,29 @@ try {
     <title>Booking Confirmed - <?php echo e(EVENT_NAME); ?></title>
     <link rel="stylesheet" href="/book/public/assets/css/main.css">
     <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+            margin: 0;
+            padding: 40px 20px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .form-section {
+            background: white;
+            border-radius: 12px;
+            padding: 40px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .form-section h2 {
+            color: #1f2937;
+            margin-bottom: 20px;
+            font-size: 20px;
+        }
         .success-icon {
             width: 80px;
             height: 80px;
@@ -68,33 +91,33 @@ try {
             color: white;
         }
         .booking-reference {
-            background: var(--bg-light);
+            background: #f9fafb;
             padding: 15px;
-            border-radius: var(--radius-md);
+            border-radius: 8px;
             text-align: center;
             margin: 20px 0;
         }
         .booking-reference strong {
             font-size: 24px;
-            color: var(--primary-color);
+            color: #eb008b;
             font-family: 'Courier New', monospace;
         }
         .detail-row {
             display: flex;
             justify-content: space-between;
             padding: 12px 0;
-            border-bottom: 1px solid var(--border-color);
+            border-bottom: 1px solid #e5e7eb;
         }
         .detail-row:last-child {
             border-bottom: none;
         }
         .detail-label {
             font-weight: 500;
-            color: var(--text-medium);
+            color: #6b7280;
         }
         .detail-value {
             font-weight: 600;
-            color: var(--text-dark);
+            color: #1f2937;
         }
         .attendee-list {
             list-style: none;
@@ -102,9 +125,51 @@ try {
         }
         .attendee-item {
             padding: 10px;
-            background: var(--bg-light);
-            border-radius: var(--radius-sm);
+            background: #f9fafb;
+            border-radius: 6px;
             margin-bottom: 8px;
+        }
+        .btn {
+            display: inline-block;
+            padding: 14px 32px;
+            background: linear-gradient(135deg, #eb008b, #d40080);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(235, 0, 139, 0.3);
+        }
+        .btn-secondary {
+            background: #f3f4f6;
+            color: #1f2937;
+        }
+        .btn-secondary:hover {
+            background: #e5e7eb;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #1f2937;
+            margin-bottom: 15px;
+        }
+        p {
+            color: #6b7280;
+            line-height: 1.6;
+        }
+        @media (max-width: 768px) {
+            body {
+                padding: 20px 15px;
+            }
+            .form-section {
+                padding: 25px 20px;
+            }
+            .detail-row {
+                flex-direction: column;
+                gap: 5px;
+            }
         }
     </style>
 </head>
