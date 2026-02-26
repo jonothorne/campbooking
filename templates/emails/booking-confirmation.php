@@ -143,11 +143,36 @@
             <h2>Attendees (<?php echo count($attendees); ?>)</h2>
             <div class="attendee-list">
                 <?php foreach ($attendees as $attendee): ?>
-                    <?php $att = new Attendee($attendee['id']); ?>
+                    <?php
+                    // Get ticket description
+                    $ticketDesc = '';
+                    switch ($attendee['ticket_type']) {
+                        case 'adult_weekend':
+                            $ticketDesc = 'Adult Weekend Ticket';
+                            break;
+                        case 'adult_sponsor':
+                            $ticketDesc = 'Adult Sponsor Ticket (Help fund a young person)';
+                            break;
+                        case 'child_weekend':
+                            $ticketDesc = 'Child Weekend Ticket';
+                            break;
+                        case 'free_child':
+                            $ticketDesc = 'Free (Ages 0-4)';
+                            break;
+                        case 'adult_day':
+                            $ticketDesc = 'Adult Day Ticket';
+                            break;
+                        case 'child_day':
+                            $ticketDesc = 'Child Day Ticket';
+                            break;
+                        default:
+                            $ticketDesc = ucwords(str_replace('_', ' ', $attendee['ticket_type']));
+                    }
+                    ?>
                     <div class="attendee-item">
                         <strong><?php echo e($attendee['name']); ?></strong>
                         (<?php echo e($attendee['age']); ?> years) -
-                        <?php echo e($att->getTicketDescription()); ?> -
+                        <?php echo e($ticketDesc); ?> -
                         <strong><?php echo formatCurrency($attendee['ticket_price']); ?></strong>
                     </div>
                 <?php endforeach; ?>
