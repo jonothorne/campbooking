@@ -173,7 +173,6 @@ body {
    ============================================ */
 .hero-polaroid {
     position: absolute;
-    width: 180px;
     height: auto;
     z-index: 3;
     filter: drop-shadow(15px 20px 25px rgba(0, 0, 0, 0.6));
@@ -185,8 +184,9 @@ body {
     transform: scale(1.05) !important;
 }
 
-/* Individual polaroid positioning and rotations */
+/* Individual polaroid positioning, rotations, and sizes */
 .hero-polaroid-1 {
+    width: 160px;
     top: -40px;
     left: 5%;
     transform: rotate(-8deg);
@@ -194,6 +194,7 @@ body {
 }
 
 .hero-polaroid-2 {
+    width: 200px;
     top: 20px;
     left: 20%;
     transform: rotate(12deg);
@@ -201,6 +202,7 @@ body {
 }
 
 .hero-polaroid-3 {
+    width: 180px;
     top: -30px;
     right: 18%;
     transform: rotate(-15deg);
@@ -208,6 +210,7 @@ body {
 }
 
 .hero-polaroid-4 {
+    width: 140px;
     top: 30px;
     right: 5%;
     transform: rotate(10deg);
@@ -215,6 +218,7 @@ body {
 }
 
 .hero-polaroid-5 {
+    width: 170px;
     bottom: 10%;
     left: 3%;
     transform: rotate(-12deg);
@@ -1131,18 +1135,19 @@ select {
         font-size: 15px;
     }
 
-    /* Hide or scale down polaroids on mobile */
+    /* Scale down polaroids on mobile */
     .hero-polaroid {
-        width: 100px;
         filter: drop-shadow(8px 10px 15px rgba(0, 0, 0, 0.5));
     }
 
     .hero-polaroid-1 {
+        width: 90px;
         top: -20px;
         left: 2%;
     }
 
     .hero-polaroid-2 {
+        width: 110px;
         top: 10px;
         left: auto;
         right: 2%;
@@ -1155,6 +1160,7 @@ select {
     }
 
     .hero-polaroid-5 {
+        width: 95px;
         bottom: 5%;
         left: 2%;
     }
