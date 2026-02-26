@@ -5,11 +5,13 @@
  */
 
 // Initialize
+require_once __DIR__ . '/vendor/autoload.php';
 require_once __DIR__ . '/includes/db.php';
 require_once __DIR__ . '/includes/functions.php';
 require_once __DIR__ . '/includes/sanitize.php';
 require_once __DIR__ . '/classes/Booking.php';
 require_once __DIR__ . '/classes/Attendee.php';
+require_once __DIR__ . '/classes/StripeHandler.php';
 
 // Start session
 if (session_status() === PHP_SESSION_NONE) {
@@ -21,6 +23,49 @@ $bookingReference = $_GET['booking'] ?? null;
 
 if (!$bookingReference) {
     redirect('/book/');
+}
+
+// Check if this is a redirect from Stripe
+$setupIntentId = $_GET['setup_intent'] ?? null;
+$paymentIntentId = $_GET['payment_intent'] ?? null;
+$redirectStatus = $_GET['redirect_status'] ?? null;
+
+// If returning from Stripe, verify the payment/setup was successful
+if ($setupIntentId || $paymentIntentId) {
+    try {
+        $stripe = new StripeHandler();
+
+        if ($setupIntentId) {
+            // Verify Setup Intent succeeded
+            $setupIntent = $stripe->retrieveSetupIntent($setupIntentId);
+
+            if ($setupIntent->status !== 'succeeded') {
+                error_log("Setup Intent not succeeded: " . $setupIntent->status);
+                $_SESSION['booking_error'] = 'Payment method setup was not completed. Please try again.';
+                redirect('/book/?error=1');
+            }
+
+            // Setup Intent will be processed by webhook
+            // We just need to confirm it succeeded here
+
+        } elseif ($paymentIntentId) {
+            // Verify Payment Intent succeeded
+            $paymentIntent = $stripe->retrievePaymentIntent($paymentIntentId);
+
+            if ($paymentIntent->status !== 'succeeded') {
+                error_log("Payment Intent not succeeded: " . $paymentIntent->status);
+                $_SESSION['booking_error'] = 'Payment was not completed. Please try again.';
+                redirect('/book/?error=1');
+            }
+
+            // Payment Intent will be processed by webhook
+        }
+
+    } catch (Exception $e) {
+        error_log("Error verifying Stripe intent: " . $e->getMessage());
+        $_SESSION['booking_error'] = 'Unable to verify payment. Please contact support with your booking reference: ' . $bookingReference;
+        redirect('/book/?error=1');
+    }
 }
 
 // Get email warning if present

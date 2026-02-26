@@ -16,6 +16,21 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
+// Check if returning from Stripe redirect
+$setupIntentId = $_GET['setup_intent'] ?? null;
+$paymentIntentId = $_GET['payment_intent'] ?? null;
+$redirectStatus = $_GET['redirect_status'] ?? null;
+
+// If returning from Stripe with success, redirect to success page
+if (($setupIntentId || $paymentIntentId) && $redirectStatus === 'succeeded') {
+    $bookingRef = $_SESSION['booking_reference'] ?? null;
+    if ($bookingRef) {
+        redirect(url('payment-success.php?booking=' . $bookingRef .
+            ($setupIntentId ? '&setup_intent=' . $setupIntentId : '&payment_intent=' . $paymentIntentId) .
+            '&redirect_status=' . $redirectStatus));
+    }
+}
+
 // Get booking reference from session
 $bookingReference = $_SESSION['booking_reference'] ?? null;
 $clientSecret = $_SESSION['stripe_client_secret'] ?? null;
