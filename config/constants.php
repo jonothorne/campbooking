@@ -63,12 +63,15 @@ if ($appEnv === 'production') {
 // Secure session settings
 ini_set('session.cookie_httponly', '1');
 ini_set('session.use_only_cookies', '1');
-ini_set('session.cookie_samesite', 'Strict');
+ini_set('session.cookie_samesite', 'Lax'); // Changed from Strict to Lax for better compatibility
 
 // Use HTTPS cookies in production
 if ($appEnv === 'production' || (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on')) {
     ini_set('session.cookie_secure', '1');
 }
+
+// Set session cookie path
+ini_set('session.cookie_path', '/');
 
 // Session timeout (2 hours)
 ini_set('session.gc_maxlifetime', '7200');
