@@ -158,7 +158,6 @@ body {
     box-shadow: 0 4px 75px rgb(211 199 170);
     cursor: pointer;
     font-family: inherit;
-    opacity: 0;
     animation: fadeInUp 1s ease-out 1.9s forwards, ctaPulse 3s ease-in-out 3s infinite;
 }
 
@@ -167,7 +166,6 @@ body {
     transform: translateY(-2px);
     box-shadow: 0 6px 24px rgba(235, 0, 139, 0.6);
     animation: none;
-    opacity: 1;
 }
 
 /* ============================================
