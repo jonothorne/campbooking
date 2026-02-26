@@ -67,7 +67,7 @@ body {
     justify-content: center;
     text-align: center;
     color: white;
-    overflow: hidden;
+    overflow: visible;
     animation: heroZoom 20s ease-in-out infinite alternate;
 }
 
@@ -166,6 +166,105 @@ body {
     transform: translateY(-2px);
     box-shadow: 0 6px 24px rgba(235, 0, 139, 0.6);
     animation: none;
+}
+
+/* ============================================
+   Polaroid Images
+   ============================================ */
+.hero-polaroid {
+    position: absolute;
+    width: 180px;
+    height: auto;
+    z-index: 3;
+    filter: drop-shadow(15px 20px 25px rgba(0, 0, 0, 0.6));
+    transition: transform 0.3s ease;
+    pointer-events: none;
+}
+
+.hero-polaroid:hover {
+    transform: scale(1.05) !important;
+}
+
+/* Individual polaroid positioning and rotations */
+.hero-polaroid-1 {
+    top: -40px;
+    left: 5%;
+    transform: rotate(-8deg);
+    animation: floatPolaroid1 6s ease-in-out infinite;
+}
+
+.hero-polaroid-2 {
+    top: 20px;
+    left: 20%;
+    transform: rotate(12deg);
+    animation: floatPolaroid2 7s ease-in-out infinite;
+}
+
+.hero-polaroid-3 {
+    top: -30px;
+    right: 18%;
+    transform: rotate(-15deg);
+    animation: floatPolaroid3 5.5s ease-in-out infinite;
+}
+
+.hero-polaroid-4 {
+    top: 30px;
+    right: 5%;
+    transform: rotate(10deg);
+    animation: floatPolaroid4 6.5s ease-in-out infinite;
+}
+
+.hero-polaroid-5 {
+    bottom: 10%;
+    left: 3%;
+    transform: rotate(-12deg);
+    animation: floatPolaroid5 7.5s ease-in-out infinite;
+}
+
+/* Floating animations for polaroids */
+@keyframes floatPolaroid1 {
+    0%, 100% {
+        transform: rotate(-8deg) translateY(0px);
+    }
+    50% {
+        transform: rotate(-8deg) translateY(-10px);
+    }
+}
+
+@keyframes floatPolaroid2 {
+    0%, 100% {
+        transform: rotate(12deg) translateY(0px);
+    }
+    50% {
+        transform: rotate(12deg) translateY(-15px);
+    }
+}
+
+@keyframes floatPolaroid3 {
+    0%, 100% {
+        transform: rotate(-15deg) translateY(0px);
+    }
+    50% {
+        transform: rotate(-15deg) translateY(-12px);
+    }
+}
+
+@keyframes floatPolaroid4 {
+    0%, 100% {
+        transform: rotate(10deg) translateY(0px);
+    }
+    50% {
+        transform: rotate(10deg) translateY(-8px);
+    }
+}
+
+@keyframes floatPolaroid5 {
+    0%, 100% {
+        transform: rotate(-12deg) translateY(0px);
+    }
+    50% {
+        transform: rotate(-12deg) translateY(-10px);
+    }
 }
 
 /* ============================================
@@ -1031,6 +1130,35 @@ select {
         padding: 14px 36px;
         font-size: 15px;
     }
+
+    /* Hide or scale down polaroids on mobile */
+    .hero-polaroid {
+        width: 100px;
+        filter: drop-shadow(8px 10px 15px rgba(0, 0, 0, 0.5));
+    }
+
+    .hero-polaroid-1 {
+        top: -20px;
+        left: 2%;
+    }
+
+    .hero-polaroid-2 {
+        top: 10px;
+        left: auto;
+        right: 2%;
+    }
+
+    /* Hide some polaroids on mobile for cleaner look */
+    .hero-polaroid-3,
+    .hero-polaroid-4 {
+        display: none;
+    }
+
+    .hero-polaroid-5 {
+        bottom: 5%;
+        left: 2%;
+    }
+}
 
     .sidebar {
         padding: 30px 20px;
