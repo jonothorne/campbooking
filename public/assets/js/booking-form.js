@@ -411,10 +411,20 @@ class BookingForm {
         let installments = [];
 
         if (plan === 'monthly') {
-            // Calculate months until May 2026
+            // Calculate months until payment deadline (May 20, 2026) - matches server logic
             const now = new Date();
-            const eventDate = new Date('2026-05-31');
-            const months = Math.max(1, Math.ceil((eventDate - now) / (1000 * 60 * 60 * 24 * 30)));
+            const paymentDeadline = new Date('2026-05-20');
+
+            // Calculate months properly (not just days/30)
+            let months = (paymentDeadline.getFullYear() - now.getFullYear()) * 12;
+            months += paymentDeadline.getMonth() - now.getMonth();
+
+            // If there are remaining days, count as additional month
+            if (paymentDeadline.getDate() > now.getDate()) {
+                months++;
+            }
+
+            months = Math.max(1, months); // At least 1 month
             const monthlyAmount = total / months;
 
             for (let i = 1; i <= months; i++) {
