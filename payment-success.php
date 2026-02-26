@@ -56,22 +56,28 @@ try {
     <link rel="stylesheet" href="/book/public/assets/css/main.css">
     <style>
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #f5f5f5;
-            margin: 0;
-            padding: 40px 20px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;
+            font-size: 16px;
+            line-height: 1.6;
+            color: #1f2937;
+            background: #1a1a1a;
             min-height: 100vh;
+            padding: 40px 20px;
+            margin: 0;
         }
         .container {
             max-width: 800px;
             margin: 0 auto;
+            background: #f5f5f5;
+            border-radius: 12px;
+            padding: 40px;
         }
         .form-section {
             background: white;
             border-radius: 12px;
-            padding: 40px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
+            padding: 30px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            margin-bottom: 25px;
         }
         .form-section h2 {
             color: #1f2937;
@@ -131,25 +137,33 @@ try {
         }
         .btn {
             display: inline-block;
-            padding: 14px 32px;
-            background: linear-gradient(135deg, #eb008b, #d40080);
-            color: white;
-            text-decoration: none;
+            padding: 12px 24px;
+            border: none;
             border-radius: 8px;
+            font-size: 15px;
             font-weight: 600;
-            transition: transform 0.2s, box-shadow 0.2s;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: inherit;
+            text-decoration: none;
         }
-        .btn:hover {
+        .btn-primary {
+            background: linear-gradient(135deg, #eb008b 0%, #d40080 100%);
+            color: white;
+        }
+        .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(235, 0, 139, 0.3);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
         }
         .btn-secondary {
-            background: #f3f4f6;
-            color: #1f2937;
+            background: white;
+            color: #eb008b;
+            border: 2px solid #eb008b;
         }
         .btn-secondary:hover {
-            background: #e5e7eb;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            background: #eb008b;
+            color: white;
         }
         h1 {
             color: #1f2937;
@@ -163,8 +177,11 @@ try {
             body {
                 padding: 20px 15px;
             }
+            .container {
+                padding: 30px 20px;
+            }
             .form-section {
-                padding: 25px 20px;
+                padding: 20px;
             }
             .detail-row {
                 flex-direction: column;

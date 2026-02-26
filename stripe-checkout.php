@@ -59,10 +59,18 @@ $returnUrl = url('payment-success.php?booking=' . $bookingReference);
     <link rel="stylesheet" href="/book/public/assets/css/main.css">
     <script src="https://js.stripe.com/v3/"></script>
     <style>
+        body {
+            background: #1a1a1a;
+            padding: 40px 20px;
+            margin: 0;
+        }
+
         .payment-container {
             max-width: 600px;
-            margin: 40px auto;
-            padding: 0 20px;
+            margin: 0 auto;
+            background: #f5f5f5;
+            border-radius: 12px;
+            padding: 40px;
         }
 
         .payment-header {
@@ -71,12 +79,18 @@ $returnUrl = url('payment-success.php?booking=' . $bookingReference);
         }
 
         .payment-header h1 {
-            color: var(--primary-color);
+            color: #eb008b;
             margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .payment-header p {
+            color: #6b7280;
+            margin: 0;
         }
 
         .payment-summary {
-            background: var(--bg-light);
+            background: #f9fafb;
             border-radius: 8px;
             padding: 20px;
             margin-bottom: 30px;
@@ -85,24 +99,26 @@ $returnUrl = url('payment-success.php?booking=' . $bookingReference);
         .payment-summary h2 {
             font-size: 18px;
             margin-bottom: 15px;
-            color: var(--text-dark);
+            color: #1f2937;
+            font-weight: 600;
         }
 
         .summary-row {
             display: flex;
             justify-content: space-between;
             padding: 10px 0;
-            border-bottom: 1px solid var(--border-color);
+            border-bottom: 1px solid #e5e7eb;
+            color: #6b7280;
         }
 
         .summary-row:last-child {
             border-bottom: none;
             font-weight: 600;
             font-size: 20px;
-            color: var(--primary-color);
+            color: #eb008b;
             padding-top: 15px;
             margin-top: 5px;
-            border-top: 2px solid var(--border-color);
+            border-top: 2px solid #e5e7eb;
         }
 
         .payment-form-card {
@@ -120,7 +136,7 @@ $returnUrl = url('payment-success.php?booking=' . $bookingReference);
         #stripe-loading {
             text-align: center;
             padding: 40px;
-            color: var(--text-medium);
+            color: #6b7280;
         }
 
         #stripe-loading.hidden {
@@ -145,19 +161,20 @@ $returnUrl = url('payment-success.php?booking=' . $bookingReference);
         #stripe-submit-btn {
             width: 100%;
             padding: 16px;
-            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            background: linear-gradient(135deg, #eb008b 0%, #d40080 100%);
             color: white;
             border: none;
             border-radius: 8px;
             font-size: 18px;
             font-weight: 600;
             cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
+            transition: all 0.3s ease;
+            font-family: inherit;
         }
 
         #stripe-submit-btn:hover:not(:disabled) {
             transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
         }
 
         #stripe-submit-btn:disabled {
@@ -169,7 +186,7 @@ $returnUrl = url('payment-success.php?booking=' . $bookingReference);
             text-align: center;
             margin-top: 20px;
             font-size: 13px;
-            color: var(--text-medium);
+            color: #6b7280;
         }
 
         .security-note svg {
@@ -183,14 +200,28 @@ $returnUrl = url('payment-success.php?booking=' . $bookingReference);
             display: block;
             text-align: center;
             margin-top: 20px;
-            color: var(--text-medium);
+            color: #6b7280;
             text-decoration: none;
             font-size: 14px;
         }
 
         .cancel-link:hover {
-            color: var(--text-dark);
+            color: #1f2937;
             text-decoration: underline;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 20px 15px;
+            }
+
+            .payment-container {
+                padding: 30px 20px;
+            }
+
+            .payment-form-card {
+                padding: 20px;
+            }
         }
     </style>
 </head>

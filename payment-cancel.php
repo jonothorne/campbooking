@@ -29,11 +29,14 @@ redirect('/book/?payment_cancelled=1');
     <link rel="stylesheet" href="/book/public/assets/css/main.css">
     <style>
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #f5f5f5;
-            margin: 0;
-            padding: 40px 20px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;
+            font-size: 16px;
+            line-height: 1.6;
+            color: #1f2937;
+            background: #1a1a1a;
             min-height: 100vh;
+            padding: 40px 20px;
+            margin: 0;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -41,13 +44,16 @@ redirect('/book/?payment_cancelled=1');
         .container {
             max-width: 600px;
             width: 100%;
+            background: #f5f5f5;
+            border-radius: 12px;
+            padding: 40px;
         }
         .form-section {
             background: white;
             border-radius: 12px;
-            padding: 40px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
+            padding: 30px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            margin-bottom: 25px;
         }
         .cancel-icon {
             width: 80px;
@@ -77,20 +83,29 @@ redirect('/book/?payment_cancelled=1');
         }
         .btn {
             display: inline-block;
-            padding: 14px 32px;
-            background: linear-gradient(135deg, #eb008b, #d40080);
-            color: white;
-            text-decoration: none;
+            padding: 12px 24px;
+            border: none;
             border-radius: 8px;
+            font-size: 15px;
             font-weight: 600;
-            transition: transform 0.2s, box-shadow 0.2s;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: inherit;
+            text-decoration: none;
+            background: linear-gradient(135deg, #eb008b 0%, #d40080 100%);
+            color: white;
         }
         .btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(235, 0, 139, 0.3);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
         }
         a {
             color: #eb008b;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
         }
     </style>
 </head>
