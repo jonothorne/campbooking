@@ -1135,34 +1135,49 @@ select {
         font-size: 15px;
     }
 
-    /* Scale down polaroids on mobile */
+    /* Mobile polaroids - let them spill off edges and overlap */
     .hero-polaroid {
         filter: drop-shadow(8px 10px 15px rgba(0, 0, 0, 0.5));
     }
 
     .hero-polaroid-1 {
-        width: 90px;
-        top: -20px;
-        left: 2%;
+        width: 130px;
+        top: -50px;
+        left: -30px;
+        transform: rotate(-12deg);
     }
 
     .hero-polaroid-2 {
-        width: 110px;
-        top: 10px;
+        width: 140px;
+        top: -30px;
         left: auto;
-        right: 2%;
+        right: -20px;
+        transform: rotate(8deg);
     }
 
-    /* Hide some polaroids on mobile for cleaner look */
-    .hero-polaroid-3,
+    .hero-polaroid-3 {
+        width: 110px;
+        top: auto;
+        bottom: 20%;
+        left: -25px;
+        transform: rotate(-15deg);
+        display: block;
+    }
+
     .hero-polaroid-4 {
-        display: none;
+        width: 120px;
+        top: 50%;
+        right: -35px;
+        transform: rotate(10deg) translateY(-50%);
+        display: block;
     }
 
     .hero-polaroid-5 {
-        width: 95px;
-        bottom: 5%;
-        left: 2%;
+        width: 115px;
+        bottom: 8%;
+        left: auto;
+        right: 5%;
+        transform: rotate(-8deg);
     }
 }
 
