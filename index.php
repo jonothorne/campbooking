@@ -8,6 +8,7 @@
 require_once __DIR__ . '/includes/db.php';
 require_once __DIR__ . '/includes/functions.php';
 require_once __DIR__ . '/includes/sanitize.php';
+require_once __DIR__ . '/includes/auth.php';
 
 // Start session for error messages
 if (session_status() === PHP_SESSION_NONE) {
