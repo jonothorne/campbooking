@@ -47,11 +47,11 @@ $eventDates = getEventDatesFormatted();
     <!-- Hero Section -->
     <section class="hero">
         <!-- Polaroid Images -->
-        <img src="/public/assets/images/echo-event-polaroid-1.png" alt="The perfect family event" class="hero-polaroid hero-polaroid-1">
-        <img src="/public/assets/images/echo-event-polaroid-2.png" alt="Worship" class="hero-polaroid hero-polaroid-2">
-        <img src="/public/assets/images/echo-event-polaroid-3.png" alt="Campfire on the beach" class="hero-polaroid hero-polaroid-3">
-        <img src="/public/assets/images/echo-event-polaroid-4.png" alt="Eat together at ECHO" class="hero-polaroid hero-polaroid-4">
-        <img src="/public/assets/images/echo-event-polaroid-5.png" alt="Campfire worship" class="hero-polaroid hero-polaroid-5">
+        <img src="/book/public/assets/images/echo-event-polaroid-1.png" alt="The perfect family event" class="hero-polaroid hero-polaroid-1">
+        <img src="/book/public/assets/images/echo-event-polaroid-2.png" alt="Worship" class="hero-polaroid hero-polaroid-2">
+        <img src="/book/public/assets/images/echo-event-polaroid-3.png" alt="Campfire on the beach" class="hero-polaroid hero-polaroid-3">
+        <img src="/book/public/assets/images/echo-event-polaroid-4.png" alt="Eat together at ECHO" class="hero-polaroid hero-polaroid-4">
+        <img src="/book/public/assets/images/echo-event-polaroid-5.png" alt="Campfire worship" class="hero-polaroid hero-polaroid-5">
 
         <div class="hero-content">
             <div class="hero-logo">
