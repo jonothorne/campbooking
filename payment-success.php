@@ -11,12 +11,22 @@ require_once __DIR__ . '/includes/sanitize.php';
 require_once __DIR__ . '/classes/Booking.php';
 require_once __DIR__ . '/classes/Attendee.php';
 
+// Start session
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 // Get booking reference from URL
 $bookingReference = $_GET['booking'] ?? null;
 
 if (!$bookingReference) {
     redirect('/book/');
 }
+
+// Clear saved booking form data since payment succeeded
+unset($_SESSION['booking_form_data']);
+unset($_SESSION['booking_reference']);
+unset($_SESSION['pending_booking_id']);
 
 // Fetch booking
 try {

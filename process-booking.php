@@ -98,6 +98,13 @@ try {
             $_SESSION['booking_reference'] = $bookingRef;
             $_SESSION['pending_booking_id'] = $bookingId;
 
+            // Store form data in case user cancels payment
+            $_SESSION['booking_form_data'] = [
+                'booker' => $bookingData,
+                'attendees' => $attendees,
+                'total_amount' => $totalAmount
+            ];
+
             if ($bookingData['payment_plan'] === 'full') {
                 // One-time payment - create Payment Intent
                 $result = $stripe->createPaymentIntent(

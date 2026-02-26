@@ -21,6 +21,17 @@ if (isset($_SESSION['booking_error'])) {
     unset($_SESSION['booking_error']);
 }
 
+// Check if payment was cancelled
+$paymentCancelled = isset($_SESSION['payment_cancelled']) && $_SESSION['payment_cancelled'] === true;
+$formData = isset($_SESSION['booking_form_data']) ? $_SESSION['booking_form_data'] : null;
+
+// Clear flags and form data after reading (will be output to JavaScript first)
+if ($paymentCancelled) {
+    unset($_SESSION['payment_cancelled']);
+    // Note: We keep booking_form_data in session until payment succeeds
+    // This way if they cancel again, data is still there
+}
+
 // Get event dates for day tickets
 $eventDates = getEventDatesFormatted();
 ?>
@@ -117,6 +128,14 @@ $eventDates = getEventDatesFormatted();
                 <?php if ($error): ?>
                     <div class="alert alert-danger">
                         <strong>Error:</strong> <?php echo e($error); ?>
+                    </div>
+                <?php endif; ?>
+
+                <!-- Payment Cancelled Message -->
+                <?php if ($paymentCancelled): ?>
+                    <div class="alert alert-warning" id="payment-cancelled-alert">
+                        <strong>Payment Cancelled</strong><br>
+                        Your payment was cancelled and no charges were made. Your booking information has been preserved below. You can choose a different payment method and submit again.
                     </div>
                 <?php endif; ?>
 
@@ -504,5 +523,90 @@ $eventDates = getEventDatesFormatted();
     </template>
 
     <script src="/book/public/assets/js/booking-form.js"></script>
+
+    <?php if ($paymentCancelled && $formData): ?>
+    <script>
+    // Restore form data after payment cancellation
+    document.addEventListener('DOMContentLoaded', function() {
+        const formData = <?php echo json_encode($formData, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
+
+        console.log('Restoring form data after payment cancellation:', formData);
+
+        // Restore booker information
+        if (formData.booker) {
+            const booker = formData.booker;
+            if (booker.booker_name) document.querySelector('[name="booker_name"]').value = booker.booker_name;
+            if (booker.booker_email) document.querySelector('[name="booker_email"]').value = booker.booker_email;
+            if (booker.booker_phone) document.querySelector('[name="booker_phone"]').value = booker.booker_phone;
+            if (booker.num_tents) document.querySelector('[name="num_tents"]').value = booker.num_tents;
+            if (booker.has_caravan) document.querySelector('[name="has_caravan"]').checked = booker.has_caravan;
+            if (booker.needs_tent_provided) document.querySelector('[name="needs_tent_provided"]').checked = booker.needs_tent_provided;
+            if (booker.special_requirements) document.querySelector('[name="special_requirements"]').value = booker.special_requirements;
+        }
+
+        // Restore attendees
+        if (formData.attendees && formData.attendees.length > 0) {
+            // Clear existing attendees (keep first one)
+            const attendeesContainer = document.getElementById('attendees-container');
+            const firstAttendee = attendeesContainer.querySelector('.attendee-card');
+
+            formData.attendees.forEach((attendee, index) => {
+                let attendeeCard;
+
+                if (index === 0) {
+                    // Use first existing attendee
+                    attendeeCard = firstAttendee;
+                } else {
+                    // Add new attendee
+                    document.getElementById('add-attendee-btn').click();
+                    // Wait a bit for the card to be added
+                    setTimeout(() => {
+                        const cards = attendeesContainer.querySelectorAll('.attendee-card');
+                        attendeeCard = cards[index];
+                        populateAttendeeCard(attendeeCard, attendee, index);
+                    }, 100 * index);
+                    return;
+                }
+
+                populateAttendeeCard(attendeeCard, attendee, index);
+            });
+        }
+
+        function populateAttendeeCard(card, attendee, index) {
+            if (!card) return;
+
+            const nameInput = card.querySelector('[name="attendees[' + index + '][name]"]');
+            const ageInput = card.querySelector('[name="attendees[' + index + '][age]"]');
+            const ticketSelect = card.querySelector('[name="attendees[' + index + '][ticket_type]"]');
+
+            if (nameInput && attendee.name) nameInput.value = attendee.name;
+            if (ageInput && attendee.age) ageInput.value = attendee.age;
+            if (ticketSelect && attendee.ticket_type) ticketSelect.value = attendee.ticket_type;
+
+            // Trigger change event to update price calculation
+            if (ticketSelect) ticketSelect.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+
+        // Scroll to payment method section after a short delay
+        setTimeout(() => {
+            const paymentSection = document.querySelector('[name="payment_method"]');
+            if (paymentSection) {
+                paymentSection.closest('.form-section').scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'center'
+                });
+
+                // Highlight the payment section briefly
+                const section = paymentSection.closest('.form-section');
+                section.style.transition = 'box-shadow 0.3s';
+                section.style.boxShadow = '0 0 0 4px rgba(235, 0, 139, 0.3)';
+                setTimeout(() => {
+                    section.style.boxShadow = '';
+                }, 2000);
+            }
+        }, 1000);
+    });
+    </script>
+    <?php endif; ?>
 </body>
 </html>

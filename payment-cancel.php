@@ -1,13 +1,24 @@
 <?php
 /**
  * Payment Cancelled Page
- * Shows when user cancels Stripe payment
+ * Redirects back to booking form with data preserved
  */
 
 // Initialize
 require_once __DIR__ . '/config/constants.php';
 require_once __DIR__ . '/includes/db.php';
 require_once __DIR__ . '/includes/functions.php';
+
+// Start session
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+// Set a flag that payment was cancelled
+$_SESSION['payment_cancelled'] = true;
+
+// Redirect back to booking form
+redirect('/book/?payment_cancelled=1');
 ?>
 <!DOCTYPE html>
 <html lang="en">
