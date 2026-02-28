@@ -271,14 +271,17 @@ class Email
     private function logEmail($bookingId, $recipient, $type, $subject, $status, $errorMessage = null)
     {
         try {
-            $this->db->insert('email_logs', [
-                'booking_id' => $bookingId,
-                'recipient' => $recipient,
-                'email_type' => $type,
-                'subject' => $subject,
-                'status' => $status,
-                'error_message' => $errorMessage,
-                'sent_at' => date('Y-m-d H:i:s')
+            $sql = "INSERT INTO email_logs
+                    (booking_id, recipient_email, email_type, subject, status, error_message, sent_at)
+                    VALUES (?, ?, ?, ?, ?, ?, NOW())";
+
+            $this->db->insert($sql, [
+                $bookingId,
+                $recipient,
+                $type,
+                $subject,
+                $status,
+                $errorMessage
             ]);
         } catch (Exception $e) {
             error_log("Email Log Error: {$e->getMessage()}");
