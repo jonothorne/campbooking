@@ -192,13 +192,15 @@ try {
         try {
             $email = new Email();
             $emailSent = $email->sendBookingConfirmation($bookingId);
+            error_log("Booking confirmation email result for booking #{$bookingId}: " . ($emailSent ? 'SUCCESS' : 'FAILED'));
         } catch (Exception $e) {
-            error_log("Email Error: " . $e->getMessage());
+            error_log("Email Exception for booking #{$bookingId}: " . $e->getMessage());
             // Don't fail the booking if email fails
         }
 
         // Store email failure warning in session
         if (!$emailSent) {
+            error_log("Setting email warning in session for booking #{$bookingId}");
             $_SESSION['email_warning'] = 'Your booking was successful, but we couldn\'t send the confirmation email. Please contact us if you don\'t receive it within 24 hours.';
         }
 

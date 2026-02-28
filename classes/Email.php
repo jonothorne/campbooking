@@ -234,11 +234,14 @@ class Email
             // Log email
             $this->logEmail($bookingId, $recipient, $type, $subject, $sent ? 'sent' : 'failed', null);
 
+            // Debug logging
+            error_log("Email send result for {$type} to {$recipient}: " . ($sent ? 'SUCCESS' : 'FAILED'));
+
             return $sent;
 
         } catch (Exception $e) {
             $this->logEmail($bookingId, $recipient, $type, $subject, 'failed', $e->getMessage());
-            error_log("Email Send Error: {$e->getMessage()}");
+            error_log("Email Send Exception for {$type} to {$recipient}: {$e->getMessage()}");
             return false;
         }
     }
