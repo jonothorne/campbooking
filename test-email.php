@@ -6,9 +6,13 @@
  * DELETE THIS FILE AFTER TESTING
  */
 
-// Load functions early
+// Load dependencies
+require_once __DIR__ . '/vendor/autoload.php';
 require_once __DIR__ . '/config/constants.php';
 require_once __DIR__ . '/includes/functions.php';
+
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
 
 // Handle AJAX requests FIRST (before any output)
 if (isset($_GET['action'])) {
@@ -313,13 +317,6 @@ function sendTestEmail($type, $email) {
         return;
     }
     try {
-        require_once __DIR__ . '/vendor/autoload.php';
-        require_once __DIR__ . '/config/constants.php';
-        require_once __DIR__ . '/includes/functions.php';
-
-        use PHPMailer\PHPMailer\PHPMailer;
-        use PHPMailer\PHPMailer\Exception;
-
         $testData = getTestEmailData($type);
         if (!$testData) {
             echo json_encode(['success' => false, 'output' => 'Invalid email type']);
