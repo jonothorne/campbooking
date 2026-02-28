@@ -455,16 +455,22 @@ function testCronScript($script) {
         return;
     }
 
-    // Read the script content
-    $scriptContent = file_get_contents($scriptPath);
+    // Save current working directory
+    $originalDir = getcwd();
 
-    // Remove shebang line if present
-    $scriptContent = preg_replace('/^#!.*\n/', '', $scriptContent);
+    // Change to cron directory so relative paths work
+    chdir(__DIR__ . '/cron');
 
     // Capture output
     ob_start();
 
     try {
+        // Read the script content
+        $scriptContent = file_get_contents($scriptPath);
+
+        // Remove shebang line if present
+        $scriptContent = preg_replace('/^#!.*\n/', '', $scriptContent);
+
         // Evaluate the script content (without shebang)
         eval('?>' . $scriptContent);
 
@@ -479,6 +485,9 @@ function testCronScript($script) {
             $output .= "Check the log files and database sections below for more details.";
         }
 
+        // Restore working directory
+        chdir($originalDir);
+
         echo json_encode(['success' => true, 'output' => $output]);
 
     } catch (Exception $e) {
@@ -486,12 +495,18 @@ function testCronScript($script) {
         $output .= "\n\nEXCEPTION: " . $e->getMessage() . "\n";
         $output .= "Stack trace:\n" . $e->getTraceAsString();
 
+        // Restore working directory
+        chdir($originalDir);
+
         echo json_encode(['success' => false, 'output' => $output]);
     } catch (Error $e) {
         $output = ob_get_clean();
         $output .= "\n\nFATAL ERROR: " . $e->getMessage() . "\n";
         $output .= "File: " . $e->getFile() . " Line: " . $e->getLine() . "\n";
         $output .= "Stack trace:\n" . $e->getTraceAsString();
+
+        // Restore working directory
+        chdir($originalDir);
 
         echo json_encode(['success' => false, 'output' => $output]);
     }
