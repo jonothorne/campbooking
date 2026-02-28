@@ -455,27 +455,17 @@ function testCronScript($script) {
         return;
     }
 
-    // Save current working directory
-    $originalDir = getcwd();
+    // Execute via shell command (preserves __DIR__ and working directory)
+    $command = '/usr/local/bin/php ' . escapeshellarg($scriptPath) . ' 2>&1';
 
-    // Change to cron directory so relative paths work
-    chdir(__DIR__ . '/cron');
+    $output = '';
+    $returnCode = 0;
 
-    // Capture output
-    ob_start();
+    // Execute and capture output
+    exec($command, $outputLines, $returnCode);
+    $output = implode("\n", $outputLines);
 
-    try {
-        // Read the script content
-        $scriptContent = file_get_contents($scriptPath);
-
-        // Remove shebang line if present
-        $scriptContent = preg_replace('/^#!.*\n/', '', $scriptContent);
-
-        // Evaluate the script content (without shebang)
-        eval('?>' . $scriptContent);
-
-        $output = ob_get_clean();
-
+    if ($returnCode === 0) {
         if (empty($output)) {
             $output = "✓ Script executed successfully (no output).\n\n";
             $output .= "This means the script ran without errors, but there may have been:\n";
@@ -485,28 +475,13 @@ function testCronScript($script) {
             $output .= "Check the log files and database sections below for more details.";
         }
 
-        // Restore working directory
-        chdir($originalDir);
-
         echo json_encode(['success' => true, 'output' => $output]);
-
-    } catch (Exception $e) {
-        $output = ob_get_clean();
-        $output .= "\n\nEXCEPTION: " . $e->getMessage() . "\n";
-        $output .= "Stack trace:\n" . $e->getTraceAsString();
-
-        // Restore working directory
-        chdir($originalDir);
-
-        echo json_encode(['success' => false, 'output' => $output]);
-    } catch (Error $e) {
-        $output = ob_get_clean();
-        $output .= "\n\nFATAL ERROR: " . $e->getMessage() . "\n";
-        $output .= "File: " . $e->getFile() . " Line: " . $e->getLine() . "\n";
-        $output .= "Stack trace:\n" . $e->getTraceAsString();
-
-        // Restore working directory
-        chdir($originalDir);
+    } else {
+        if (empty($output)) {
+            $output = "Script failed with exit code: $returnCode\n\nNo error output captured.";
+        } else {
+            $output = "Exit Code: $returnCode\n\n" . $output;
+        }
 
         echo json_encode(['success' => false, 'output' => $output]);
     }
