@@ -1,147 +1,126 @@
 <?php
 /**
- * Email Configuration Test Script
- * Tests SMTP settings and sends a test email
+ * Email Testing Tool
+ * Test email sending and view email templates
+ *
+ * DELETE THIS FILE AFTER TESTING
  */
 
-require_once __DIR__ . '/vendor/autoload.php';
-require_once __DIR__ . '/config/constants.php';
+// Handle AJAX requests FIRST (before any output)
+if (isset($_GET['action'])) {
+    session_start();
 
-use PHPMailer\PHPMailer\PHPMailer;
-use PHPMailer\PHPMailer\Exception;
-
-echo "Email Configuration Test\n";
-echo "========================\n\n";
-
-$authRequired = env('SMTP_AUTH_REQUIRED', 'true') === 'true';
-
-// Display current settings (hide password)
-echo "SMTP Settings:\n";
-echo "  Host: " . SMTP_HOST . "\n";
-echo "  Port: " . SMTP_PORT . "\n";
-echo "  Authentication: " . ($authRequired ? 'Yes' : 'No (GoDaddy relay)') . "\n";
-
-if ($authRequired) {
-    echo "  Username: " . SMTP_USER . "\n";
-    echo "  Password: " . (SMTP_PASS === 'your_app_password_here' || empty(SMTP_PASS) ? '⚠️  NOT CONFIGURED!' : '✓ Set (hidden)') . "\n";
-}
-
-echo "  From Email: " . SMTP_FROM_EMAIL . "\n";
-echo "  From Name: " . SMTP_FROM_NAME . "\n\n";
-
-// Check if password is configured (only if auth required)
-if ($authRequired && (SMTP_PASS === 'your_app_password_here' || empty(SMTP_PASS))) {
-    echo "❌ ERROR: SMTP password not configured!\n\n";
-    echo "To fix this:\n";
-    echo "1. If using Gmail:\n";
-    echo "   - Go to https://myaccount.google.com/apppasswords\n";
-    echo "   - Enable 2-Step Verification if not already enabled\n";
-    echo "   - Generate an 'App Password' for 'Mail'\n";
-    echo "   - Copy the 16-character password\n\n";
-    echo "2. Update your .env file:\n";
-    echo "   SMTP_PASS=your_generated_app_password\n\n";
-    echo "3. Run this script again to test\n";
-    exit(1);
-}
-
-// Ask for test recipient
-echo "Enter email address to send test email to: ";
-$testRecipient = trim(fgets(STDIN));
-
-if (!filter_var($testRecipient, FILTER_VALIDATE_EMAIL)) {
-    echo "❌ Invalid email address\n";
-    exit(1);
-}
-
-echo "\nSending test email to: {$testRecipient}\n";
-echo "Please wait...\n\n";
-
-// Create PHPMailer instance
-$mail = new PHPMailer(true);
-
-try {
-    $authRequired = env('SMTP_AUTH_REQUIRED', 'true') === 'true';
-    $smtpHost = SMTP_HOST;
-
-    // Server settings
-    $mail->isSMTP();
-    $mail->Host = $smtpHost;
-    $mail->Port = SMTP_PORT;
-
-    // Authentication (optional for GoDaddy relay)
-    if ($authRequired) {
-        $mail->SMTPAuth = true;
-        $mail->Username = SMTP_USER;
-        $mail->Password = SMTP_PASS;
-
-        // Only use encryption if not localhost
-        if ($smtpHost !== 'localhost' && $smtpHost !== '127.0.0.1') {
-            $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-        }
-    } else {
-        $mail->SMTPAuth = false;
-        $mail->SMTPAutoTLS = false;
+    // Check authentication for AJAX requests
+    if (!isset($_SESSION['email_test_auth'])) {
+        header('Content-Type: application/json');
+        echo json_encode(['success' => false, 'output' => 'Not authenticated']);
+        exit;
     }
 
-    // Enable verbose debug output
-    $mail->SMTPDebug = 2;
+    header('Content-Type: application/json');
 
-    // Recipients
-    $mail->setFrom(SMTP_FROM_EMAIL, SMTP_FROM_NAME);
-    $mail->addAddress($testRecipient);
+    switch ($_GET['action']) {
+        case 'send':
+            sendTestEmail($_GET['type'] ?? '', $_GET['email'] ?? '');
+            break;
+        case 'preview':
+            previewEmail($_GET['type'] ?? '');
+            break;
+        default:
+            echo json_encode(['success' => false, 'output' => 'Invalid action']);
+    }
+    exit;
+}
 
-    // Content
-    $mail->isHTML(true);
-    $mail->Subject = 'Test Email - Camp Booking System';
-    $mail->Body = '
+// Now start session for regular page load
+session_start();
+$password = 'test123'; // Change this to something secure
+
+// Handle login
+if (isset($_POST['password'])) {
+    if ($_POST['password'] === $password) {
+        $_SESSION['email_test_auth'] = true;
+        header('Location: ' . $_SERVER['PHP_SELF']);
+        exit;
+    } else {
+        $loginError = 'Incorrect password';
+    }
+}
+
+// Show login page if not authenticated
+if (!isset($_SESSION['email_test_auth'])) {
+    ?>
     <!DOCTYPE html>
-    <html>
+    <html lang="en">
     <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Email Test - Authentication</title>
         <style>
-            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-            .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 8px; text-align: center; }
-            .content { padding: 20px; background: #f9f9f9; border-radius: 8px; margin-top: 20px; }
-            .success { color: #28a745; font-weight: bold; }
+            body {
+                font-family: Arial, sans-serif;
+                background: #1a1a1a;
+                color: #f5f5f5;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                height: 100vh;
+                margin: 0;
+            }
+            .auth-box {
+                background: #2a2a2a;
+                padding: 40px;
+                border-radius: 8px;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+                max-width: 400px;
+                width: 100%;
+            }
+            h2 { color: #eb008b; margin-top: 0; }
+            input {
+                padding: 10px;
+                width: 100%;
+                margin: 10px 0;
+                border: 1px solid #444;
+                background: #1a1a1a;
+                color: #f5f5f5;
+                border-radius: 4px;
+                box-sizing: border-box;
+            }
+            button {
+                padding: 12px 24px;
+                background: #eb008b;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+                width: 100%;
+                font-size: 16px;
+            }
+            button:hover { background: #d40080; }
+            .error {
+                background: #7f1d1d;
+                color: #fca5a5;
+                padding: 10px;
+                border-radius: 4px;
+                margin-bottom: 15px;
+            }
         </style>
     </head>
     <body>
-        <div class="container">
-            <div class="header">
-                <h1>✅ Email Test Successful!</h1>
-            </div>
-            <div class="content">
-                <p class="success">Your SMTP configuration is working correctly!</p>
-                <p>This test email was sent from your Camp Booking System.</p>
-                <h3>Configuration Details:</h3>
-                <ul>
-                    <li><strong>SMTP Host:</strong> ' . SMTP_HOST . '</li>
-                    <li><strong>SMTP Port:</strong> ' . SMTP_PORT . '</li>
-                    <li><strong>From Email:</strong> ' . SMTP_FROM_EMAIL . '</li>
-                    <li><strong>Test Time:</strong> ' . date('Y-m-d H:i:s') . '</li>
-                </ul>
-                <p>Your booking confirmation emails will now be sent successfully! 🎉</p>
-            </div>
+        <div class="auth-box">
+            <h2>🔒 Email Test Authentication</h2>
+            <?php if (isset($loginError)): ?>
+                <div class="error"><?php echo htmlspecialchars($loginError); ?></div>
+            <?php endif; ?>
+            <form method="POST">
+                <input type="password" name="password" placeholder="Enter password" required autofocus>
+                <button type="submit">Login</button>
+            </form>
+            <p style="font-size: 12px; color: #888; margin-top: 20px;">Default password: test123</p>
         </div>
     </body>
     </html>
-    ';
-
-    $mail->AltBody = 'Email Test Successful! Your SMTP configuration is working correctly.';
-
-    $mail->send();
-
-    echo "\n✅ SUCCESS! Test email sent successfully!\n";
-    echo "Check {$testRecipient} for the test email.\n";
-
-} catch (Exception $e) {
-    echo "\n❌ ERROR: Email could not be sent.\n";
-    echo "Error: {$mail->ErrorInfo}\n\n";
-
-    echo "Common issues:\n";
-    echo "1. Gmail App Password not created or incorrect\n";
-    echo "2. 2-Step Verification not enabled on Gmail account\n";
-    echo "3. SMTP blocked by firewall\n";
-    echo "4. Incorrect SMTP credentials\n";
-    exit(1);
+    <?php
+    exit;
 }
+?>
