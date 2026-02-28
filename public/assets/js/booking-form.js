@@ -346,31 +346,32 @@ class BookingForm {
             bankTransferDetails.style.display = 'none';
         }
 
+        // Show payment plan group
+        paymentPlanGroup.style.display = 'block';
+
+        // Get installment radio buttons
+        const fullPaymentRadio = document.querySelector('input[name="payment_plan"][value="full"]');
+        const monthlyRadio = document.querySelector('input[name="payment_plan"][value="monthly"]');
+        const threePaymentRadio = document.querySelector('input[name="payment_plan"][value="three_payments"]');
+
         // Only allow installment plans with Stripe
         if (method === 'stripe') {
-            paymentPlanGroup.style.display = 'block';
             if (stripeNote) stripeNote.style.display = 'block';
+
+            // Enable installment options for Stripe
+            if (monthlyRadio) monthlyRadio.disabled = false;
+            if (threePaymentRadio) threePaymentRadio.disabled = false;
         } else {
-            paymentPlanGroup.style.display = 'block';
             if (stripeNote) stripeNote.style.display = 'none';
 
             // Force "pay in full" for non-Stripe methods
-            const fullPaymentRadio = document.querySelector('input[name="payment_plan"][value="full"]');
             if (fullPaymentRadio) {
                 fullPaymentRadio.checked = true;
             }
 
             // Disable installment options for non-Stripe
-            const monthlyRadio = document.querySelector('input[name="payment_plan"][value="monthly"]');
-            const threePaymentRadio = document.querySelector('input[name="payment_plan"][value="three_payments"]');
-
-            if (method !== 'stripe') {
-                if (monthlyRadio) monthlyRadio.disabled = true;
-                if (threePaymentRadio) threePaymentRadio.disabled = true;
-            } else {
-                if (monthlyRadio) monthlyRadio.disabled = false;
-                if (threePaymentRadio) threePaymentRadio.disabled = false;
-            }
+            if (monthlyRadio) monthlyRadio.disabled = true;
+            if (threePaymentRadio) threePaymentRadio.disabled = true;
         }
 
         this.updateInstallmentPreview();
