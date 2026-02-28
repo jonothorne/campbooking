@@ -12,7 +12,7 @@ require_once __DIR__ . '/includes/functions.php';
 
 // Handle AJAX requests FIRST (before any output)
 if (isset($_GET['action'])) {
-    session_start();
+    // Session already started by constants.php
 
     // Check authentication for AJAX requests
     if (!isset($_SESSION['email_test_auth'])) {
@@ -36,8 +36,7 @@ if (isset($_GET['action'])) {
     exit;
 }
 
-// Now start session for regular page load
-session_start();
+// Session already started by constants.php
 $password = 'test123'; // Change this to something secure
 
 // Handle login
@@ -368,8 +367,21 @@ function getBookingConfirmationEmail() {
     require_once __DIR__ . '/config/constants.php';
     require_once __DIR__ . '/includes/functions.php';
     ob_start();
-    $_booking = ['booking_reference' => 'CAMP-TEST-1234', 'booker_name' => 'Test User', 'booker_email' => 'test@example.com', 'total_amount' => 250.00, 'payment_method' => 'stripe', 'payment_plan' => 'three_payments'];
-    $_attendees = [['name' => 'John Doe', 'age' => 30, 'ticket_type' => 'Adult Weekend'], ['name' => 'Jane Doe', 'age' => 28, 'ticket_type' => 'Adult Weekend']];
+
+    // Extract variables for template
+    $booking_reference = 'CAMP-TEST-1234';
+    $booker_name = 'Test User';
+    $booker_email = 'test@example.com';
+    $total_amount = 250.00;
+    $payment_method = 'stripe';
+    $payment_plan = 'three_payments';
+    $attendees = [
+        ['name' => 'John Doe', 'age' => 30, 'ticket_type' => 'adult_weekend', 'ticket_price' => 85.00],
+        ['name' => 'Jane Doe', 'age' => 28, 'ticket_type' => 'adult_weekend', 'ticket_price' => 85.00],
+        ['name' => 'Jimmy Doe', 'age' => 12, 'ticket_type' => 'child_weekend', 'ticket_price' => 55.00],
+        ['name' => 'Jenny Doe', 'age' => 3, 'ticket_type' => 'free_child', 'ticket_price' => 0.00]
+    ];
+
     include __DIR__ . '/templates/emails/booking-confirmation.php';
     return ob_get_clean();
 }
@@ -378,8 +390,14 @@ function getPaymentReceiptEmail() {
     require_once __DIR__ . '/config/constants.php';
     require_once __DIR__ . '/includes/functions.php';
     ob_start();
-    $_booking = ['booking_reference' => 'CAMP-TEST-1234', 'booker_name' => 'Test User'];
-    $_payment = ['amount' => 83.33, 'payment_date' => date('Y-m-d H:i:s'), 'payment_method' => 'stripe'];
+
+    // Extract variables for template
+    $booking_reference = 'CAMP-TEST-1234';
+    $booker_name = 'Test User';
+    $amount = 83.33;
+    $payment_date = date('Y-m-d H:i:s');
+    $payment_method = 'stripe';
+
     include __DIR__ . '/templates/emails/payment-receipt.php';
     return ob_get_clean();
 }
@@ -388,8 +406,14 @@ function getPaymentReminderEmail() {
     require_once __DIR__ . '/config/constants.php';
     require_once __DIR__ . '/includes/functions.php';
     ob_start();
-    $_booking = ['booking_reference' => 'CAMP-TEST-1234', 'booker_name' => 'Test User'];
-    $_schedule = ['amount' => 83.33, 'due_date' => date('Y-m-d', strtotime('+3 days')), 'installment_number' => 2];
+
+    // Extract variables for template
+    $booking_reference = 'CAMP-TEST-1234';
+    $booker_name = 'Test User';
+    $amount = 83.33;
+    $due_date = date('Y-m-d', strtotime('+3 days'));
+    $installment_number = 2;
+
     include __DIR__ . '/templates/emails/payment-reminder.php';
     return ob_get_clean();
 }
@@ -398,9 +422,15 @@ function getPaymentFailedEmail() {
     require_once __DIR__ . '/config/constants.php';
     require_once __DIR__ . '/includes/functions.php';
     ob_start();
-    $_booking = ['booking_reference' => 'CAMP-TEST-1234', 'booker_name' => 'Test User'];
-    $_schedule = ['amount' => 83.33, 'due_date' => date('Y-m-d'), 'installment_number' => 2];
-    $_retryDate = date('Y-m-d', strtotime('+2 days'));
+
+    // Extract variables for template
+    $booking_reference = 'CAMP-TEST-1234';
+    $booker_name = 'Test User';
+    $amount = 83.33;
+    $due_date = date('Y-m-d');
+    $installment_number = 2;
+    $retry_date = date('Y-m-d', strtotime('+2 days'));
+
     include __DIR__ . '/templates/emails/payment-failed.php';
     return ob_get_clean();
 }
