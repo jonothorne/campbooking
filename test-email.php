@@ -124,3 +124,269 @@ if (!isset($_SESSION['email_test_auth'])) {
     exit;
 }
 ?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Testing Tool</title>
+    <style>
+        body { font-family: 'Courier New', monospace; background: #1a1a1a; color: #f5f5f5; padding: 40px; max-width: 1200px; margin: 0 auto; }
+        h1 { color: #eb008b; border-bottom: 2px solid #eb008b; padding-bottom: 10px; }
+        h2 { color: #ff6b9d; margin-top: 30px; }
+        .warning-box { background: #7f1d1d; border: 2px solid #dc2626; padding: 20px; margin: 30px 0; border-radius: 8px; text-align: center; }
+        .warning-box strong { color: #fca5a5; font-size: 18px; }
+        .info-box { background: #1e3a5f; border-left: 4px solid #3b82f6; padding: 15px 20px; margin: 20px 0; border-radius: 4px; }
+        .info-box h3 { color: #60a5fa; margin-top: 0; }
+        .info-box code { background: #1a1a1a; padding: 2px 6px; border-radius: 3px; color: #4ade80; }
+        .test-section { background: #2a2a2a; border-left: 4px solid #eb008b; padding: 20px; margin: 20px 0; border-radius: 4px; }
+        .test-button { padding: 12px 24px; background: linear-gradient(135deg, #eb008b 0%, #d40080 100%); color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; font-weight: 600; margin: 10px 10px 10px 0; transition: all 0.3s ease; }
+        .test-button:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(235, 0, 139, 0.4); }
+        .test-button:disabled { opacity: 0.5; cursor: not-allowed; }
+        .preview-button { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); }
+        .output-box { background: #1a1a1a; border: 1px solid #444; padding: 15px; margin: 15px 0; border-radius: 4px; font-family: 'Courier New', monospace; font-size: 13px; max-height: 400px; overflow-y: auto; white-space: pre-wrap; word-wrap: break-word; }
+        .preview-box { background: white; border: 1px solid #444; padding: 20px; margin: 15px 0; border-radius: 4px; max-height: 500px; overflow-y: auto; }
+        .success { color: #4ade80; }
+        .error { color: #f87171; }
+        .loading { display: inline-block; width: 16px; height: 16px; border: 3px solid rgba(235, 0, 139, 0.3); border-radius: 50%; border-top-color: #eb008b; animation: spin 1s ease-in-out infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        input[type="email"] { padding: 10px; background: #1a1a1a; border: 1px solid #444; color: #f5f5f5; border-radius: 4px; font-size: 14px; width: 300px; margin-right: 10px; }
+        .logout-btn { position: absolute; top: 20px; right: 20px; padding: 8px 16px; background: #444; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; text-decoration: none; }
+        .logout-btn:hover { background: #555; }
+    </style>
+</head>
+<body>
+    <a href="?logout=1" class="logout-btn">Logout</a>
+    <h1>📧 Email Testing Tool</h1>
+
+    <div class="warning-box">
+        <strong>⚠️ SECURITY WARNING ⚠️</strong><br>
+        This is a testing tool. DELETE THIS FILE after testing your emails!
+    </div>
+
+    <div class="info-box">
+        <h3>📋 Email Authentication Status</h3>
+        <p>After adding SPF and DMARC DNS records, test sending an email below to verify it doesn't go to spam.</p>
+        <p><strong>DNS propagation can take 15-30 minutes.</strong></p>
+    </div>
+
+    <h2>1. Test Email Sending</h2>
+
+    <div class="test-section">
+        <h3>Booking Confirmation Email</h3>
+        <p>Test the email sent when a booking is completed.</p>
+        <input type="email" id="email-booking-confirmation" placeholder="your.email@example.com">
+        <button class="test-button" onclick="sendEmail('booking-confirmation')">Send Test Email</button>
+        <button class="preview-button test-button" onclick="previewEmail('booking-confirmation')">Preview</button>
+        <div id="output-booking-confirmation" class="output-box" style="display: none;"></div>
+        <div id="preview-booking-confirmation" class="preview-box" style="display: none;"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>Payment Receipt Email</h3>
+        <p>Test the email sent when a payment is received.</p>
+        <input type="email" id="email-payment-receipt" placeholder="your.email@example.com">
+        <button class="test-button" onclick="sendEmail('payment-receipt')">Send Test Email</button>
+        <button class="preview-button test-button" onclick="previewEmail('payment-receipt')">Preview</button>
+        <div id="output-payment-receipt" class="output-box" style="display: none;"></div>
+        <div id="preview-payment-receipt" class="preview-box" style="display: none;"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>Payment Reminder Email</h3>
+        <p>Test the reminder email sent 3 days before a payment is due.</p>
+        <input type="email" id="email-payment-reminder" placeholder="your.email@example.com">
+        <button class="test-button" onclick="sendEmail('payment-reminder')">Send Test Email</button>
+        <button class="preview-button test-button" onclick="previewEmail('payment-reminder')">Preview</button>
+        <div id="output-payment-reminder" class="output-box" style="display: none;"></div>
+        <div id="preview-payment-reminder" class="preview-box" style="display: none;"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>Payment Failed Email</h3>
+        <p>Test the email sent when a payment fails.</p>
+        <input type="email" id="email-payment-failed" placeholder="your.email@example.com">
+        <button class="test-button" onclick="sendEmail('payment-failed')">Send Test Email</button>
+        <button class="preview-button test-button" onclick="previewEmail('payment-failed')">Preview</button>
+        <div id="output-payment-failed" class="output-box" style="display: none;"></div>
+        <div id="preview-payment-failed" class="preview-box" style="display: none;"></div>
+    </div>
+
+    <h2>2. DNS Records Reference</h2>
+
+    <div class="info-box">
+        <h3>🔐 DNS Records (GoDaddy)</h3>
+        
+        <h4 style="margin-top: 20px;">✅ SPF Record:</h4>
+        <div style="background: #1a1a1a; padding: 15px; border-radius: 4px; margin: 10px 0;">
+            <strong>Type:</strong> TXT<br>
+            <strong>Name:</strong> @<br>
+            <strong>Value:</strong> <code>v=spf1 a mx include:secureserver.net ~all</code><br>
+            <strong>TTL:</strong> 3600
+        </div>
+
+        <h4 style="margin-top: 20px;">✅ DMARC Record:</h4>
+        <div style="background: #1a1a1a; padding: 15px; border-radius: 4px; margin: 10px 0;">
+            <strong>Type:</strong> TXT<br>
+            <strong>Name:</strong> _dmarc<br>
+            <strong>Value:</strong> <code>v=DMARC1; p=none; rua=mailto:office@alive.me.uk</code><br>
+            <strong>TTL:</strong> 3600
+        </div>
+
+        <p style="margin-top: 20px;"><strong>📧 DKIM:</strong> Check cPanel → Email → Email Deliverability, or contact GoDaddy support to enable DKIM signing.</p>
+    </div>
+
+    <div class="warning-box" style="margin-top: 40px;">
+        <strong>🗑️ DELETE THIS FILE AFTER TESTING</strong><br>
+        File: test-email.php
+    </div>
+
+    <script>
+        async function sendEmail(type) {
+            const outputDiv = document.getElementById('output-' + type);
+            const emailInput = document.getElementById('email-' + type);
+            const button = event.target;
+            const email = emailInput.value.trim();
+            if (!email) { alert('Please enter an email address'); return; }
+            outputDiv.style.display = 'block';
+            outputDiv.innerHTML = '<span class="loading"></span> Sending email to ' + email + '...';
+            button.disabled = true;
+            try {
+                const response = await fetch('?action=send&type=' + encodeURIComponent(type) + '&email=' + encodeURIComponent(email));
+                const text = await response.text();
+                try {
+                    const data = JSON.parse(text);
+                    if (data.success) {
+                        outputDiv.innerHTML = '<span class="success">✓ SUCCESS</span>\n\n' + escapeHtml(data.output);
+                    } else {
+                        outputDiv.innerHTML = '<span class="error">✗ ERROR</span>\n\n' + escapeHtml(data.output);
+                    }
+                } catch (parseError) {
+                    outputDiv.innerHTML = '<span class="error">✗ FAILED - Invalid JSON</span>\n\n' + escapeHtml(text);
+                }
+            } catch (error) {
+                outputDiv.innerHTML = '<span class="error">✗ FAILED</span>\n\n' + escapeHtml(error.message);
+            } finally {
+                button.disabled = false;
+            }
+        }
+
+        async function previewEmail(type) {
+            const previewDiv = document.getElementById('preview-' + type);
+            const button = event.target;
+            previewDiv.style.display = 'block';
+            previewDiv.innerHTML = '<div style="color: #666;"><span class="loading"></span> Loading preview...</div>';
+            button.disabled = true;
+            try {
+                const response = await fetch('?action=preview&type=' + encodeURIComponent(type));
+                const data = await response.json();
+                if (data.success) {
+                    previewDiv.innerHTML = data.html;
+                } else {
+                    previewDiv.innerHTML = '<div style="color: #f87171;">✗ ERROR: ' + escapeHtml(data.output) + '</div>';
+                }
+            } catch (error) {
+                previewDiv.innerHTML = '<div style="color: #f87171;">✗ FAILED: ' + escapeHtml(error.message) + '</div>';
+            } finally {
+                button.disabled = false;
+            }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+</html>
+
+<?php
+if (isset($_GET['logout'])) { session_destroy(); header('Location: ' . strtok($_SERVER['REQUEST_URI'], '?')); exit; }
+
+function sendTestEmail($type, $email) {
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        echo json_encode(['success' => false, 'output' => 'Invalid email address']);
+        return;
+    }
+    try {
+        require_once __DIR__ . '/config/constants.php';
+        require_once __DIR__ . '/includes/db.php';
+        require_once __DIR__ . '/classes/Email.php';
+        $emailClass = new Email();
+        $testData = getTestEmailData($type);
+        if (!$testData) {
+            echo json_encode(['success' => false, 'output' => 'Invalid email type']);
+            return;
+        }
+        $result = $emailClass->send($email, $testData['subject'], $testData['body']);
+        if ($result) {
+            $output = "✓ Email sent successfully to: {$email}\n\n";
+            $output .= "Subject: {$testData['subject']}\n\n";
+            $output .= "Check your inbox (and spam folder).\n\n";
+            $output .= "If it's in spam, wait 15-30 min for DNS to propagate after adding SPF/DMARC records.";
+            echo json_encode(['success' => true, 'output' => $output]);
+        } else {
+            echo json_encode(['success' => false, 'output' => 'Failed to send email. Check SMTP settings in .env file.']);
+        }
+    } catch (Exception $e) {
+        echo json_encode(['success' => false, 'output' => 'Exception: ' . $e->getMessage()]);
+    }
+}
+
+function previewEmail($type) {
+    try {
+        $testData = getTestEmailData($type);
+        if (!$testData) {
+            echo json_encode(['success' => false, 'output' => 'Invalid email type']);
+            return;
+        }
+        echo json_encode(['success' => true, 'html' => $testData['body']]);
+    } catch (Exception $e) {
+        echo json_encode(['success' => false, 'output' => 'Exception: ' . $e->getMessage()]);
+    }
+}
+
+function getTestEmailData($type) {
+    $data = [
+        'booking-confirmation' => ['subject' => 'Booking Confirmation - ' . EVENT_NAME, 'body' => getBookingConfirmationEmail()],
+        'payment-receipt' => ['subject' => 'Payment Receipt - ' . EVENT_NAME, 'body' => getPaymentReceiptEmail()],
+        'payment-reminder' => ['subject' => 'Payment Reminder - ' . EVENT_NAME, 'body' => getPaymentReminderEmail()],
+        'payment-failed' => ['subject' => 'Payment Failed - ' . EVENT_NAME, 'body' => getPaymentFailedEmail()]
+    ];
+    return $data[$type] ?? null;
+}
+
+function getBookingConfirmationEmail() {
+    ob_start();
+    $_booking = ['booking_reference' => 'CAMP-TEST-1234', 'booker_name' => 'Test User', 'booker_email' => 'test@example.com', 'total_amount' => 250.00, 'payment_method' => 'stripe', 'payment_plan' => 'three_payments'];
+    $_attendees = [['name' => 'John Doe', 'age' => 30, 'ticket_type' => 'Adult Weekend'], ['name' => 'Jane Doe', 'age' => 28, 'ticket_type' => 'Adult Weekend']];
+    include __DIR__ . '/templates/emails/booking-confirmation.php';
+    return ob_get_clean();
+}
+
+function getPaymentReceiptEmail() {
+    ob_start();
+    $_booking = ['booking_reference' => 'CAMP-TEST-1234', 'booker_name' => 'Test User'];
+    $_payment = ['amount' => 83.33, 'payment_date' => date('Y-m-d H:i:s'), 'payment_method' => 'stripe'];
+    include __DIR__ . '/templates/emails/payment-receipt.php';
+    return ob_get_clean();
+}
+
+function getPaymentReminderEmail() {
+    ob_start();
+    $_booking = ['booking_reference' => 'CAMP-TEST-1234', 'booker_name' => 'Test User'];
+    $_schedule = ['amount' => 83.33, 'due_date' => date('Y-m-d', strtotime('+3 days')), 'installment_number' => 2];
+    include __DIR__ . '/templates/emails/payment-reminder.php';
+    return ob_get_clean();
+}
+
+function getPaymentFailedEmail() {
+    ob_start();
+    $_booking = ['booking_reference' => 'CAMP-TEST-1234', 'booker_name' => 'Test User'];
+    $_schedule = ['amount' => 83.33, 'due_date' => date('Y-m-d'), 'installment_number' => 2];
+    $_retryDate = date('Y-m-d', strtotime('+2 days'));
+    include __DIR__ . '/templates/emails/payment-failed.php';
+    return ob_get_clean();
+}
+?>
