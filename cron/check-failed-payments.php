@@ -9,13 +9,14 @@
 
 // Initialize
 require_once __DIR__ . '/../vendor/autoload.php';
+require_once __DIR__ . '/../config/constants.php';
 require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/functions.php';
 require_once __DIR__ . '/../classes/Booking.php';
 require_once __DIR__ . '/../classes/StripeHandler.php';
 require_once __DIR__ . '/../classes/Email.php';
 
-$logFile = __DIR__ . '/../logs/payments.log';
+$logFile = 'payments.log';  // Just filename - logMessage() will prepend LOGS_PATH
 $timestamp = date('Y-m-d H:i:s');
 
 logMessage("[$timestamp] Starting failed payment check", $logFile);
