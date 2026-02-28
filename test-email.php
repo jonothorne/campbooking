@@ -445,7 +445,8 @@ function getPaymentReceiptEmail() {
         'transaction_id' => 'pi_test_1234567890'
     ];
     $booking = [
-        'total_amount' => 250.00
+        'total_amount' => 250.00,
+        'payment_plan' => 'three_payments'
     ];
     $amount_paid = 166.66; // 2 payments of 83.33
     $amount_outstanding = 83.34; // 1 payment remaining
