@@ -556,8 +556,11 @@ function checkDatabaseTable($table) {
                     $output .= "  Due Date: {$s['due_date']}\n";
                     $output .= "  Amount: £" . number_format($s['amount'], 2) . "\n";
                     $output .= "  Status: {$s['status']}\n";
-                    $output .= "  Payment Number: {$s['payment_number']}\n";
-                    $output .= "  Retry Count: {$s['retry_count']}\n";
+                    $output .= "  Installment #: {$s['installment_number']}\n";
+                    $output .= "  Attempt Count: {$s['attempt_count']}\n";
+                    if (!empty($s['next_retry_date'])) {
+                        $output .= "  Next Retry: {$s['next_retry_date']}\n";
+                    }
                     $output .= "\n";
                 }
             }
