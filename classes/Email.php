@@ -76,12 +76,22 @@ class Email
             $bookingData = $booking->getData();
             $attendees = $booking->getAttendees();
 
+            // Get payment schedule if installment plan
+            $paymentSchedule = [];
+            if ($bookingData['payment_plan'] !== 'full') {
+                $paymentSchedule = $this->db->fetchAll(
+                    "SELECT * FROM payment_schedules WHERE booking_id = ? ORDER BY due_date ASC",
+                    [$bookingId]
+                );
+            }
+
             $recipient = $bookingData['booker_email'];
             $subject = "Camp Booking Confirmation - {$bookingData['booking_reference']}";
 
             $data = [
                 'booking' => $bookingData,
                 'attendees' => $attendees,
+                'payment_schedule' => $paymentSchedule,
                 'booking_reference' => $bookingData['booking_reference'],
                 'booker_name' => $bookingData['booker_name'],
                 'total_amount' => $bookingData['total_amount'],

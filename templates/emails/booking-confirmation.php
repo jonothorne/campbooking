@@ -250,23 +250,10 @@
                     </p>
                 </div>
 
-                <?php if ($payment_plan !== 'full'): ?>
-                    <div class="payment-info">
-                        <strong>Payment Plan:</strong> <?php
-                            $plans = [
-                                'monthly' => 'Monthly Installments',
-                                'three_payments' => '3 Equal Payments'
-                            ];
-                            echo $plans[$payment_plan] ?? 'Pay in Full';
-                        ?>
-                        <p style="margin: 10px 0 0 0;">You'll receive reminders before each payment is due.</p>
-                    </div>
-                <?php endif; ?>
-
             <?php elseif ($payment_method === 'cash'): ?>
                 <div class="payment-info">
                     <strong>Payment Method:</strong> Cash
-                    <p style="margin: 10px 0 0 0;">Please hand your payment to Jon at church. He will confirm receipt and mark your booking as paid.</p>
+                    <p style="margin: 10px 0 0 0;">Please hand your payment<?php echo $payment_plan !== 'full' ? 's' : ''; ?> to Jon at church. He will confirm receipt and mark your booking as paid.</p>
                 </div>
 
             <?php else: ?>
@@ -279,6 +266,52 @@
                             Your card has been saved securely. Payments will be automatically charged according to your payment plan.
                         <?php endif; ?>
                     </p>
+                </div>
+            <?php endif; ?>
+
+            <!-- Payment Schedule (for installment plans) -->
+            <?php if ($payment_plan !== 'full' && !empty($payment_schedule)): ?>
+                <div class="section" style="margin-top: 20px;">
+                    <h2>Payment Schedule</h2>
+                    <div style="background: #f0f9ff; border: 2px solid #eb008b; padding: 20px; border-radius: 8px;">
+                        <p style="margin: 0 0 15px 0; color: #666;">
+                            <?php
+                                $planNames = [
+                                    'monthly' => 'Monthly Installments',
+                                    'three_payments' => '3 Equal Payments'
+                                ];
+                                echo '<strong>' . ($planNames[$payment_plan] ?? 'Installment Plan') . '</strong>';
+                            ?>
+                        </p>
+
+                        <?php foreach ($payment_schedule as $schedule): ?>
+                            <div class="detail-row" style="border-bottom: 1px solid #ddd; padding: 12px 0;">
+                                <span class="detail-label">
+                                    Payment <?php echo $schedule['installment_number']; ?>
+                                    <span style="font-weight: normal; color: #666; font-size: 13px;">
+                                        (Due: <?php echo formatDate($schedule['due_date'], 'd M Y'); ?>)
+                                    </span>
+                                </span>
+                                <span class="detail-value" style="font-weight: bold; color: #eb008b;">
+                                    <?php echo formatCurrency($schedule['amount']); ?>
+                                </span>
+                            </div>
+                        <?php endforeach; ?>
+
+                        <?php if ($payment_method === 'stripe'): ?>
+                            <p style="margin: 15px 0 0 0; font-size: 13px; color: #666;">
+                                ℹ️ Payments will be automatically charged to your saved card on the due dates above.
+                            </p>
+                        <?php elseif ($payment_method === 'bank_transfer'): ?>
+                            <p style="margin: 15px 0 0 0; font-size: 13px; color: #666;">
+                                ℹ️ Please make each transfer by the due date using the bank details above with reference: <strong><?php echo e($bank_reference); ?></strong>
+                            </p>
+                        <?php else: ?>
+                            <p style="margin: 15px 0 0 0; font-size: 13px; color: #666;">
+                                ℹ️ Please hand each payment to Jon at church by the due dates above.
+                            </p>
+                        <?php endif; ?>
+                    </div>
                 </div>
             <?php endif; ?>
         </div>

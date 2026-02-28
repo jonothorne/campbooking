@@ -350,29 +350,19 @@ class BookingForm {
         paymentPlanGroup.style.display = 'block';
 
         // Get installment radio buttons
-        const fullPaymentRadio = document.querySelector('input[name="payment_plan"][value="full"]');
         const monthlyRadio = document.querySelector('input[name="payment_plan"][value="monthly"]');
         const threePaymentRadio = document.querySelector('input[name="payment_plan"][value="three_payments"]');
 
-        // Only allow installment plans with Stripe
+        // Show Stripe note only for Stripe payments
         if (method === 'stripe') {
             if (stripeNote) stripeNote.style.display = 'block';
-
-            // Enable installment options for Stripe
-            if (monthlyRadio) monthlyRadio.disabled = false;
-            if (threePaymentRadio) threePaymentRadio.disabled = false;
         } else {
             if (stripeNote) stripeNote.style.display = 'none';
-
-            // Force "pay in full" for non-Stripe methods
-            if (fullPaymentRadio) {
-                fullPaymentRadio.checked = true;
-            }
-
-            // Disable installment options for non-Stripe
-            if (monthlyRadio) monthlyRadio.disabled = true;
-            if (threePaymentRadio) threePaymentRadio.disabled = true;
         }
+
+        // Enable installment options for all payment methods
+        if (monthlyRadio) monthlyRadio.disabled = false;
+        if (threePaymentRadio) threePaymentRadio.disabled = false;
 
         this.updateInstallmentPreview();
     }
