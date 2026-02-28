@@ -6,77 +6,128 @@
  * DELETE THIS FILE AFTER TESTING
  */
 
-// Security: Basic password protection
+// Handle AJAX requests FIRST (before any output)
+if (isset($_GET['action'])) {
+    session_start();
+
+    // Check authentication for AJAX requests
+    if (!isset($_SESSION['cron_test_auth'])) {
+        header('Content-Type: application/json');
+        echo json_encode(['success' => false, 'output' => 'Not authenticated']);
+        exit;
+    }
+
+    header('Content-Type: application/json');
+
+    switch ($_GET['action']) {
+        case 'test':
+            testCronScript($_GET['script'] ?? '');
+            break;
+        case 'viewlog':
+            viewLogFile($_GET['type'] ?? '');
+            break;
+        case 'checkdb':
+            checkDatabaseTable($_GET['table'] ?? '');
+            break;
+        default:
+            echo json_encode(['success' => false, 'output' => 'Invalid action']);
+    }
+    exit;
+}
+
+// Now start session for regular page load
 session_start();
 $password = 'test123'; // Change this to something secure
 
-if (!isset($_SESSION['cron_test_auth'])) {
-    if (isset($_POST['password']) && $_POST['password'] === $password) {
+// Handle login
+if (isset($_POST['password'])) {
+    if ($_POST['password'] === $password) {
         $_SESSION['cron_test_auth'] = true;
-    } else {
-        ?>
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Cron Test - Authentication</title>
-            <style>
-                body {
-                    font-family: Arial, sans-serif;
-                    background: #1a1a1a;
-                    color: #f5f5f5;
-                    display: flex;
-                    justify-content: center;
-                    align-items: center;
-                    height: 100vh;
-                    margin: 0;
-                }
-                .auth-box {
-                    background: #2a2a2a;
-                    padding: 40px;
-                    border-radius: 8px;
-                    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-                }
-                h2 { color: #eb008b; }
-                input {
-                    padding: 10px;
-                    width: 100%;
-                    margin: 10px 0;
-                    border: 1px solid #444;
-                    background: #1a1a1a;
-                    color: #f5f5f5;
-                    border-radius: 4px;
-                }
-                button {
-                    padding: 12px 24px;
-                    background: #eb008b;
-                    color: white;
-                    border: none;
-                    border-radius: 4px;
-                    cursor: pointer;
-                    width: 100%;
-                    font-size: 16px;
-                }
-                button:hover { background: #d40080; }
-            </style>
-        </head>
-        <body>
-            <div class="auth-box">
-                <h2>🔒 Cron Test Authentication</h2>
-                <form method="POST">
-                    <input type="password" name="password" placeholder="Enter password" required autofocus>
-                    <button type="submit">Login</button>
-                </form>
-                <p style="font-size: 12px; color: #888; margin-top: 20px;">Password: test123</p>
-            </div>
-        </body>
-        </html>
-        <?php
+        header('Location: ' . $_SERVER['PHP_SELF']);
         exit;
+    } else {
+        $loginError = 'Incorrect password';
     }
 }
 
+// Show login page if not authenticated
+if (!isset($_SESSION['cron_test_auth'])) {
+    ?>
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Cron Test - Authentication</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                background: #1a1a1a;
+                color: #f5f5f5;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                height: 100vh;
+                margin: 0;
+            }
+            .auth-box {
+                background: #2a2a2a;
+                padding: 40px;
+                border-radius: 8px;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+                max-width: 400px;
+                width: 100%;
+            }
+            h2 { color: #eb008b; margin-top: 0; }
+            input {
+                padding: 10px;
+                width: 100%;
+                margin: 10px 0;
+                border: 1px solid #444;
+                background: #1a1a1a;
+                color: #f5f5f5;
+                border-radius: 4px;
+                box-sizing: border-box;
+            }
+            button {
+                padding: 12px 24px;
+                background: #eb008b;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+                width: 100%;
+                font-size: 16px;
+            }
+            button:hover { background: #d40080; }
+            .error {
+                background: #7f1d1d;
+                color: #fca5a5;
+                padding: 10px;
+                border-radius: 4px;
+                margin-bottom: 15px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="auth-box">
+            <h2>🔒 Cron Test Authentication</h2>
+            <?php if (isset($loginError)): ?>
+                <div class="error"><?php echo htmlspecialchars($loginError); ?></div>
+            <?php endif; ?>
+            <form method="POST">
+                <input type="password" name="password" placeholder="Enter password" required autofocus>
+                <button type="submit">Login</button>
+            </form>
+            <p style="font-size: 12px; color: #888; margin-top: 20px;">Default password: test123</p>
+        </div>
+    </body>
+    </html>
+    <?php
+    exit;
+}
+
+// Main page HTML
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -198,9 +249,26 @@ if (!isset($_SESSION['cron_test_auth'])) {
         .instructions li {
             margin: 5px 0;
         }
+        .logout-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 8px 16px;
+            background: #444;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .logout-btn:hover {
+            background: #555;
+        }
     </style>
 </head>
 <body>
+    <a href="?logout=1" class="logout-btn">Logout</a>
+
     <h1>🧪 Cron Job Tester</h1>
 
     <div class="warning-box">
@@ -213,7 +281,7 @@ if (!isset($_SESSION['cron_test_auth'])) {
         <ul>
             <li><strong>Before adding cron jobs:</strong> Click each "Test" button below to verify the scripts work correctly</li>
             <li><strong>After adding cron jobs:</strong> Check the log viewer sections to see if they ran</li>
-            <li><strong>Testing payment processing:</strong> Make sure you have at least one booking with a payment due today</li>
+            <li><strong>Testing payment processing:</strong> The script will only process payments that are due today</li>
             <li><strong>After testing:</strong> DELETE this file for security!</li>
         </ul>
     </div>
@@ -283,7 +351,7 @@ if (!isset($_SESSION['cron_test_auth'])) {
 
     <div class="warning-box" style="margin-top: 40px;">
         <strong>🗑️ DELETE THIS FILE AFTER TESTING</strong><br>
-        File: /home/xvn00ltbgeh7/public_html/repositories/campbooking/test-cron.php
+        File: test-cron.php
     </div>
 
     <script>
@@ -296,16 +364,16 @@ if (!isset($_SESSION['cron_test_auth'])) {
             button.disabled = true;
 
             try {
-                const response = await fetch('?action=test&script=' + script);
+                const response = await fetch('?action=test&script=' + encodeURIComponent(script));
                 const data = await response.json();
 
                 if (data.success) {
-                    outputDiv.innerHTML = '<span class="success">✓ SUCCESS</span>\n\n' + data.output;
+                    outputDiv.innerHTML = '<span class="success">✓ SUCCESS</span>\n\n' + escapeHtml(data.output);
                 } else {
-                    outputDiv.innerHTML = '<span class="error">✗ ERROR</span>\n\n' + data.output;
+                    outputDiv.innerHTML = '<span class="error">✗ ERROR</span>\n\n' + escapeHtml(data.output);
                 }
             } catch (error) {
-                outputDiv.innerHTML = '<span class="error">✗ FAILED</span>\n\nError: ' + error.message;
+                outputDiv.innerHTML = '<span class="error">✗ FAILED</span>\n\nError: ' + escapeHtml(error.message);
             } finally {
                 button.disabled = false;
             }
@@ -318,16 +386,16 @@ if (!isset($_SESSION['cron_test_auth'])) {
             outputDiv.innerHTML = '<span class="loading"></span> Loading ' + logType + ' logs...';
 
             try {
-                const response = await fetch('?action=viewlog&type=' + logType);
+                const response = await fetch('?action=viewlog&type=' + encodeURIComponent(logType));
                 const data = await response.json();
 
                 if (data.success) {
-                    outputDiv.innerHTML = '<span class="success">✓ Log File: ' + data.file + '</span>\n\n' + data.content;
+                    outputDiv.innerHTML = '<span class="success">✓ Log File: ' + escapeHtml(data.file) + '</span>\n\n' + escapeHtml(data.content);
                 } else {
-                    outputDiv.innerHTML = '<span class="error">✗ ERROR</span>\n\n' + data.message;
+                    outputDiv.innerHTML = '<span class="error">✗ ERROR</span>\n\n' + escapeHtml(data.message);
                 }
             } catch (error) {
-                outputDiv.innerHTML = '<span class="error">✗ FAILED</span>\n\nError: ' + error.message;
+                outputDiv.innerHTML = '<span class="error">✗ FAILED</span>\n\nError: ' + escapeHtml(error.message);
             }
         }
 
@@ -338,40 +406,39 @@ if (!isset($_SESSION['cron_test_auth'])) {
             outputDiv.innerHTML = '<span class="loading"></span> Querying database...';
 
             try {
-                const response = await fetch('?action=checkdb&table=' + table);
+                const response = await fetch('?action=checkdb&table=' + encodeURIComponent(table));
                 const data = await response.json();
 
                 if (data.success) {
-                    outputDiv.innerHTML = '<span class="success">✓ Database Query Results</span>\n\n' + data.output;
+                    outputDiv.innerHTML = '<span class="success">✓ Database Query Results</span>\n\n' + escapeHtml(data.output);
                 } else {
-                    outputDiv.innerHTML = '<span class="error">✗ ERROR</span>\n\n' + data.output;
+                    outputDiv.innerHTML = '<span class="error">✗ ERROR</span>\n\n' + escapeHtml(data.output);
                 }
             } catch (error) {
-                outputDiv.innerHTML = '<span class="error">✗ FAILED</span>\n\nError: ' + error.message;
+                outputDiv.innerHTML = '<span class="error">✗ FAILED</span>\n\nError: ' + escapeHtml(error.message);
             }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
         }
     </script>
 </body>
 </html>
 
 <?php
-// Handle AJAX requests
-if (isset($_GET['action'])) {
-    header('Content-Type: application/json');
-
-    switch ($_GET['action']) {
-        case 'test':
-            testCronScript($_GET['script']);
-            break;
-        case 'viewlog':
-            viewLogFile($_GET['type']);
-            break;
-        case 'checkdb':
-            checkDatabaseTable($_GET['table']);
-            break;
-    }
+// Handle logout
+if (isset($_GET['logout'])) {
+    session_destroy();
+    header('Location: ' . strtok($_SERVER['REQUEST_URI'], '?'));
     exit;
 }
+
+// ============================================
+// AJAX Handler Functions
+// ============================================
 
 function testCronScript($script) {
     $validScripts = ['process-payments', 'send-reminders', 'check-failed-payments'];
@@ -398,14 +465,27 @@ function testCronScript($script) {
         $output = ob_get_clean();
 
         if (empty($output)) {
-            $output = "Script executed successfully (no output).\n\nThis means the script ran without errors, but there may have been no work to do (e.g., no payments due today).";
+            $output = "✓ Script executed successfully (no output).\n\n";
+            $output .= "This means the script ran without errors, but there may have been:\n";
+            $output .= "- No payments due today (for process-payments.php)\n";
+            $output .= "- No reminders to send (for send-reminders.php)\n";
+            $output .= "- No failed payments to retry (for check-failed-payments.php)\n\n";
+            $output .= "Check the log files and database sections below for more details.";
         }
 
         echo json_encode(['success' => true, 'output' => $output]);
 
     } catch (Exception $e) {
         $output = ob_get_clean();
-        $output .= "\n\nEXCEPTION: " . $e->getMessage() . "\n" . $e->getTraceAsString();
+        $output .= "\n\nEXCEPTION: " . $e->getMessage() . "\n";
+        $output .= "Stack trace:\n" . $e->getTraceAsString();
+
+        echo json_encode(['success' => false, 'output' => $output]);
+    } catch (Error $e) {
+        $output = ob_get_clean();
+        $output .= "\n\nFATAL ERROR: " . $e->getMessage() . "\n";
+        $output .= "File: " . $e->getFile() . " Line: " . $e->getLine() . "\n";
+        $output .= "Stack trace:\n" . $e->getTraceAsString();
 
         echo json_encode(['success' => false, 'output' => $output]);
     }
@@ -426,7 +506,10 @@ function viewLogFile($type) {
     $logFile = $logFiles[$type];
 
     if (!file_exists($logFile)) {
-        echo json_encode(['success' => false, 'message' => "Log file doesn't exist yet: $logFile"]);
+        echo json_encode([
+            'success' => false,
+            'message' => "Log file doesn't exist yet: $logFile\n\nThis is normal if the system hasn't logged anything yet."
+        ]);
         return;
     }
 
@@ -436,17 +519,17 @@ function viewLogFile($type) {
     $content = implode('', $recentLines);
 
     if (empty($content)) {
-        $content = "(Log file is empty)";
+        $content = "(Log file is empty - no activity logged yet)";
     }
 
     echo json_encode(['success' => true, 'file' => $logFile, 'content' => $content]);
 }
 
 function checkDatabaseTable($table) {
-    require_once __DIR__ . '/config/constants.php';
-    require_once __DIR__ . '/includes/db.php';
-
     try {
+        require_once __DIR__ . '/config/constants.php';
+        require_once __DIR__ . '/includes/db.php';
+
         $db = Database::getInstance();
 
         if ($table === 'schedules') {
@@ -458,11 +541,12 @@ function checkDatabaseTable($table) {
                 LIMIT 20"
             );
 
-            $output = "RECENT PAYMENT SCHEDULES:\n";
+            $output = "RECENT PAYMENT SCHEDULES (Last 20):\n";
             $output .= str_repeat("=", 80) . "\n\n";
 
             if (empty($schedules)) {
                 $output .= "No payment schedules found.\n";
+                $output .= "This means no bookings have been made with installment payment plans yet.";
             } else {
                 foreach ($schedules as $s) {
                     $output .= "Booking: {$s['booking_reference']} ({$s['booker_name']})\n";
@@ -486,11 +570,12 @@ function checkDatabaseTable($table) {
                 LIMIT 20"
             );
 
-            $output = "RECENT PAYMENTS:\n";
+            $output = "RECENT PAYMENTS (Last 20):\n";
             $output .= str_repeat("=", 80) . "\n\n";
 
             if (empty($payments)) {
                 $output .= "No payments found.\n";
+                $output .= "This means no payments have been recorded yet.";
             } else {
                 foreach ($payments as $p) {
                     $output .= "Booking: {$p['booking_reference']} ({$p['booker_name']})\n";
@@ -499,7 +584,7 @@ function checkDatabaseTable($table) {
                     $output .= "  Method: {$p['payment_method']}\n";
                     $output .= "  Status: {$p['status']}\n";
                     $output .= "  Type: {$p['payment_type']}\n";
-                    if ($p['stripe_payment_intent_id']) {
+                    if (!empty($p['stripe_payment_intent_id'])) {
                         $output .= "  Stripe Intent: {$p['stripe_payment_intent_id']}\n";
                     }
                     $output .= "\n";
