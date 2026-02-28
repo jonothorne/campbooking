@@ -1101,6 +1101,37 @@ select {
     .form-container {
         padding: 40px 30px;
     }
+
+    /* Tablet polaroids - moderate sizing */
+    .hero-polaroid-1 {
+        width: 170px;
+        top: -50px;
+        left: -30px;
+    }
+
+    .hero-polaroid-2 {
+        width: 210px;
+        top: -15px;
+        left: 12%;
+    }
+
+    .hero-polaroid-3 {
+        width: 180px;
+        top: -60px;
+        right: 10%;
+    }
+
+    .hero-polaroid-4 {
+        width: 160px;
+        top: -25px;
+        right: -25px;
+    }
+
+    .hero-polaroid-5 {
+        width: 195px;
+        bottom: 5%;
+        left: -40px;
+    }
 }
 
 @media (max-width: 767px) {
@@ -1140,48 +1171,48 @@ select {
         font-size: 15px;
     }
 
-    /* Mobile polaroids - let them spill off edges and overlap */
+    /* Mobile polaroids - smaller and pushed to edges */
     .hero-polaroid {
-        filter: drop-shadow(8px 10px 15px rgba(0, 0, 0, 0.5));
+        filter: drop-shadow(4px 6px 10px rgba(0, 0, 0, 0.4));
     }
 
     .hero-polaroid-1 {
-        width: 130px;
-        top: -50px;
-        left: -30px;
+        width: 90px;
+        top: -40px;
+        left: -50px;
         transform: rotate(-12deg);
     }
 
     .hero-polaroid-2 {
-        width: 140px;
-        top: -30px;
+        width: 95px;
+        top: -35px;
         left: auto;
-        right: -20px;
+        right: -55px;
         transform: rotate(8deg);
     }
 
     .hero-polaroid-3 {
-        width: 110px;
+        width: 80px;
         top: auto;
-        bottom: 20%;
-        left: -25px;
+        bottom: 15%;
+        left: -45px;
         transform: rotate(-15deg);
         display: block;
     }
 
     .hero-polaroid-4 {
-        width: 120px;
+        width: 85px;
         top: 50%;
-        right: -35px;
+        right: -50px;
         transform: rotate(10deg) translateY(-50%);
         display: block;
     }
 
     .hero-polaroid-5 {
-        width: 115px;
-        bottom: 8%;
+        width: 88px;
+        bottom: 5%;
         left: auto;
-        right: 5%;
+        right: -40px;
         transform: rotate(-8deg);
     }
 }
@@ -1225,6 +1256,50 @@ select {
     .video-modal-cta .btn {
         padding: 14px 36px;
         font-size: 15px;
+    }
+}
+
+/* ============================================
+   Extra Small Mobile (phones < 480px)
+   ============================================ */
+@media (max-width: 480px) {
+    /* Extra small polaroids for tiny screens */
+    .hero-polaroid-1 {
+        width: 70px;
+        top: -35px;
+        left: -55px;
+    }
+
+    .hero-polaroid-2 {
+        width: 75px;
+        top: -30px;
+        right: -60px;
+    }
+
+    .hero-polaroid-3 {
+        width: 65px;
+        bottom: 12%;
+        left: -50px;
+    }
+
+    .hero-polaroid-4 {
+        width: 68px;
+        right: -55px;
+    }
+
+    .hero-polaroid-5 {
+        width: 70px;
+        bottom: 3%;
+        right: -45px;
+    }
+
+    .hero h1 {
+        font-size: 38px;
+        letter-spacing: 2px;
+    }
+
+    .hero-logo img {
+        max-height: 70px;
     }
 }
 
