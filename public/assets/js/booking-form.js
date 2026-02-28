@@ -16,7 +16,7 @@ class VideoModal {
         this.iframe = document.getElementById('promo-video');
 
         // Set your YouTube video ID here
-        this.videoId = 'dQw4w9WgXcQ'; // Replace with actual video ID
+        this.videoId = 'VRr_5ZLL2gg'; // ECHO2026 Promo Video
 
         this.init();
     }
