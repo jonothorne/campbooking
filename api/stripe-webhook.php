@@ -151,10 +151,19 @@ function handlePaymentIntentSucceeded($paymentIntent)
             );
         }
 
-        // Send payment receipt email
+        // Send emails
         try {
             $email = new Email();
+
+            // Send booking confirmation for first payment
+            if ($installmentNumber == 1 || $paymentType === 'full_payment') {
+                $email->sendBookingConfirmation($bookingId);
+                logMessage("[$timestamp] Booking confirmation email sent", $logFile);
+            }
+
+            // Send payment receipt
             $email->sendPaymentReceipt($paymentId);
+            logMessage("[$timestamp] Payment receipt email sent", $logFile);
         } catch (Exception $e) {
             logMessage("[$timestamp] Email error: " . $e->getMessage(), $logFile);
         }
