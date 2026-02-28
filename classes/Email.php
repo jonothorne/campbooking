@@ -4,6 +4,8 @@
  * Sends transactional emails using PHPMailer
  */
 
+require_once __DIR__ . '/../includes/functions.php';
+
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
