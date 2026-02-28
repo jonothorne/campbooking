@@ -491,10 +491,14 @@ function getPaymentFailedEmail() {
     $due_date = date('Y-m-d');
     $installment_number = 2;
     $retry_date = date('Y-m-d', strtotime('+2 days'));
+    $next_retry_date = date('Y-m-d', strtotime('+2 days'));
     $attempt_count = 1;
     $booking = [
         'payment_method' => 'stripe',
-        'payment_plan' => 'three_payments'
+        'payment_plan' => 'three_payments',
+        'total_amount' => 250.00,
+        'amount_paid' => 83.33,
+        'amount_outstanding' => 166.67
     ];
 
     include __DIR__ . '/templates/emails/payment-failed.php';
