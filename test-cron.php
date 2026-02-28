@@ -407,12 +407,19 @@ if (!isset($_SESSION['cron_test_auth'])) {
 
             try {
                 const response = await fetch('?action=checkdb&table=' + encodeURIComponent(table));
-                const data = await response.json();
+                const text = await response.text();
 
-                if (data.success) {
-                    outputDiv.innerHTML = '<span class="success">✓ Database Query Results</span>\n\n' + escapeHtml(data.output);
-                } else {
-                    outputDiv.innerHTML = '<span class="error">✗ ERROR</span>\n\n' + escapeHtml(data.output);
+                // Try to parse as JSON
+                try {
+                    const data = JSON.parse(text);
+                    if (data.success) {
+                        outputDiv.innerHTML = '<span class="success">✓ Database Query Results</span>\n\n' + escapeHtml(data.output);
+                    } else {
+                        outputDiv.innerHTML = '<span class="error">✗ ERROR</span>\n\n' + escapeHtml(data.output);
+                    }
+                } catch (parseError) {
+                    // Show raw response if JSON parsing fails
+                    outputDiv.innerHTML = '<span class="error">✗ FAILED - Invalid JSON Response</span>\n\nRaw Response:\n' + escapeHtml(text);
                 }
             } catch (error) {
                 outputDiv.innerHTML = '<span class="error">✗ FAILED</span>\n\nError: ' + escapeHtml(error.message);
