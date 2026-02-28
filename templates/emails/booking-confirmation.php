@@ -7,28 +7,31 @@
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
             line-height: 1.6;
-            color: #333;
+            color: #1f2937;
             max-width: 600px;
             margin: 0 auto;
             padding: 20px;
-            background-color: #f5f5f5;
+            background-color: #1a1a1a;
         }
         .email-container {
             background: white;
-            border-radius: 10px;
-            padding: 30px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border-radius: 12px;
+            padding: 0;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
         }
         .header {
+            background: linear-gradient(135deg, #eb008b 0%, #d40080 100%);
             text-align: center;
-            padding-bottom: 20px;
-            border-bottom: 3px solid #eb008b;
-            margin-bottom: 30px;
+            padding: 40px 30px 30px;
+            color: white;
         }
         .header h1 {
-            color: #eb008b;
+            color: white;
             margin: 0;
-            font-size: 28px;
+            font-size: 36px;
+            font-weight: 700;
+            letter-spacing: 4px;
         }
         .booking-ref {
             background: linear-gradient(135deg, #eb008b 0%, #d40080 100%);
@@ -126,13 +129,16 @@
 <body>
     <div class="email-container">
         <div class="header">
-            <h1><?php echo env('EVENT_NAME', 'Alive Church Camp 2026'); ?></h1>
-            <p style="color: #666; margin: 10px 0 0 0;">May 29-31, 2026</p>
+            <img src="<?php echo url('public/assets/images/echo-logo.png'); ?>" alt="ECHO2026" style="width: 180px; height: auto; margin: 0 auto 15px; display: block; filter: brightness(0) invert(1);">
+            <h1>ECHO2026</h1>
+            <p style="color: rgba(255,255,255,0.95); margin: 8px 0 0 0; font-size: 14px; letter-spacing: 1px;">May 29-31, 2026 • Sizewell Hall, Suffolk</p>
+            <p style="color: rgba(255,255,255,0.9); margin: 20px 0 0 0; font-size: 13px; font-style: italic; border-top: 1px solid rgba(255,255,255,0.3); padding-top: 15px;">"The Spirit and the bride say, 'Come!'" - Revelation 22:17</p>
         </div>
 
-        <p>Dear <?php echo e($booker_name); ?>,</p>
+        <div style="padding: 35px 30px;">
+        <p><strong>Dear <?php echo e($booker_name); ?>,</strong></p>
 
-        <p>Thank you for your booking! We're excited to confirm your registration for Alive Church Camp 2026.</p>
+        <p>Thank you for answering the call! We're excited to confirm your registration for ECHO2026.</p>
 
         <div class="booking-ref">
             Booking Reference: <?php echo e($booking_reference); ?>
@@ -282,11 +288,14 @@
                 <span class="detail-value"><?php echo e($booking['booker_phone']); ?></span>
             </div>
         </div>
+        </div>
 
-        <div class="footer">
-            <p><strong>Questions?</strong> Contact us at <?php echo e(env('SMTP_FROM_EMAIL')); ?></p>
-            <p style="margin-top: 15px; color: #999; font-size: 12px;">
-                This is an automated email. Please keep this confirmation for your records.
+        <div class="footer" style="background: #1a1a1a; color: #9ca3af; padding: 30px; text-align: center; font-size: 13px;">
+            <p style="margin: 0;"><strong style="color: #e5e7eb;">ECHO2026</strong> - Respond to the Call</p>
+            <p style="margin: 10px 0;">Questions? Contact us at <a href="mailto:<?php echo e(env('SMTP_FROM_EMAIL')); ?>" style="color: #eb008b; text-decoration: none;"><?php echo e(env('SMTP_FROM_EMAIL')); ?></a></p>
+            <p style="margin-top: 20px; font-size: 12px; color: #6b7280;">
+                This is an automated email. Please keep this for your records.<br>
+                Sizewell Hall, Sizewell, Leiston, Suffolk, IP16 4TX
             </p>
         </div>
     </div>

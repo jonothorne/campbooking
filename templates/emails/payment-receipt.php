@@ -96,15 +96,18 @@
 <body>
     <div class="email-container">
         <div class="header">
-            <h1>Payment Received</h1>
-            <p style="color: #666; margin: 10px 0 0 0;"><?php echo env('EVENT_NAME', 'Alive Church Camp 2026'); ?></p>
+            <img src="<?php echo url('public/assets/images/echo-logo.png'); ?>" alt="ECHO2026" style="width: 180px; height: auto; margin: 0 auto 15px; display: block; filter: brightness(0) invert(1);">
+            <h1>ECHO2026</h1>
+            <p style="color: rgba(255,255,255,0.95); margin: 8px 0 0 0; font-size: 14px; letter-spacing: 1px;">Payment Received</p>
+            <p style="color: rgba(255,255,255,0.9); margin: 20px 0 0 0; font-size: 13px; font-style: italic; border-top: 1px solid rgba(255,255,255,0.3); padding-top: 15px;">"The Spirit and the bride say, 'Come!'" - Revelation 22:17</p>
         </div>
 
+        <div style="padding: 35px 30px;">
         <div class="success-badge">
             ✓ Payment Successfully Received
         </div>
 
-        <p>Dear <?php echo e($booker_name); ?>,</p>
+        <p><strong>Dear <?php echo e($booker_name); ?>,</strong></p>
 
         <p>Thank you! We've received your payment for booking <strong><?php echo e($booking_reference); ?></strong>.</p>
 
@@ -180,11 +183,14 @@
                 </div>
             <?php endif; ?>
         </div>
+        </div>
 
-        <div class="footer">
-            <p><strong>Questions?</strong> Contact us at <?php echo e(env('SMTP_FROM_EMAIL')); ?></p>
-            <p style="margin-top: 15px; color: #999; font-size: 12px;">
-                Keep this receipt for your records. Booking Reference: <?php echo e($booking_reference); ?>
+        <div class="footer" style="background: #1a1a1a; color: #9ca3af; padding: 30px; text-align: center; font-size: 13px;">
+            <p style="margin: 0;"><strong style="color: #e5e7eb;">ECHO2026</strong> - Respond to the Call</p>
+            <p style="margin: 10px 0;">Questions? Contact us at <a href="mailto:<?php echo e(env('SMTP_FROM_EMAIL')); ?>" style="color: #eb008b; text-decoration: none;"><?php echo e(env('SMTP_FROM_EMAIL')); ?></a></p>
+            <p style="margin-top: 20px; font-size: 12px; color: #6b7280;">
+                Keep this receipt for your records. Booking Reference: <?php echo e($booking_reference); ?><br>
+                Sizewell Hall, Sizewell, Leiston, Suffolk, IP16 4TX
             </p>
         </div>
     </div>
