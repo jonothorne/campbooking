@@ -20,15 +20,25 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         .header {
+            background: url('<?php echo url('public/assets/images/poster-background-echo2026.png'); ?>') center center / cover no-repeat;
             text-align: center;
-            padding-bottom: 20px;
-            border-bottom: 3px solid #eb008b;
-            margin-bottom: 30px;
+            padding: 60px 30px;
+            color: white;
+            position: relative;
         }
-        .header h1 {
-            color: #eb008b;
-            margin: 0;
-            font-size: 28px;
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.6));
+            z-index: 1;
+        }
+        .header > * {
+            position: relative;
+            z-index: 2;
         }
         .reminder-badge {
             background: #eb008b;
@@ -100,10 +110,9 @@
 <body>
     <div class="email-container">
         <div class="header">
-            <img src="<?php echo url('public/assets/images/echo-logo.png'); ?>" alt="ECHO2026" style="width: 180px; height: auto; margin: 0 auto 15px; display: block; filter: brightness(0) invert(1);">
-            <h1>ECHO2026</h1>
-            <p style="color: rgba(255,255,255,0.95); margin: 8px 0 0 0; font-size: 14px; letter-spacing: 1px;">Payment Reminder</p>
-            <p style="color: rgba(255,255,255,0.9); margin: 20px 0 0 0; font-size: 13px; font-style: italic; border-top: 1px solid rgba(255,255,255,0.3); padding-top: 15px;">"The Spirit and the bride say, 'Come!'" - Revelation 22:17</p>
+            <img src="<?php echo url('public/assets/images/echo-logo.png'); ?>" alt="ECHO2026" style="width: 280px; height: auto; margin: 0 auto 20px; display: block; filter: brightness(0) invert(1);">
+            <p style="color: rgba(255,255,255,0.95); margin: 8px 0 0 0; font-size: 15px; letter-spacing: 1px;">May 29-31, 2026 • Sizewell Hall, Suffolk</p>
+            <p style="color: rgba(255,255,255,0.9); margin: 20px 0 0 0; font-size: 14px; font-style: italic; border-top: 1px solid rgba(255,255,255,0.3); padding-top: 15px;">"The Spirit and the bride say, 'Come!'" - Revelation 22:17</p>
         </div>
 
         <div style="padding: 35px 30px;">
