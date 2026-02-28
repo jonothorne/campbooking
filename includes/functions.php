@@ -377,6 +377,12 @@ function jsonSuccess($data = null) {
  */
 function logMessage($message, $logFile = 'app.log') {
     $logPath = LOGS_PATH . '/' . $logFile;
+
+    // Create logs directory if it doesn't exist
+    if (!is_dir(LOGS_PATH)) {
+        mkdir(LOGS_PATH, 0755, true);
+    }
+
     $timestamp = date('Y-m-d H:i:s');
     $logEntry = "[{$timestamp}] {$message}" . PHP_EOL;
 
