@@ -463,10 +463,17 @@ function getPaymentReminderEmail() {
     // Extract variables for template
     $booking_reference = 'CAMP-TEST-1234';
     $booker_name = 'Test User';
-    $amount = 83.33;
+    $payment_amount = 83.33;
     $due_date = date('Y-m-d', strtotime('+3 days'));
     $installment_number = 2;
     $days_until_due = 3;
+    $booking = [
+        'payment_method' => 'stripe',
+        'payment_plan' => 'three_payments',
+        'total_amount' => 250.00,
+        'amount_paid' => 83.33,
+        'amount_outstanding' => 166.67
+    ];
 
     include __DIR__ . '/templates/emails/payment-reminder.php';
     return ob_get_clean();
@@ -480,10 +487,15 @@ function getPaymentFailedEmail() {
     // Extract variables for template
     $booking_reference = 'CAMP-TEST-1234';
     $booker_name = 'Test User';
-    $amount = 83.33;
+    $payment_amount = 83.33;
     $due_date = date('Y-m-d');
     $installment_number = 2;
     $retry_date = date('Y-m-d', strtotime('+2 days'));
+    $attempt_count = 1;
+    $booking = [
+        'payment_method' => 'stripe',
+        'payment_plan' => 'three_payments'
+    ];
 
     include __DIR__ . '/templates/emails/payment-failed.php';
     return ob_get_clean();
