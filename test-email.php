@@ -313,25 +313,64 @@ function sendTestEmail($type, $email) {
         return;
     }
     try {
+        require_once __DIR__ . '/vendor/autoload.php';
         require_once __DIR__ . '/config/constants.php';
-        require_once __DIR__ . '/includes/db.php';
         require_once __DIR__ . '/includes/functions.php';
-        require_once __DIR__ . '/classes/Email.php';
-        $emailClass = new Email();
+
+        use PHPMailer\PHPMailer\PHPMailer;
+        use PHPMailer\PHPMailer\Exception;
+
         $testData = getTestEmailData($type);
         if (!$testData) {
             echo json_encode(['success' => false, 'output' => 'Invalid email type']);
             return;
         }
-        $result = $emailClass->send($email, $testData['subject'], $testData['body']);
-        if ($result) {
+
+        // Create PHPMailer instance
+        $mail = new PHPMailer(true);
+
+        // SMTP configuration
+        $smtpHost = env('SMTP_HOST');
+        $smtpPort = env('SMTP_PORT', 587);
+        $smtpAuthRequired = env('SMTP_AUTH_REQUIRED', 'true') === 'true';
+
+        $mail->isSMTP();
+        $mail->Host = $smtpHost;
+        $mail->Port = $smtpPort;
+
+        if ($smtpAuthRequired) {
+            $mail->SMTPAuth = true;
+            $mail->Username = env('SMTP_USER');
+            $mail->Password = env('SMTP_PASS');
+
+            if ($smtpHost !== 'localhost' && $smtpHost !== '127.0.0.1') {
+                $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+            }
+        } else {
+            $mail->SMTPAuth = false;
+            $mail->SMTPAutoTLS = false;
+        }
+
+        // Email settings
+        $mail->setFrom(
+            env('SMTP_FROM_EMAIL', 'noreply@example.com'),
+            env('SMTP_FROM_NAME', 'Alive Church Camp')
+        );
+        $mail->addAddress($email);
+        $mail->CharSet = 'UTF-8';
+        $mail->isHTML(true);
+        $mail->Subject = $testData['subject'];
+        $mail->Body = $testData['body'];
+
+        // Send
+        if ($mail->send()) {
             $output = "✓ Email sent successfully to: {$email}\n\n";
             $output .= "Subject: {$testData['subject']}\n\n";
             $output .= "Check your inbox (and spam folder).\n\n";
             $output .= "If it's in spam, wait 15-30 min for DNS to propagate after adding SPF/DMARC records.";
             echo json_encode(['success' => true, 'output' => $output]);
         } else {
-            echo json_encode(['success' => false, 'output' => 'Failed to send email. Check SMTP settings in .env file.']);
+            echo json_encode(['success' => false, 'output' => 'Failed to send email.']);
         }
     } catch (Exception $e) {
         echo json_encode(['success' => false, 'output' => 'Exception: ' . $e->getMessage()]);
