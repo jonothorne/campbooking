@@ -417,6 +417,14 @@ function getBookingConfirmationEmail() {
         ['name' => 'Jimmy Doe', 'age' => 12, 'ticket_type' => 'child_weekend', 'ticket_price' => 55.00],
         ['name' => 'Jenny Doe', 'age' => 3, 'ticket_type' => 'free_child', 'ticket_price' => 0.00]
     ];
+    $booking = [
+        'num_tents' => 2,
+        'has_caravan' => 0,
+        'needs_tent_provided' => 0,
+        'special_requirements' => 'Vegetarian meals for Jane Doe',
+        'booker_email' => 'test@example.com',
+        'booker_phone' => '07700 900123'
+    ];
 
     include __DIR__ . '/templates/emails/booking-confirmation.php';
     return ob_get_clean();
