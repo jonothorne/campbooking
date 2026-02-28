@@ -6,6 +6,7 @@
 
 // Initialize
 require_once __DIR__ . '/../vendor/autoload.php';
+require_once __DIR__ . '/../config/constants.php';
 require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/functions.php';
 require_once __DIR__ . '/../classes/Booking.php';
@@ -13,7 +14,7 @@ require_once __DIR__ . '/../classes/StripeHandler.php';
 require_once __DIR__ . '/../classes/Email.php';
 
 // Log webhook receipt
-$logFile = __DIR__ . '/../logs/webhooks.log';
+$logFile = 'webhooks.log';  // Just filename - logMessage() will prepend LOGS_PATH
 $timestamp = date('Y-m-d H:i:s');
 
 // Get raw POST body
