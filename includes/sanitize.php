@@ -296,16 +296,6 @@ function calculateTicketPrice($age, $ticketType, $dayTicketDates = null) {
 }
 
 /**
- * Escape output for HTML display (prevent XSS)
- *
- * @param string $string
- * @return string
- */
-function e($string) {
-    return htmlspecialchars($string, ENT_QUOTES, 'UTF-8');
-}
-
-/**
  * Validate and sanitize decimal amount
  *
  * @param mixed $amount
