@@ -5,6 +5,16 @@
  */
 
 /**
+ * Escape HTML for safe output
+ *
+ * @param string $string
+ * @return string
+ */
+function e($string) {
+    return htmlspecialchars($string ?? '', ENT_QUOTES, 'UTF-8');
+}
+
+/**
  * Format currency amount
  *
  * @param float $amount

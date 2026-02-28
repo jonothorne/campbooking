@@ -6,6 +6,13 @@
  * DELETE THIS FILE AFTER TESTING
  */
 
+// Define e() function if not already defined
+if (!function_exists('e')) {
+    function e($string) {
+        return htmlspecialchars($string ?? '', ENT_QUOTES, 'UTF-8');
+    }
+}
+
 // Handle AJAX requests FIRST (before any output)
 if (isset($_GET['action'])) {
     session_start();
@@ -312,6 +319,7 @@ function sendTestEmail($type, $email) {
     try {
         require_once __DIR__ . '/config/constants.php';
         require_once __DIR__ . '/includes/db.php';
+        require_once __DIR__ . '/includes/functions.php';
         require_once __DIR__ . '/classes/Email.php';
         $emailClass = new Email();
         $testData = getTestEmailData($type);
@@ -336,6 +344,8 @@ function sendTestEmail($type, $email) {
 
 function previewEmail($type) {
     try {
+        require_once __DIR__ . '/config/constants.php';
+        require_once __DIR__ . '/includes/functions.php';
         $testData = getTestEmailData($type);
         if (!$testData) {
             echo json_encode(['success' => false, 'output' => 'Invalid email type']);
@@ -358,6 +368,8 @@ function getTestEmailData($type) {
 }
 
 function getBookingConfirmationEmail() {
+    require_once __DIR__ . '/config/constants.php';
+    require_once __DIR__ . '/includes/functions.php';
     ob_start();
     $_booking = ['booking_reference' => 'CAMP-TEST-1234', 'booker_name' => 'Test User', 'booker_email' => 'test@example.com', 'total_amount' => 250.00, 'payment_method' => 'stripe', 'payment_plan' => 'three_payments'];
     $_attendees = [['name' => 'John Doe', 'age' => 30, 'ticket_type' => 'Adult Weekend'], ['name' => 'Jane Doe', 'age' => 28, 'ticket_type' => 'Adult Weekend']];
@@ -366,6 +378,8 @@ function getBookingConfirmationEmail() {
 }
 
 function getPaymentReceiptEmail() {
+    require_once __DIR__ . '/config/constants.php';
+    require_once __DIR__ . '/includes/functions.php';
     ob_start();
     $_booking = ['booking_reference' => 'CAMP-TEST-1234', 'booker_name' => 'Test User'];
     $_payment = ['amount' => 83.33, 'payment_date' => date('Y-m-d H:i:s'), 'payment_method' => 'stripe'];
@@ -374,6 +388,8 @@ function getPaymentReceiptEmail() {
 }
 
 function getPaymentReminderEmail() {
+    require_once __DIR__ . '/config/constants.php';
+    require_once __DIR__ . '/includes/functions.php';
     ob_start();
     $_booking = ['booking_reference' => 'CAMP-TEST-1234', 'booker_name' => 'Test User'];
     $_schedule = ['amount' => 83.33, 'due_date' => date('Y-m-d', strtotime('+3 days')), 'installment_number' => 2];
@@ -382,6 +398,8 @@ function getPaymentReminderEmail() {
 }
 
 function getPaymentFailedEmail() {
+    require_once __DIR__ . '/config/constants.php';
+    require_once __DIR__ . '/includes/functions.php';
     ob_start();
     $_booking = ['booking_reference' => 'CAMP-TEST-1234', 'booker_name' => 'Test User'];
     $_schedule = ['amount' => 83.33, 'due_date' => date('Y-m-d'), 'installment_number' => 2];
