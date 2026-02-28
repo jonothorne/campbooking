@@ -455,12 +455,18 @@ function testCronScript($script) {
         return;
     }
 
+    // Read the script content
+    $scriptContent = file_get_contents($scriptPath);
+
+    // Remove shebang line if present
+    $scriptContent = preg_replace('/^#!.*\n/', '', $scriptContent);
+
     // Capture output
     ob_start();
 
     try {
-        // Include and run the script
-        include $scriptPath;
+        // Evaluate the script content (without shebang)
+        eval('?>' . $scriptContent);
 
         $output = ob_get_clean();
 
