@@ -51,9 +51,14 @@ include __DIR__ . '/../templates/admin/header.php';
         <h1 class="page-title">Booking Details</h1>
         <p class="page-subtitle">Reference: <?php echo e($bookingData['booking_reference']); ?></p>
     </div>
-    <a href="<?php echo url('admin/bookings.php'); ?>" class="btn btn-secondary">
-        ← Back to Bookings
-    </a>
+    <div style="display: flex; gap: 10px;">
+        <a href="<?php echo url('admin/booking-edit.php?id=' . $bookingId); ?>" class="btn btn-primary">
+            ✏️ Edit Booking
+        </a>
+        <a href="<?php echo url('admin/bookings.php'); ?>" class="btn btn-secondary">
+            ← Back to Bookings
+        </a>
+    </div>
 </div>
 
 <!-- Success/Error Messages -->
