@@ -46,3 +46,7 @@ CREATE TABLE IF NOT EXISTS `gdpr_log` (
 
 -- Create index for faster booking lookup by email
 ALTER TABLE `bookings` ADD INDEX `booker_email` (`booker_email`);
+
+-- Add password_setup to email_type enum
+ALTER TABLE `email_logs`
+MODIFY COLUMN `email_type` ENUM('booking_confirmation','payment_receipt','payment_reminder','payment_failed','password_setup','general') NOT NULL;
