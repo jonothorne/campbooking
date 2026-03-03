@@ -130,73 +130,63 @@ $bookingsWithPassword = $db->fetchAll(
 );
 
 $csrfToken = generateCsrfToken();
+$pageTitle = 'Send Portal Invites';
+
+// Include admin header
+include __DIR__ . '/../templates/admin/header.php';
 ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Send Portal Invites - Admin</title>
-    <link rel="stylesheet" href="<?php echo basePath('public/assets/css/admin.css'); ?>">
-    <style>
-        .status-badge {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 12px;
-            font-size: 12px;
-            font-weight: 600;
-        }
-        .status-success {
-            background: #d4edda;
-            color: #155724;
-        }
-        .status-error {
-            background: #f8d7da;
-            color: #721c24;
-        }
-        .status-skipped {
-            background: #fff3cd;
-            color: #856404;
-        }
-        .select-all-container {
-            margin: 15px 0;
-            padding: 15px;
-            background: #f0f9ff;
-            border-radius: 8px;
-        }
-        .send-results {
-            margin: 20px 0;
-        }
-        .result-item {
-            padding: 12px;
-            margin: 8px 0;
-            border-radius: 6px;
-            background: #f9f9f9;
-            border-left: 4px solid #ddd;
-        }
-        .result-item.success {
-            border-left-color: #28a745;
-            background: #d4edda;
-        }
-        .result-item.error {
-            border-left-color: #dc3545;
-            background: #f8d7da;
-        }
-        .result-item.skipped {
-            border-left-color: #ffc107;
-            background: #fff3cd;
-        }
-    </style>
-</head>
-<body class="admin-body">
-    <?php include __DIR__ . '/../templates/admin/sidebar.php'; ?>
 
-    <div class="admin-container">
-        <div class="admin-layout">
-            <div class="admin-main">
-                <?php include __DIR__ . '/../templates/admin/navbar.php'; ?>
+<style>
+    .status-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+    .status-success {
+        background: #d4edda;
+        color: #155724;
+    }
+    .status-error {
+        background: #f8d7da;
+        color: #721c24;
+    }
+    .status-skipped {
+        background: #fff3cd;
+        color: #856404;
+    }
+    .select-all-container {
+        margin: 15px 0;
+        padding: 15px;
+        background: #f0f9ff;
+        border-radius: 8px;
+    }
+    .send-results {
+        margin: 20px 0;
+    }
+    .result-item {
+        padding: 12px;
+        margin: 8px 0;
+        border-radius: 6px;
+        background: #f9f9f9;
+        border-left: 4px solid #ddd;
+    }
+    .result-item.success {
+        border-left-color: #28a745;
+        background: #d4edda;
+    }
+    .result-item.error {
+        border-left-color: #dc3545;
+        background: #f8d7da;
+    }
+    .result-item.skipped {
+        border-left-color: #ffc107;
+        background: #fff3cd;
+    }
+</style>
 
-                <div class="content-header">
+<div class="content-header">
                     <div>
                         <h1>Send Portal Invites</h1>
                         <p style="color: var(--text-medium); margin: 5px 0;">Send password setup emails to customers for portal access</p>
@@ -380,11 +370,8 @@ $csrfToken = generateCsrfToken();
                         </div>
                     <?php endif; ?>
                 </div>
-            </div>
-        </div>
-    </div>
 
-    <script>
+<script>
         // Select all checkboxes
         const selectAllCheckbox = document.getElementById('select-all');
         const selectAllHeader = document.getElementById('select-all-header');
@@ -422,5 +409,5 @@ $csrfToken = generateCsrfToken();
         // Initialize
         updateSelectAll();
     </script>
-</body>
-</html>
+
+<?php include __DIR__ . '/../templates/admin/footer.php'; ?>
