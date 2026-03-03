@@ -126,7 +126,7 @@ $bookingsWithPassword = $db->fetchAll(
         b.last_portal_login
     FROM bookings b
     WHERE b.password_hash IS NOT NULL AND b.password_hash != ''
-    ORDER BY b.last_portal_login DESC NULLS LAST"
+    ORDER BY b.last_portal_login IS NULL, b.last_portal_login DESC"
 );
 
 $csrfToken = generateCsrfToken();
