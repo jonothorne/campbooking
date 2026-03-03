@@ -21,11 +21,12 @@ $success = null;
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username = $_POST['username'] ?? '';
     $password = $_POST['password'] ?? '';
+    $rememberMe = isset($_POST['remember_me']) && $_POST['remember_me'] === '1';
 
     if (empty($username) || empty($password)) {
         $error = 'Please enter both username and password.';
     } else {
-        $result = login($username, $password);
+        $result = login($username, $password, $rememberMe);
 
         if ($result['success']) {
             // Check if there's a redirect parameter
@@ -235,6 +236,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     required
                     autocomplete="current-password"
                 >
+            </div>
+
+            <div class="form-group">
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: normal;">
+                    <input type="checkbox" name="remember_me" value="1" style="width: auto;">
+                    <span>Remember me for 30 days</span>
+                </label>
             </div>
 
             <button type="submit" class="btn">Login</button>

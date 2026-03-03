@@ -9,9 +9,10 @@
  *
  * @param string $username
  * @param string $password
+ * @param bool $rememberMe Whether to set remember me cookie
  * @return array ['success' => bool, 'error' => string|null]
  */
-function login($username, $password) {
+function login($username, $password, $rememberMe = false) {
     $db = Database::getInstance();
 
     // Check rate limiting
@@ -53,6 +54,22 @@ function login($username, $password) {
         $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
         $_SESSION['last_activity'] = time();
 
+        // Set remember me cookie if requested
+        if ($rememberMe) {
+            $token = bin2hex(random_bytes(32));
+            $expiry = time() + (30 * 24 * 60 * 60); // 30 days
+
+            // Store token in database
+            $db->execute(
+                "INSERT INTO remember_tokens (user_id, token, expires_at) VALUES (?, ?, FROM_UNIXTIME(?))",
+                [$user['id'], hash('sha256', $token), $expiry]
+            );
+
+            // Set cookie (send plain token, store hashed in DB)
+            setcookie('remember_token', $token, $expiry, '/', '', true, true); // secure, httponly
+            setcookie('remember_user', $user['id'], $expiry, '/', '', true, true);
+        }
+
         // Clear failed attempts
         clearFailedAttempts($username);
 
@@ -71,6 +88,24 @@ function login($username, $password) {
  * Log out current user
  */
 function logout() {
+    // Delete remember token from database
+    if (isset($_COOKIE['remember_token']) && isset($_COOKIE['remember_user'])) {
+        $db = Database::getInstance();
+        $token = $_COOKIE['remember_token'];
+        $db->execute(
+            "DELETE FROM remember_tokens WHERE token = ?",
+            [hash('sha256', $token)]
+        );
+    }
+
+    // Clear remember me cookies
+    if (isset($_COOKIE['remember_token'])) {
+        setcookie('remember_token', '', time() - 3600, '/');
+    }
+    if (isset($_COOKIE['remember_user'])) {
+        setcookie('remember_user', '', time() - 3600, '/');
+    }
+
     // Unset all session variables
     $_SESSION = [];
 
@@ -89,18 +124,78 @@ function logout() {
  * @return bool
  */
 function isLoggedIn() {
-    if (!isset($_SESSION['admin_id']) || !isset($_SESSION['last_activity'])) {
+    // Check session-based auth first
+    if (isset($_SESSION['admin_id']) && isset($_SESSION['last_activity'])) {
+        // Check session timeout (2 hours)
+        if (time() - $_SESSION['last_activity'] > 7200) {
+            // Session expired, try remember me cookie
+            if (loginFromRememberToken()) {
+                return true;
+            }
+            logout();
+            return false;
+        }
+
+        // Update last activity time
+        $_SESSION['last_activity'] = time();
+        return true;
+    }
+
+    // No active session, try remember me cookie
+    return loginFromRememberToken();
+}
+
+/**
+ * Attempt to log in from remember me cookie
+ *
+ * @return bool
+ */
+function loginFromRememberToken() {
+    if (!isset($_COOKIE['remember_token']) || !isset($_COOKIE['remember_user'])) {
         return false;
     }
 
-    // Check session timeout (2 hours)
-    if (time() - $_SESSION['last_activity'] > 7200) {
-        logout();
+    $token = $_COOKIE['remember_token'];
+    $userId = (int)$_COOKIE['remember_user'];
+
+    $db = Database::getInstance();
+
+    // Check if token exists and is valid
+    $tokenData = $db->fetchOne(
+        "SELECT user_id, expires_at FROM remember_tokens
+        WHERE token = ? AND user_id = ? AND expires_at > NOW()",
+        [hash('sha256', $token), $userId]
+    );
+
+    if (!$tokenData) {
+        // Invalid or expired token, clear cookies
+        setcookie('remember_token', '', time() - 3600, '/');
+        setcookie('remember_user', '', time() - 3600, '/');
         return false;
     }
 
-    // Update last activity time
+    // Get user details
+    $user = $db->fetchOne(
+        "SELECT id, username, is_active FROM users WHERE id = ?",
+        [$userId]
+    );
+
+    if (!$user || !$user['is_active']) {
+        return false;
+    }
+
+    // Create new session
+    session_regenerate_id(true);
+    $_SESSION['admin_id'] = $user['id'];
+    $_SESSION['admin_username'] = $user['username'];
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
     $_SESSION['last_activity'] = time();
+
+    // Update last login
+    $db->execute(
+        "UPDATE users SET last_login = NOW() WHERE id = ?",
+        [$user['id']]
+    );
 
     return true;
 }
