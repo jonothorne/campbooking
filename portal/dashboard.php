@@ -38,7 +38,7 @@ unset($_SESSION['success'], $_SESSION['error']);
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Booking - <?php echo e(EVENT_NAME); ?></title>
-    <link rel="stylesheet" href="/book/public/assets/css/admin.css">
+    <link rel="stylesheet" href="<?php echo basePath('public/assets/css/admin.css'); ?>">
     <style>
         body {
             background: #f9fafb;
@@ -81,7 +81,7 @@ unset($_SESSION['success'], $_SESSION['error']);
     <div class="portal-header">
         <div class="portal-header-content">
             <div>
-                <img src="/book/public/assets/images/echo-logo.png" alt="ECHO2026" class="portal-logo" style="filter: brightness(0) invert(1);">
+                <img src="<?php echo basePath('public/assets/images/echo-logo.png'); ?>" alt="ECHO2026" class="portal-logo" style="filter: brightness(0) invert(1);">
             </div>
             <div style="display: flex; gap: 15px; align-items: center;">
                 <span><?php echo e($bookingData['booker_name']); ?></span>

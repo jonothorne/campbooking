@@ -42,17 +42,17 @@ $eventDates = getEventDatesFormatted();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Book Your Place - <?php echo e(EVENT_NAME); ?></title>
-    <link rel="stylesheet" href="/book/public/assets/css/main.css">
+    <link rel="stylesheet" href="<?php echo basePath('public/assets/css/main.css'); ?>">
 </head>
 <body>
     <!-- Hero Section -->
     <section class="hero">
         <!-- Polaroid Images -->
-        <img src="/book/public/assets/images/echo-event-polaroid-1.png" alt="The perfect family event" class="hero-polaroid hero-polaroid-1">
-        <img src="/book/public/assets/images/echo-event-polaroid-2.png" alt="Worship" class="hero-polaroid hero-polaroid-2">
-        <img src="/book/public/assets/images/echo-event-polaroid-3.png" alt="Campfire on the beach" class="hero-polaroid hero-polaroid-3">
-        <img src="/book/public/assets/images/echo-event-polaroid-4.png" alt="Eat together at ECHO" class="hero-polaroid hero-polaroid-4">
-        <img src="/book/public/assets/images/echo-event-polaroid-5.png" alt="Campfire worship" class="hero-polaroid hero-polaroid-5">
+        <img src="<?php echo basePath('public/assets/images/echo-event-polaroid-1.png'); ?>" alt="The perfect family event" class="hero-polaroid hero-polaroid-1">
+        <img src="<?php echo basePath('public/assets/images/echo-event-polaroid-2.png'); ?>" alt="Worship" class="hero-polaroid hero-polaroid-2">
+        <img src="<?php echo basePath('public/assets/images/echo-event-polaroid-3.png'); ?>" alt="Campfire on the beach" class="hero-polaroid hero-polaroid-3">
+        <img src="<?php echo basePath('public/assets/images/echo-event-polaroid-4.png'); ?>" alt="Eat together at ECHO" class="hero-polaroid hero-polaroid-4">
+        <img src="<?php echo basePath('public/assets/images/echo-event-polaroid-5.png'); ?>" alt="Campfire worship" class="hero-polaroid hero-polaroid-5">
 
         <div class="hero-content">
             <div class="hero-logo">
@@ -531,7 +531,7 @@ $eventDates = getEventDatesFormatted();
         </div>
     </template>
 
-    <script src="/book/public/assets/js/booking-form.js"></script>
+    <script src="<?php echo basePath('public/assets/js/booking-form.js'); ?>"></script>
 
     <?php if ($paymentCancelled && $formData): ?>
     <script>

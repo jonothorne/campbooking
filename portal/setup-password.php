@@ -68,7 +68,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $tokenData) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Set Up Password - <?php echo e(EVENT_NAME); ?></title>
-    <link rel="stylesheet" href="/book/public/assets/css/main.css">
+    <link rel="stylesheet" href="<?php echo basePath('public/assets/css/main.css'); ?>">
     <style>
         body {
             background: linear-gradient(135deg, #eb008b 0%, #d40080 100%);
@@ -216,7 +216,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $tokenData) {
 <body>
     <div class="setup-container">
         <div class="logo">
-            <img src="/book/public/assets/images/echo-logo.png" alt="ECHO2026">
+            <img src="<?php echo basePath('public/assets/images/echo-logo.png'); ?>" alt="ECHO2026">
             <h1>Set Up Your Password</h1>
             <p class="subtitle">Create a password to access your booking</p>
         </div>

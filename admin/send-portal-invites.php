@@ -137,7 +137,7 @@ $csrfToken = generateCsrfToken();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Send Portal Invites - Admin</title>
-    <link rel="stylesheet" href="/book/public/assets/css/admin.css">
+    <link rel="stylesheet" href="<?php echo basePath('public/assets/css/admin.css'); ?>">
     <style>
         .status-badge {
             display: inline-block;

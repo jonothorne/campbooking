@@ -98,6 +98,7 @@ define('LOGS_PATH', ROOT_PATH . '/logs');
 
 // URLs
 define('APP_URL', getenv('APP_URL') ?: 'http://localhost');
+define('APP_BASE_PATH', getenv('APP_BASE_PATH') ?: '');
 define('APP_ENV', $appEnv);
 
 // Event Details
@@ -179,7 +180,8 @@ function isDevelopment() {
  * Generate absolute URL
  */
 function url($path = '') {
-    return rtrim(APP_URL, '/') . '/' . ltrim($path, '/');
+    $basePath = APP_BASE_PATH ? '/' . trim(APP_BASE_PATH, '/') : '';
+    return rtrim(APP_URL, '/') . $basePath . '/' . ltrim($path, '/');
 }
 
 /**
@@ -188,6 +190,14 @@ function url($path = '') {
 function redirect($url, $statusCode = 302) {
     header('Location: ' . $url, true, $statusCode);
     exit;
+}
+
+/**
+ * Get base path for use in HTML/URLs
+ */
+function basePath($path = '') {
+    $basePath = APP_BASE_PATH ? '/' . trim(APP_BASE_PATH, '/') : '';
+    return $basePath . '/' . ltrim($path, '/');
 }
 
 /**

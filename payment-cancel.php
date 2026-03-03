@@ -26,7 +26,7 @@ redirect('/book/?payment_cancelled=1');
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Payment Cancelled - <?php echo e(EVENT_NAME); ?></title>
-    <link rel="stylesheet" href="/book/public/assets/css/main.css">
+    <link rel="stylesheet" href="<?php echo basePath('public/assets/css/main.css'); ?>">
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;
@@ -123,7 +123,7 @@ redirect('/book/?payment_cancelled=1');
             </p>
 
             <div style="margin-top: 30px;">
-                <a href="/book/" class="btn">Return to Booking Form</a>
+                <a href="<?php echo basePath(''); ?>" class="btn">Return to Booking Form</a>
             </div>
         </div>
 

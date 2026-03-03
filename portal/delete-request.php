@@ -60,7 +60,7 @@ $csrfToken = generateCustomerCsrfToken();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Request Data Deletion - <?php echo e(EVENT_NAME); ?></title>
-    <link rel="stylesheet" href="/book/public/assets/css/main.css">
+    <link rel="stylesheet" href="<?php echo basePath('public/assets/css/main.css'); ?>">
     <style>
         body {
             background: linear-gradient(135deg, #eb008b 0%, #d40080 100%);
@@ -234,7 +234,7 @@ $csrfToken = generateCustomerCsrfToken();
 <body>
     <div class="delete-container">
         <div class="logo">
-            <img src="/book/public/assets/images/echo-logo.png" alt="ECHO2026">
+            <img src="<?php echo basePath('public/assets/images/echo-logo.png'); ?>" alt="ECHO2026">
             <h1>⚠️ Request Data Deletion</h1>
             <p class="subtitle">GDPR Right to be Forgotten</p>
         </div>

@@ -102,7 +102,7 @@ try {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Booking Confirmed - <?php echo e(EVENT_NAME); ?></title>
-    <link rel="stylesheet" href="/book/public/assets/css/main.css">
+    <link rel="stylesheet" href="<?php echo basePath('public/assets/css/main.css'); ?>">
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;
@@ -381,7 +381,7 @@ try {
         </div>
 
         <div style="text-align: center; margin: 30px 0;">
-            <a href="/book/" class="btn btn-secondary">Make Another Booking</a>
+            <a href="<?php echo basePath(''); ?>" class="btn btn-secondary">Make Another Booking</a>
         </div>
     </div>
 </body>
