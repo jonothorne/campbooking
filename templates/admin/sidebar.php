@@ -24,6 +24,12 @@ $currentPage = basename($_SERVER['PHP_SELF']);
             <span class="sidebar-text">Bookings</span>
         </a>
 
+        <a href="<?php echo url('admin/send-portal-invites.php'); ?>"
+           class="sidebar-link <?php echo $currentPage === 'send-portal-invites.php' ? 'active' : ''; ?>">
+            <span class="sidebar-icon">📧</span>
+            <span class="sidebar-text">Portal Invites</span>
+        </a>
+
         <a href="<?php echo url('admin/users.php'); ?>"
            class="sidebar-link <?php echo in_array($currentPage, ['users.php', 'user-add.php', 'user-edit.php', 'change-password.php']) ? 'active' : ''; ?>">
             <span class="sidebar-icon">👥</span>

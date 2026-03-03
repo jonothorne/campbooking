@@ -229,6 +229,40 @@ class Email
     }
 
     /**
+     * Send customer portal password setup email
+     */
+    public function sendPasswordSetup($bookingId, $token)
+    {
+        try {
+            require_once __DIR__ . '/../includes/customer-auth.php';
+
+            $booking = new Booking($bookingId);
+            $bookingData = $booking->getData();
+
+            $recipient = $bookingData['booker_email'];
+            $subject = "Access Your ECHO2026 Booking Portal";
+
+            // Build setup link
+            $setupLink = url('portal/setup-password.php?token=' . $token);
+
+            $data = [
+                'booking' => $bookingData,
+                'booking_reference' => $bookingData['booking_reference'],
+                'booker_name' => $bookingData['booker_name'],
+                'setup_link' => $setupLink
+            ];
+
+            $body = $this->loadTemplate('customer-password-setup', $data);
+
+            return $this->send($recipient, $subject, $body, $bookingId, 'password_setup');
+
+        } catch (Exception $e) {
+            error_log("Password Setup Email Error: {$e->getMessage()}");
+            return false;
+        }
+    }
+
+    /**
      * Send email
      */
     private function send($recipient, $subject, $body, $bookingId, $type)
