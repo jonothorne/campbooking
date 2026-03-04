@@ -106,6 +106,9 @@ class Email
 
             $body = $this->loadTemplate('booking-confirmation', $data);
 
+            // Clear any previous attachments before adding PDF
+            $this->mailer->clearAttachments();
+
             // Generate and attach booking confirmation PDF
             require_once __DIR__ . '/../includes/generate-booking-pdf.php';
 
@@ -294,12 +297,14 @@ class Email
     {
         try {
             $this->mailer->clearAddresses();
-            $this->mailer->clearAttachments();
             $this->mailer->addAddress($recipient);
             $this->mailer->Subject = $subject;
             $this->mailer->Body = $body;
 
             $sent = $this->mailer->send();
+
+            // Clear attachments after sending (for next email)
+            $this->mailer->clearAttachments();
 
             // Log email
             $this->logEmail($bookingId, $recipient, $type, $subject, $sent ? 'sent' : 'failed', null);
