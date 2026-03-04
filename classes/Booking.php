@@ -234,24 +234,24 @@ class Booking {
             return;
         }
 
-        // Calculate new amount per schedule
+        // Calculate amounts using floor division to avoid rounding errors
         $numSchedules = count($unpaidSchedules);
-        $amountPerSchedule = $outstandingAmount / $numSchedules;
 
-        // Round to 2 decimal places
-        $amountPerSchedule = round($amountPerSchedule, 2);
+        // Calculate base amount per schedule (floor to 2 decimals - always round down)
+        $baseAmount = floor(($outstandingAmount / $numSchedules) * 100) / 100;
 
-        // Calculate remainder to add to last payment (to handle rounding)
-        $totalDistributed = $amountPerSchedule * $numSchedules;
-        $remainder = round($outstandingAmount - $totalDistributed, 2);
+        // Keep track of total distributed
+        $totalDistributed = 0;
 
         // Update each schedule
         foreach ($unpaidSchedules as $index => $schedule) {
-            $newAmount = $amountPerSchedule;
-
-            // Add remainder to last schedule
             if ($index === $numSchedules - 1) {
-                $newAmount += $remainder;
+                // Last payment gets the remainder to ensure exact total
+                $newAmount = round($outstandingAmount - $totalDistributed, 2);
+            } else {
+                // All other payments get the base amount
+                $newAmount = $baseAmount;
+                $totalDistributed += $newAmount;
             }
 
             // Update schedule amount

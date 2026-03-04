@@ -7,6 +7,9 @@
  * Cron schedule: 0 10 * * * (Daily at 10am)
  */
 
+ file_put_contents('/home/xvn00ltbgeh7/cron-debug.txt', "Send Reminders started at " . date('Y-m-d H:i:s') . "\n", FILE_APPEND);
+
+
 // Initialize
 require_once __DIR__ . '/../vendor/autoload.php';
 require_once __DIR__ . '/../config/constants.php';
