@@ -132,6 +132,33 @@
             margin: 20px 0;
             font-weight: 600;
         }
+        .portal-box {
+            background: linear-gradient(135deg, #eb008b 0%, #d40080 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 12px;
+            margin: 25px 0;
+            text-align: center;
+        }
+        .portal-box h3 {
+            margin: 0 0 12px 0;
+            font-size: 20px;
+        }
+        .portal-box p {
+            margin: 0 0 20px 0;
+            color: rgba(255,255,255,0.95);
+        }
+        .portal-button {
+            display: inline-block;
+            background: white;
+            color: #eb008b;
+            padding: 14px 32px;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 16px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
     </style>
 </head>
 <body>
@@ -149,6 +176,16 @@
 
         <div class="booking-ref">
             Booking Reference: <?php echo e($booking_reference); ?>
+        </div>
+
+        <!-- Customer Portal Access -->
+        <div class="portal-box">
+            <h3>🌟 Access Your Booking Portal</h3>
+            <p>Manage your booking, add more attendees, view payment schedules, and download your booking confirmation PDF anytime!</p>
+            <a href="<?php echo e($portal_setup_url); ?>" class="portal-button">Setup Portal Access</a>
+            <p style="margin: 20px 0 0 0; font-size: 13px; color: rgba(255,255,255,0.85);">
+                ⏰ This link expires in 7 days. Set up your password to access your booking portal.
+            </p>
         </div>
 
         <!-- Attendees -->

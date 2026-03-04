@@ -75,6 +75,8 @@ class Email
     public function sendBookingConfirmation($bookingId)
     {
         try {
+            require_once __DIR__ . '/../includes/customer-auth.php';
+
             $booking = new Booking($bookingId);
             $bookingData = $booking->getData();
             $attendees = $booking->getAttendees();
@@ -89,6 +91,10 @@ class Email
                 );
             }
 
+            // Generate password setup token for customer portal access
+            $setupToken = generatePasswordSetupToken($bookingId);
+            $portalSetupUrl = url('portal/setup-password.php?token=' . $setupToken);
+
             $recipient = $bookingData['booker_email'];
             $subject = "Camp Booking Confirmation - {$bookingData['booking_reference']}";
 
@@ -101,7 +107,8 @@ class Email
                 'total_amount' => $bookingData['total_amount'],
                 'payment_method' => $bookingData['payment_method'],
                 'payment_plan' => $bookingData['payment_plan'],
-                'bank_reference' => getBankTransferReference($bookingData['booker_name'])
+                'bank_reference' => getBankTransferReference($bookingData['booker_name']),
+                'portal_setup_url' => $portalSetupUrl
             ];
 
             $body = $this->loadTemplate('booking-confirmation', $data);
