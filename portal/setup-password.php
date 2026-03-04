@@ -228,6 +228,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $tokenData) {
             </div>
             <p style="text-align: center; margin-bottom: 20px;">
                 <a href="mailto:<?php echo e(env('SMTP_FROM_EMAIL')); ?>" class="btn btn-secondary">Contact Support</a>
+            </p>
+            <p style="text-align: center; margin-bottom: 20px;">
                 <a href="https://echo.alivechur.ch/portal/login.php" class="btn btn-primary">Login</a>
             </p>
         <?php elseif ($success): ?>
