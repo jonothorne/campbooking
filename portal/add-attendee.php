@@ -1,0 +1,247 @@
+<?php
+/**
+ * Customer Portal - Add Attendee
+ * Allow customers to add additional attendees to their booking
+ */
+
+// Initialize
+require_once __DIR__ . '/../includes/db.php';
+require_once __DIR__ . '/../includes/functions.php';
+require_once __DIR__ . '/../includes/customer-auth.php';
+require_once __DIR__ . '/../classes/Booking.php';
+
+// Require authentication
+requireCustomerAuth();
+
+$customerId = currentCustomerId();
+$error = null;
+$db = Database::getInstance();
+
+// Load booking
+try {
+    $booking = new Booking($customerId);
+    $bookingData = $booking->getData();
+} catch (Exception $e) {
+    customerLogout();
+    redirect(url('portal/login.php'));
+}
+
+// Handle form submission
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    requireCustomerCsrfToken();
+
+    $attendeeName = trim($_POST['attendee_name'] ?? '');
+    $attendeeAge = (int)($_POST['attendee_age'] ?? 0);
+    $ticketType = $_POST['ticket_type'] ?? '';
+
+    if (empty($attendeeName)) {
+        $error = 'Please enter the attendee name.';
+    } elseif ($attendeeAge < 0 || $attendeeAge > 120) {
+        $error = 'Please enter a valid age.';
+    } elseif (empty($ticketType)) {
+        $error = 'Please select a ticket type.';
+    } else {
+        // Calculate ticket price
+        $ticketPrice = 0;
+        switch ($ticketType) {
+            case 'adult_weekend':
+                $ticketPrice = ADULT_PRICE;
+                break;
+            case 'adult_sponsor':
+                $ticketPrice = ADULT_SPONSOR_PRICE;
+                break;
+            case 'child_weekend':
+                $ticketPrice = CHILD_PRICE;
+                break;
+            case 'free_child':
+                $ticketPrice = 0;
+                break;
+        }
+
+        // Add attendee
+        $attendeeId = $db->insert(
+            "INSERT INTO attendees (booking_id, name, age, ticket_type, ticket_price) VALUES (?, ?, ?, ?, ?)",
+            [$customerId, $attendeeName, $attendeeAge, $ticketType, $ticketPrice]
+        );
+
+        if ($attendeeId) {
+            // Recalculate booking total
+            $newTotal = $db->fetchOne(
+                "SELECT SUM(ticket_price) as total FROM attendees WHERE booking_id = ?",
+                [$customerId]
+            )['total'];
+
+            // Update booking total and outstanding amount
+            $db->execute(
+                "UPDATE bookings SET
+                    total_amount = ?,
+                    amount_outstanding = total_amount - amount_paid
+                WHERE id = ?",
+                [$newTotal, $customerId]
+            );
+
+            logGDPRAction($customerId, 'privacy_update', "Customer added attendee: $attendeeName");
+
+            $_SESSION['success'] = "Added $attendeeName to your booking! Your new total is " . formatCurrency($newTotal) . ".";
+            redirect(url('portal/dashboard.php'));
+        } else {
+            $error = 'Failed to add attendee. Please try again.';
+        }
+    }
+}
+
+$csrfToken = generateCustomerCsrfToken();
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Attendee - <?php echo e(EVENT_NAME); ?></title>
+    <link rel="stylesheet" href="<?php echo basePath('public/assets/css/admin.css'); ?>">
+    <style>
+        body {
+            background: #f9fafb;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        }
+        .portal-header {
+            background: linear-gradient(135deg, #eb008b 0%, #d40080 100%);
+            color: white;
+            padding: 30px 20px;
+            margin-bottom: 30px;
+        }
+        .portal-header-content {
+            max-width: 800px;
+            margin: 0 auto;
+            text-align: center;
+        }
+        .portal-logo {
+            height: 50px;
+            margin-bottom: 15px;
+        }
+        .portal-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0 20px 40px;
+        }
+        .ticket-option {
+            background: white;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 15px 0;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .ticket-option:hover {
+            border-color: var(--primary-color);
+            background: #fef2f8;
+        }
+        .ticket-option input[type="radio"] {
+            margin-right: 12px;
+        }
+        .ticket-price {
+            font-weight: 700;
+            color: var(--primary-color);
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <div class="portal-header">
+        <div class="portal-header-content">
+            <img src="<?php echo basePath('public/assets/images/echo-logo.png'); ?>" alt="ECHO2026" class="portal-logo" style="filter: brightness(0) invert(1);">
+            <h1 style="margin: 0; font-size: 28px;">Add Attendee</h1>
+            <p style="margin: 10px 0 0 0; opacity: 0.9;">Add another person to your booking</p>
+        </div>
+    </div>
+
+    <div class="portal-container">
+        <?php if ($error): ?>
+            <div class="alert alert-danger">
+                <?php echo e($error); ?>
+            </div>
+        <?php endif; ?>
+
+        <div class="content-card">
+            <form method="POST" action="">
+                <input type="hidden" name="csrf_token" value="<?php echo e($csrfToken); ?>">
+
+                <div class="form-group">
+                    <label for="attendee_name">Attendee Name *</label>
+                    <input type="text" id="attendee_name" name="attendee_name" class="form-control" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="attendee_age">Age *</label>
+                    <input type="number" id="attendee_age" name="attendee_age" class="form-control" min="0" max="120" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Ticket Type *</label>
+
+                    <label class="ticket-option">
+                        <input type="radio" name="ticket_type" value="adult_weekend" required>
+                        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                            <div>
+                                <strong style="font-size: 16px;">Adult Weekend Ticket</strong>
+                                <p style="margin: 5px 0 0 0; color: #6b7280; font-size: 14px;">Ages 16+</p>
+                            </div>
+                            <div class="ticket-price"><?php echo formatCurrency(ADULT_PRICE); ?></div>
+                        </div>
+                    </label>
+
+                    <label class="ticket-option">
+                        <input type="radio" name="ticket_type" value="adult_sponsor" required>
+                        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                            <div>
+                                <strong style="font-size: 16px;">Adult Sponsor Ticket</strong>
+                                <p style="margin: 5px 0 0 0; color: #6b7280; font-size: 14px;">Help fund a young person (Ages 16+)</p>
+                            </div>
+                            <div class="ticket-price"><?php echo formatCurrency(ADULT_SPONSOR_PRICE); ?></div>
+                        </div>
+                    </label>
+
+                    <label class="ticket-option">
+                        <input type="radio" name="ticket_type" value="child_weekend" required>
+                        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                            <div>
+                                <strong style="font-size: 16px;">Child Weekend Ticket</strong>
+                                <p style="margin: 5px 0 0 0; color: #6b7280; font-size: 14px;">Ages 5-15</p>
+                            </div>
+                            <div class="ticket-price"><?php echo formatCurrency(CHILD_PRICE); ?></div>
+                        </div>
+                    </label>
+
+                    <label class="ticket-option">
+                        <input type="radio" name="ticket_type" value="free_child" required>
+                        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                            <div>
+                                <strong style="font-size: 16px;">Free Child Ticket</strong>
+                                <p style="margin: 5px 0 0 0; color: #6b7280; font-size: 14px;">Ages 0-4</p>
+                            </div>
+                            <div class="ticket-price">FREE</div>
+                        </div>
+                    </label>
+                </div>
+
+                <div style="margin-top: 30px; display: flex; gap: 15px;">
+                    <button type="submit" class="btn btn-primary" style="flex: 1;">
+                        ➕ Add Attendee
+                    </button>
+                    <a href="<?php echo url('portal/dashboard.php'); ?>" class="btn btn-secondary" style="flex: 1; text-align: center;">
+                        Cancel
+                    </a>
+                </div>
+            </form>
+
+            <div style="margin-top: 25px; padding: 20px; background: #f0f9ff; border-radius: 8px; font-size: 14px;">
+                <strong>ℹ️ Note:</strong>
+                <p style="margin: 10px 0 0 0; color: #666;">
+                    Adding an attendee will increase your booking total. Any outstanding amount will be added to your payment schedule.
+                </p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

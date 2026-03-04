@@ -31,6 +31,24 @@ $welcome = isset($_GET['welcome']);
 $success = $_SESSION['success'] ?? null;
 $error = $_SESSION['error'] ?? null;
 unset($_SESSION['success'], $_SESSION['error']);
+
+// Check for overdue payments
+$overduePayments = [];
+$upcomingPayments = [];
+$today = date('Y-m-d');
+
+foreach ($paymentSchedule as $schedule) {
+    if ($schedule['status'] === 'pending' || $schedule['status'] === 'failed') {
+        if ($schedule['due_date'] < $today) {
+            $overduePayments[] = $schedule;
+        } else {
+            $upcomingPayments[] = $schedule;
+        }
+    }
+}
+
+$hasOverdue = !empty($overduePayments);
+$totalOverdue = array_sum(array_column($overduePayments, 'amount'));
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -42,6 +60,7 @@ unset($_SESSION['success'], $_SESSION['error']);
     <style>
         body {
             background: #f9fafb;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
         }
 
         .portal-header {
@@ -91,6 +110,20 @@ unset($_SESSION['success'], $_SESSION['error']);
     </div>
 
     <div class="portal-container">
+        <?php if ($hasOverdue): ?>
+            <div style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+                    <div>
+                        <h3 style="margin: 0 0 5px 0; font-size: 20px; font-weight: 700;">⚠️ Payment Overdue</h3>
+                        <p style="margin: 0; opacity: 0.95;">You have <?php echo count($overduePayments); ?> overdue payment(s) totaling <?php echo formatCurrency($totalOverdue); ?></p>
+                    </div>
+                    <a href="<?php echo url('portal/pay-now.php'); ?>" class="btn" style="background: white; color: #ef4444; font-weight: 600; padding: 12px 24px; border-radius: 8px; text-decoration: none; white-space: nowrap;">
+                        Pay Now
+                    </a>
+                </div>
+            </div>
+        <?php endif; ?>
+
         <?php if ($welcome): ?>
             <div class="alert alert-success">
                 <strong>Welcome to your portal!</strong> You now have access to view and manage your ECHO2026 booking.
@@ -107,9 +140,14 @@ unset($_SESSION['success'], $_SESSION['error']);
 
         <!-- Booking Overview -->
         <div class="content-card">
-            <div class="card-header">
-                <h2 class="card-title">Booking Overview</h2>
-                <span class="badge badge-info">Ref: <?php echo e($bookingData['booking_reference']); ?></span>
+            <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
+                    <h2 class="card-title" style="margin: 0;">Booking Overview</h2>
+                    <span class="badge badge-info">Ref: <?php echo e($bookingData['booking_reference']); ?></span>
+                </div>
+                <a href="<?php echo url('portal/edit-booking.php'); ?>" class="btn btn-primary btn-sm">
+                    ✏️ Edit Details
+                </a>
             </div>
 
             <div class="detail-grid">
@@ -172,8 +210,11 @@ unset($_SESSION['success'], $_SESSION['error']);
 
         <!-- Attendees -->
         <div class="content-card">
-            <div class="card-header">
-                <h2 class="card-title">Attendees (<?php echo count($attendees); ?>)</h2>
+            <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                <h2 class="card-title" style="margin: 0;">Attendees (<?php echo count($attendees); ?>)</h2>
+                <a href="<?php echo url('portal/add-attendee.php'); ?>" class="btn btn-primary btn-sm">
+                    ➕ Add Attendee
+                </a>
             </div>
 
             <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 15px;">
@@ -245,14 +286,24 @@ unset($_SESSION['success'], $_SESSION['error']);
                             <th>Due Date</th>
                             <th>Amount</th>
                             <th>Status</th>
+                            <th>Action</th>
                         </tr>
                     </thead>
                     <tbody>
                         <?php foreach ($paymentSchedule as $schedule): ?>
                             <?php if ($schedule['status'] !== 'paid'): ?>
-                                <tr>
+                                <?php
+                                $isOverdue = ($schedule['status'] === 'pending' || $schedule['status'] === 'failed') && $schedule['due_date'] < $today;
+                                $isFailed = $schedule['status'] === 'failed';
+                                ?>
+                                <tr style="<?php echo $isOverdue ? 'background: #fef2f2;' : ''; ?>">
                                     <td><?php echo $schedule['installment_number']; ?></td>
-                                    <td><?php echo formatDate($schedule['due_date'], 'd M Y'); ?></td>
+                                    <td>
+                                        <?php echo formatDate($schedule['due_date'], 'd M Y'); ?>
+                                        <?php if ($isOverdue): ?>
+                                            <span style="color: #ef4444; font-weight: 600; font-size: 11px; display: block;">OVERDUE</span>
+                                        <?php endif; ?>
+                                    </td>
                                     <td><strong><?php echo formatCurrency($schedule['amount']); ?></strong></td>
                                     <td>
                                         <?php if ($schedule['status'] === 'pending'): ?>
@@ -261,6 +312,13 @@ unset($_SESSION['success'], $_SESSION['error']);
                                             <span class="badge badge-danger">Failed</span>
                                         <?php else: ?>
                                             <span class="badge badge-secondary"><?php echo ucfirst($schedule['status']); ?></span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td>
+                                        <?php if ($isOverdue || $isFailed): ?>
+                                            <a href="<?php echo url('portal/pay-now.php?schedule_id=' . $schedule['id']); ?>" class="btn btn-danger btn-sm">
+                                                Pay Now
+                                            </a>
                                         <?php endif; ?>
                                     </td>
                                 </tr>
