@@ -76,10 +76,19 @@ try {
 
             if ($result['status'] === 'succeeded' || $result['status'] === 'requires_capture') {
                 // Payment charge initiated successfully
-                // NOTE: Do NOT record payment here - the webhook will handle it when payment_intent.succeeded fires
+                // Update schedule status to 'paid' to prevent double charging
+                $db->execute(
+                    "UPDATE payment_schedules
+                    SET status = 'paid',
+                        paid_date = NOW(),
+                        last_attempt_date = NOW()
+                    WHERE id = ?",
+                    [$scheduleId]
+                );
 
+                // NOTE: Webhook will record the payment in the payments table
                 logMessage("[$timestamp] SUCCESS: Payment charged for booking #{$bookingId}, installment #{$installmentNumber}", $logFile);
-                logMessage("[$timestamp] Payment Intent: {$result['payment_intent_id']} - Webhook will record payment", $logFile);
+                logMessage("[$timestamp] Payment Intent: {$result['payment_intent_id']} - Schedule marked as paid", $logFile);
                 $successCount++;
 
             } else {
