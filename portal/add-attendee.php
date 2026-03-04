@@ -314,5 +314,39 @@ $csrfToken = generateCustomerCsrfToken();
             </div>
         </div>
     </div>
+
+    <script>
+        // Auto-select ticket type based on age
+        const ageInput = document.getElementById('attendee_age');
+        const ticketRadios = document.querySelectorAll('input[name="ticket_type"]');
+
+        ageInput.addEventListener('input', function() {
+            const age = parseInt(this.value);
+
+            if (isNaN(age) || age < 0) {
+                return; // Don't auto-select for invalid ages
+            }
+
+            let selectedTicket = null;
+
+            // Determine appropriate ticket type based on age
+            if (age >= 0 && age <= 4) {
+                selectedTicket = 'free_child';
+            } else if (age >= 5 && age <= 15) {
+                selectedTicket = 'child_weekend';
+            } else if (age >= 16) {
+                selectedTicket = 'adult_weekend';
+            }
+
+            // Auto-select the appropriate ticket
+            if (selectedTicket) {
+                ticketRadios.forEach(radio => {
+                    if (radio.value === selectedTicket) {
+                        radio.checked = true;
+                    }
+                });
+            }
+        });
+    </script>
 </body>
 </html>
