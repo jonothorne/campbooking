@@ -172,19 +172,19 @@ include __DIR__ . '/../templates/admin/header.php';
                         <div class="form-group day-tickets-group">
                             <label class="form-label">Days Attending <span style="color: var(--danger-color);">*</span></label>
                             <?php
-                            $selectedDays = !empty($attendee['day_dates']) ? json_decode($attendee['day_dates'], true) : [];
+                            $selectedDays = !empty($attendee['day_ticket_dates']) ? json_decode($attendee['day_ticket_dates'], true) : [];
                             ?>
                             <div>
                                 <label style="display: block; margin-bottom: 8px;">
-                                    <input type="checkbox" name="attendees[<?php echo $index; ?>][day_dates][]" value="2026-05-29" <?php echo in_array('2026-05-29', $selectedDays) ? 'checked' : ''; ?>>
+                                    <input type="checkbox" name="attendees[<?php echo $index; ?>][day_ticket_dates][]" value="2026-05-29" <?php echo in_array('2026-05-29', $selectedDays) ? 'checked' : ''; ?>>
                                     Friday, May 29
                                 </label>
                                 <label style="display: block; margin-bottom: 8px;">
-                                    <input type="checkbox" name="attendees[<?php echo $index; ?>][day_dates][]" value="2026-05-30" <?php echo in_array('2026-05-30', $selectedDays) ? 'checked' : ''; ?>>
+                                    <input type="checkbox" name="attendees[<?php echo $index; ?>][day_ticket_dates][]" value="2026-05-30" <?php echo in_array('2026-05-30', $selectedDays) ? 'checked' : ''; ?>>
                                     Saturday, May 30
                                 </label>
                                 <label style="display: block; margin-bottom: 8px;">
-                                    <input type="checkbox" name="attendees[<?php echo $index; ?>][day_dates][]" value="2026-05-31" <?php echo in_array('2026-05-31', $selectedDays) ? 'checked' : ''; ?>>
+                                    <input type="checkbox" name="attendees[<?php echo $index; ?>][day_ticket_dates][]" value="2026-05-31" <?php echo in_array('2026-05-31', $selectedDays) ? 'checked' : ''; ?>>
                                     Sunday, May 31
                                 </label>
                             </div>

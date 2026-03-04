@@ -102,14 +102,14 @@ try {
                 $price = 55.00;
                 break;
             case 'adult_day':
-                $days = isset($attendeeData['day_dates']) ? count($attendeeData['day_dates']) : 0;
+                $days = isset($attendeeData['day_ticket_dates']) ? count($attendeeData['day_ticket_dates']) : 0;
                 $price = 25.00 * $days;
-                $dayDates = isset($attendeeData['day_dates']) ? json_encode($attendeeData['day_dates']) : null;
+                $dayDates = isset($attendeeData['day_ticket_dates']) ? json_encode($attendeeData['day_ticket_dates']) : null;
                 break;
             case 'child_day':
-                $days = isset($attendeeData['day_dates']) ? count($attendeeData['day_dates']) : 0;
+                $days = isset($attendeeData['day_ticket_dates']) ? count($attendeeData['day_ticket_dates']) : 0;
                 $price = 15.00 * $days;
-                $dayDates = isset($attendeeData['day_dates']) ? json_encode($attendeeData['day_dates']) : null;
+                $dayDates = isset($attendeeData['day_ticket_dates']) ? json_encode($attendeeData['day_ticket_dates']) : null;
                 break;
             case 'free_child':
                 $price = 0.00;
@@ -123,7 +123,7 @@ try {
             // Update existing attendee
             $db->execute(
                 "UPDATE attendees
-                SET name = ?, age = ?, ticket_type = ?, ticket_price = ?, day_dates = ?
+                SET name = ?, age = ?, ticket_type = ?, ticket_price = ?, day_ticket_dates = ?
                 WHERE id = ? AND booking_id = ?",
                 [$name, $age, $ticketType, $price, $dayDates, $attendeeId, $bookingId]
             );
@@ -131,7 +131,7 @@ try {
         } else {
             // Insert new attendee
             $newAttendeeId = $db->insert(
-                "INSERT INTO attendees (booking_id, name, age, ticket_type, ticket_price, day_dates)
+                "INSERT INTO attendees (booking_id, name, age, ticket_type, ticket_price, day_ticket_dates)
                 VALUES (?, ?, ?, ?, ?, ?)",
                 [$bookingId, $name, $age, $ticketType, $price, $dayDates]
             );
