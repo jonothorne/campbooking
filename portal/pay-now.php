@@ -104,37 +104,48 @@ $csrfToken = generateCustomerCsrfToken();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pay Now - <?php echo e(EVENT_NAME); ?></title>
-    <link rel="stylesheet" href="<?php echo basePath('public/assets/css/admin.css'); ?>">
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
         body {
             background: #f9fafb;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #1f2937;
         }
-
         .portal-header {
             background: linear-gradient(135deg, #eb008b 0%, #d40080 100%);
             color: white;
             padding: 30px 20px;
             margin-bottom: 30px;
         }
-
         .portal-header-content {
             max-width: 800px;
             margin: 0 auto;
             text-align: center;
         }
-
         .portal-logo {
             height: 50px;
             margin-bottom: 15px;
         }
-
         .portal-container {
             max-width: 800px;
             margin: 0 auto;
             padding: 0 20px 40px;
         }
-
+        .alert {
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .alert-danger {
+            background: #fee;
+            color: #c33;
+            border: 1px solid #fcc;
+        }
         .payment-summary {
             background: #fff;
             padding: 25px;
@@ -142,21 +153,36 @@ $csrfToken = generateCustomerCsrfToken();
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
             margin-bottom: 25px;
         }
-
+        .payment-summary h2 {
+            margin: 0 0 20px 0;
+            color: #111827;
+        }
         .payment-item {
             display: flex;
             justify-content: space-between;
             padding: 12px 0;
             border-bottom: 1px solid #e5e7eb;
         }
-
         .payment-item:last-child {
             border-bottom: none;
             font-weight: 700;
             font-size: 18px;
-            color: var(--primary-color);
+            color: #eb008b;
         }
-
+        .content-card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .card-header {
+            margin-bottom: 20px;
+        }
+        .card-title {
+            margin: 0;
+            color: #111827;
+            font-size: 20px;
+        }
         .payment-method-card {
             background: white;
             border: 2px solid #e5e7eb;
@@ -165,15 +191,40 @@ $csrfToken = generateCustomerCsrfToken();
             margin: 15px 0;
             cursor: pointer;
             transition: all 0.3s;
+            display: block;
         }
-
         .payment-method-card:hover {
-            border-color: var(--primary-color);
+            border-color: #eb008b;
             background: #fef2f8;
         }
-
         .payment-method-card input[type="radio"] {
             margin-right: 12px;
+        }
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            border: none;
+            transition: all 0.3s;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #eb008b 0%, #d40080 100%);
+            color: white;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(235, 0, 139, 0.4);
+        }
+        .btn-secondary {
+            background: #6b7280;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background: #4b5563;
         }
     </style>
 </head>
