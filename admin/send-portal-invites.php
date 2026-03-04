@@ -66,14 +66,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // Generate password setup token
                 $token = generatePasswordSetupToken($bookingId);
 
-                // Send email
-                if ($email->sendPasswordSetup($bookingId, $token)) {
+                // Generate setup link for display
+                $setupLink = url('portal/setup-password.php?token=' . $token);
+
+                // Try to send email
+                $emailSent = $email->sendPasswordSetup($bookingId, $token);
+
+                if ($emailSent || isDevelopment()) {
+                    // In development, show link even if email fails
+                    $message = $emailSent
+                        ? 'Invite sent successfully'
+                        : 'Email failed - Use link below';
+
                     $sendResults[] = [
                         'booking_id' => $bookingId,
                         'name' => $booking['booker_name'],
                         'email' => $booking['booker_email'],
-                        'status' => 'success',
-                        'message' => 'Invite sent successfully'
+                        'status' => $emailSent ? 'success' : 'warning',
+                        'message' => $message,
+                        'setup_link' => $setupLink
                     ];
                     $successCount++;
                 } else {
@@ -156,6 +167,10 @@ include __DIR__ . '/../templates/admin/header.php';
         background: #fff3cd;
         color: #856404;
     }
+    .status-warning {
+        background: #fff3cd;
+        color: #856404;
+    }
     .select-all-container {
         margin: 15px 0;
         padding: 15px;
@@ -181,6 +196,10 @@ include __DIR__ . '/../templates/admin/header.php';
         background: #f8d7da;
     }
     .result-item.skipped {
+        border-left-color: #ffc107;
+        background: #fff3cd;
+    }
+    .result-item.warning {
         border-left-color: #ffc107;
         background: #fff3cd;
     }
@@ -225,6 +244,14 @@ include __DIR__ . '/../templates/admin/header.php';
                                 <span class="status-badge status-<?php echo e($result['status']); ?>">
                                     <?php echo e(ucfirst($result['status'])); ?>: <?php echo e($result['message']); ?>
                                 </span>
+                                <?php if (isset($result['setup_link'])): ?>
+                                    <div style="margin-top: 10px; padding: 10px; background: #f0f9ff; border-radius: 4px; font-size: 12px;">
+                                        <strong>Setup Link (for testing):</strong><br>
+                                        <a href="<?php echo e($result['setup_link']); ?>" target="_blank" style="color: #eb008b; word-break: break-all;">
+                                            <?php echo e($result['setup_link']); ?>
+                                        </a>
+                                    </div>
+                                <?php endif; ?>
                             </div>
                         <?php endforeach; ?>
                     </div>
