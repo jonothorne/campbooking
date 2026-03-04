@@ -221,23 +221,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $tokenData) {
             <p class="subtitle">Create a password to access your booking</p>
         </div>
 
-        <?php if ($error): ?>
+        <?php if (!$tokenData): ?>
+            <!-- Invalid or expired token -->
             <div class="alert-danger">
-                <?php echo e($error); ?>
+                <?php echo e($error ?: 'Invalid or missing setup link.'); ?>
             </div>
-            <?php if (strpos($error, 'expired') !== false): ?>
-                <p style="text-align: center; margin-bottom: 20px;">
-                    <a href="mailto:<?php echo e(env('SMTP_FROM_EMAIL')); ?>" class="btn btn-secondary">Contact Support</a>
-                </p>
-            <?php endif; ?>
+            <p style="text-align: center; margin-bottom: 20px;">
+                <a href="mailto:<?php echo e(env('SMTP_FROM_EMAIL')); ?>" class="btn btn-secondary">Contact Support</a>
+            </p>
         <?php elseif ($success): ?>
+            <!-- Password set successfully -->
             <div class="alert-success">
                 Password set successfully! You can now login to your portal.
             </div>
             <p style="text-align: center; margin-top: 20px;">
                 <a href="<?php echo url('portal/login.php'); ?>" class="btn">Go to Login</a>
             </p>
-        <?php elseif ($tokenData): ?>
+        <?php else: ?>
+            <!-- Token is valid - show form -->
+            <?php if ($error): ?>
+                <div class="alert-danger">
+                    <?php echo e($error); ?>
+                </div>
+            <?php endif; ?>
+
             <div class="welcome-box">
                 <h2>Welcome, <?php echo e($tokenData['booker_name']); ?>!</h2>
                 <p>You're setting up access to your ECHO2026 booking. Create a secure password below to continue.</p>
