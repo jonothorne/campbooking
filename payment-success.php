@@ -12,6 +12,7 @@ require_once __DIR__ . '/includes/sanitize.php';
 require_once __DIR__ . '/classes/Booking.php';
 require_once __DIR__ . '/classes/Attendee.php';
 require_once __DIR__ . '/classes/StripeHandler.php';
+require_once __DIR__ . '/classes/Email.php';
 
 // Start session
 if (session_status() === PHP_SESSION_NONE) {
@@ -66,6 +67,135 @@ if ($setupIntentId || $paymentIntentId) {
         $_SESSION['booking_error'] = 'Unable to verify payment. Please contact support with your booking reference: ' . $bookingReference;
         redirect('/book/?error=1');
     }
+}
+
+// In development mode, process initial booking payment synchronously (webhook won't work locally)
+if (isDevelopment() && $paymentIntentId && !isset($_SESSION['is_portal_payment'])) {
+    try {
+        $db = Database::getInstance();
+        $stripe = new StripeHandler();
+        $paymentIntent = $stripe->retrievePaymentIntent($paymentIntentId);
+
+        if ($paymentIntent->status === 'succeeded') {
+            $bookingId = $paymentIntent->metadata->booking_id ?? null;
+            $paymentType = $paymentIntent->metadata->payment_type ?? 'full';
+
+            if ($bookingId) {
+                // Check if payment already recorded (prevent duplicates)
+                $existingPayment = $db->fetchOne(
+                    "SELECT id FROM payments WHERE stripe_payment_intent_id = ?",
+                    [$paymentIntent->id]
+                );
+
+                if (!$existingPayment) {
+                    // Get booking
+                    $bookingData = $db->fetchOne("SELECT * FROM bookings WHERE id = ?", [$bookingId]);
+
+                    if ($bookingData) {
+                        $booking = new Booking((int)$bookingId);
+                        $amount = StripeHandler::formatAmountFromPence($paymentIntent->amount);
+
+                        error_log("Dev mode: Processing payment for booking #{$bookingId}, amount: £{$amount}");
+
+                        // Record payment
+                        $paymentId = $booking->addPayment(
+                            $amount,
+                            'stripe',
+                            [
+                                'payment_type' => $paymentType,
+                                'status' => 'succeeded',
+                                'stripe_payment_intent_id' => $paymentIntent->id,
+                                'stripe_charge_id' => $paymentIntent->charges->data[0]->id ?? null,
+                                'admin_notes' => 'Initial booking payment (dev mode)'
+                            ]
+                        );
+
+                        // Update booking status to confirmed
+                        $booking->update(['booking_status' => 'confirmed']);
+
+                        error_log("Dev mode: Payment recorded successfully. Payment ID: {$paymentId}");
+
+                        // Send confirmation email
+                        try {
+                            $email = new Email();
+                            $email->sendBookingConfirmation($bookingId);
+                            error_log("Dev mode: Booking confirmation email sent");
+                        } catch (Exception $e) {
+                            error_log("Dev mode: Email error - " . $e->getMessage());
+                            $_SESSION['email_warning'] = 'We were unable to send your confirmation email. Please contact us if you do not receive it within 24 hours.';
+                        }
+                    }
+                } else {
+                    error_log("Dev mode: Payment already recorded (ID: {$existingPayment['id']}), skipping duplicate");
+                }
+            }
+        }
+    } catch (Exception $e) {
+        error_log("Dev mode payment processing error: " . $e->getMessage());
+        $_SESSION['email_warning'] = 'Payment was successful but there was an issue recording it. Please contact support if you have concerns.';
+    }
+}
+
+// Check if this is a portal payment - redirect to portal dashboard
+if (isset($_SESSION['is_portal_payment']) && $_SESSION['is_portal_payment'] === true) {
+    // In development mode, process payment synchronously (webhook won't work locally)
+    if (isDevelopment() && $paymentIntentId && isset($_SESSION['portal_payment_schedules'])) {
+        try {
+            $db = Database::getInstance();
+            $stripe = new StripeHandler();
+            $paymentIntent = $stripe->retrievePaymentIntent($paymentIntentId);
+
+            if ($paymentIntent->status === 'succeeded') {
+                $bookingId = $paymentIntent->metadata->booking_id ?? null;
+                $scheduleIds = isset($_SESSION['portal_payment_schedules']) ? $_SESSION['portal_payment_schedules'] : [];
+
+                if ($bookingId && !empty($scheduleIds)) {
+                    // Check if payment already recorded (prevent duplicates)
+                    $existingPayment = $db->fetchOne(
+                        "SELECT id FROM payments WHERE stripe_payment_intent_id = ?",
+                        [$paymentIntent->id]
+                    );
+
+                    if (!$existingPayment) {
+                        $booking = new Booking((int)$bookingId);
+                        $amount = StripeHandler::formatAmountFromPence($paymentIntent->amount);
+
+                        // Record payment
+                        $paymentId = $booking->addPayment(
+                            $amount,
+                            'stripe',
+                            [
+                                'payment_type' => 'portal_payment',
+                                'status' => 'succeeded',
+                                'stripe_payment_intent_id' => $paymentIntent->id,
+                                'stripe_charge_id' => $paymentIntent->charges->data[0]->id ?? null,
+                                'admin_notes' => 'Portal payment for ' . count($scheduleIds) . ' schedule(s)'
+                            ]
+                        );
+
+                        // Mark all schedules as paid
+                        foreach ($scheduleIds as $scheduleId) {
+                            $db->execute(
+                                "UPDATE payment_schedules SET status = 'paid', payment_id = ?, paid_at = NOW() WHERE id = ? AND booking_id = ?",
+                                [$paymentId, $scheduleId, $bookingId]
+                            );
+                        }
+                    }
+                }
+            }
+        } catch (Exception $e) {
+            error_log("Dev mode payment processing error: " . $e->getMessage());
+        }
+    }
+
+    $_SESSION['success'] = 'Payment processed successfully! Your payment schedule has been updated.';
+    unset($_SESSION['is_portal_payment']);
+    unset($_SESSION['portal_payment_schedules']);
+    unset($_SESSION['booking_reference']);
+    unset($_SESSION['stripe_client_secret']);
+    unset($_SESSION['stripe_payment_intent_id']);
+    unset($_SESSION['stripe_is_setup_intent']);
+    redirect(url('portal/dashboard.php'));
 }
 
 // Get email warning if present
@@ -378,6 +508,15 @@ try {
                 If you have any questions, please contact us at
                 <a href="mailto:<?php echo e(SMTP_FROM_EMAIL); ?>"><?php echo e(SMTP_FROM_EMAIL); ?></a>
             </p>
+        </div>
+
+        <!-- Download PDF -->
+        <div class="form-section" style="background: #f0f9ff; border: 2px solid #0ea5e9;">
+            <h2>📄 Download Your Booking Confirmation</h2>
+            <p style="margin-bottom: 20px;">Download a PDF with all your booking details. Perfect for printing and bringing to check-in!</p>
+            <a href="<?php echo basePath('download-booking-pdf.php?booking=' . $bookingData['booking_reference']); ?>" class="btn btn-primary" style="display: inline-block;">
+                📥 Download PDF
+            </a>
         </div>
 
         <div style="text-align: center; margin: 30px 0;">

@@ -33,6 +33,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $attendeeName = trim($_POST['attendee_name'] ?? '');
     $attendeeAge = (int)($_POST['attendee_age'] ?? 0);
     $ticketType = $_POST['ticket_type'] ?? '';
+    $dayTicketDates = $_POST['day_ticket_dates'] ?? [];
 
     if (empty($attendeeName)) {
         $error = 'Please enter the attendee name.';
@@ -40,9 +41,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = 'Please enter a valid age.';
     } elseif (empty($ticketType)) {
         $error = 'Please select a ticket type.';
+    } elseif (($ticketType === 'adult_day' || $ticketType === 'child_day') && empty($dayTicketDates)) {
+        $error = 'Please select at least one day for the day ticket.';
     } else {
         // Calculate ticket price
         $ticketPrice = 0;
+        $dayTicketDatesJson = null;
+
         switch ($ticketType) {
             case 'adult_weekend':
                 $ticketPrice = ADULT_PRICE;
@@ -53,6 +58,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             case 'child_weekend':
                 $ticketPrice = CHILD_PRICE;
                 break;
+            case 'adult_day':
+                $numDays = count($dayTicketDates);
+                $ticketPrice = ADULT_DAY_PRICE * $numDays;
+                $dayTicketDatesJson = json_encode($dayTicketDates);
+                break;
+            case 'child_day':
+                $numDays = count($dayTicketDates);
+                $ticketPrice = CHILD_DAY_PRICE * $numDays;
+                $dayTicketDatesJson = json_encode($dayTicketDates);
+                break;
             case 'free_child':
                 $ticketPrice = 0;
                 break;
@@ -60,8 +75,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // Add attendee
         $attendeeId = $db->insert(
-            "INSERT INTO attendees (booking_id, name, age, ticket_type, ticket_price) VALUES (?, ?, ?, ?, ?)",
-            [$customerId, $attendeeName, $attendeeAge, $ticketType, $ticketPrice]
+            "INSERT INTO attendees (booking_id, name, age, ticket_type, ticket_price, day_ticket_dates) VALUES (?, ?, ?, ?, ?, ?)",
+            [$customerId, $attendeeName, $attendeeAge, $ticketType, $ticketPrice, $dayTicketDatesJson]
         );
 
         if ($attendeeId) {
@@ -79,6 +94,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 WHERE id = ?",
                 [$newTotal, $customerId]
             );
+
+            // Recalculate payment schedule to redistribute outstanding amount
+            $booking->recalculatePaymentSchedule();
 
             logGDPRAction($customerId, 'privacy_update', "Customer added attendee: $attendeeName");
 
@@ -111,10 +129,14 @@ $csrfToken = generateCustomerCsrfToken();
             color: #1f2937;
         }
         .portal-header {
-            background: linear-gradient(135deg, #eb008b 0%, #d40080 100%);
             color: white;
             padding: 30px 20px;
             margin-bottom: 30px;
+            background: linear-gradient(135deg, #1f2937 0%, #d40080 100%);
+            border-color:#eb008b;
+            border-top-style: solid;
+            border-width: 5px;
+
         }
         .portal-header-content {
             max-width: 800px;
@@ -221,7 +243,7 @@ $csrfToken = generateCustomerCsrfToken();
 <body>
     <div class="portal-header">
         <div class="portal-header-content">
-            <img src="<?php echo basePath('public/assets/images/echo-logo.png'); ?>" alt="ECHO2026" class="portal-logo" style="filter: brightness(0) invert(1);">
+            <img src="<?php echo basePath('public/assets/images/echo-logo.png'); ?>" alt="ECHO2026" class="portal-logo">
             <h1 style="margin: 0; font-size: 28px;">Add Attendee</h1>
             <p style="margin: 10px 0 0 0; opacity: 0.9;">Add another person to your booking</p>
         </div>
@@ -252,7 +274,7 @@ $csrfToken = generateCustomerCsrfToken();
                     <label>Ticket Type *</label>
 
                     <label class="ticket-option">
-                        <input type="radio" name="ticket_type" value="adult_weekend" required>
+                        <input type="radio" name="ticket_type" value="adult_weekend" required class="ticket-type-radio">
                         <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
                             <div>
                                 <strong style="font-size: 16px;">Adult Weekend Ticket</strong>
@@ -263,7 +285,7 @@ $csrfToken = generateCustomerCsrfToken();
                     </label>
 
                     <label class="ticket-option">
-                        <input type="radio" name="ticket_type" value="adult_sponsor" required>
+                        <input type="radio" name="ticket_type" value="adult_sponsor" required class="ticket-type-radio">
                         <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
                             <div>
                                 <strong style="font-size: 16px;">Adult Sponsor Ticket</strong>
@@ -274,7 +296,7 @@ $csrfToken = generateCustomerCsrfToken();
                     </label>
 
                     <label class="ticket-option">
-                        <input type="radio" name="ticket_type" value="child_weekend" required>
+                        <input type="radio" name="ticket_type" value="child_weekend" required class="ticket-type-radio">
                         <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
                             <div>
                                 <strong style="font-size: 16px;">Child Weekend Ticket</strong>
@@ -285,7 +307,29 @@ $csrfToken = generateCustomerCsrfToken();
                     </label>
 
                     <label class="ticket-option">
-                        <input type="radio" name="ticket_type" value="free_child" required>
+                        <input type="radio" name="ticket_type" value="adult_day" required class="ticket-type-radio">
+                        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                            <div>
+                                <strong style="font-size: 16px;">Adult Day Ticket</strong>
+                                <p style="margin: 5px 0 0 0; color: #6b7280; font-size: 14px;">Ages 16+ (per day)</p>
+                            </div>
+                            <div class="ticket-price"><?php echo formatCurrency(ADULT_DAY_PRICE); ?>/day</div>
+                        </div>
+                    </label>
+
+                    <label class="ticket-option">
+                        <input type="radio" name="ticket_type" value="child_day" required class="ticket-type-radio">
+                        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                            <div>
+                                <strong style="font-size: 16px;">Child Day Ticket</strong>
+                                <p style="margin: 5px 0 0 0; color: #6b7280; font-size: 14px;">Ages 5-15 (per day)</p>
+                            </div>
+                            <div class="ticket-price"><?php echo formatCurrency(CHILD_DAY_PRICE); ?>/day</div>
+                        </div>
+                    </label>
+
+                    <label class="ticket-option">
+                        <input type="radio" name="ticket_type" value="free_child" required class="ticket-type-radio">
                         <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
                             <div>
                                 <strong style="font-size: 16px;">Free Child Ticket</strong>
@@ -294,6 +338,22 @@ $csrfToken = generateCustomerCsrfToken();
                             <div class="ticket-price">FREE</div>
                         </div>
                     </label>
+                </div>
+
+                <!-- Day ticket date selection (hidden by default) -->
+                <div class="form-group" id="day-ticket-dates" style="display: none;">
+                    <label>Select Days *</label>
+                    <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 10px;">
+                        <?php
+                        $eventDates = getEventDatesFormatted();
+                        foreach ($eventDates as $date):
+                        ?>
+                            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 12px; background: #f9fafb; border-radius: 6px;">
+                                <input type="checkbox" name="day_ticket_dates[]" value="<?php echo e($date['date']); ?>" class="day-checkbox" style="width: auto;">
+                                <span><?php echo e($date['display']); ?></span>
+                            </label>
+                        <?php endforeach; ?>
+                    </div>
                 </div>
 
                 <div style="margin-top: 30px; display: flex; gap: 15px;">
@@ -319,7 +379,30 @@ $csrfToken = generateCustomerCsrfToken();
         // Auto-select ticket type based on age
         const ageInput = document.getElementById('attendee_age');
         const ticketRadios = document.querySelectorAll('input[name="ticket_type"]');
+        const dayTicketDates = document.getElementById('day-ticket-dates');
 
+        // Show/hide day selection based on ticket type
+        ticketRadios.forEach(radio => {
+            radio.addEventListener('change', function() {
+                const ticketType = this.value;
+                if (ticketType === 'adult_day' || ticketType === 'child_day') {
+                    dayTicketDates.style.display = 'block';
+                    // Make checkboxes required
+                    document.querySelectorAll('.day-checkbox').forEach(cb => {
+                        cb.required = true;
+                    });
+                } else {
+                    dayTicketDates.style.display = 'none';
+                    // Remove required from checkboxes
+                    document.querySelectorAll('.day-checkbox').forEach(cb => {
+                        cb.required = false;
+                        cb.checked = false;
+                    });
+                }
+            });
+        });
+
+        // Auto-select ticket type based on age
         ageInput.addEventListener('input', function() {
             const age = parseInt(this.value);
 
@@ -329,7 +412,7 @@ $csrfToken = generateCustomerCsrfToken();
 
             let selectedTicket = null;
 
-            // Determine appropriate ticket type based on age
+            // Determine appropriate ticket type based on age (default to weekend tickets)
             if (age >= 0 && age <= 4) {
                 selectedTicket = 'free_child';
             } else if (age >= 5 && age <= 15) {
@@ -343,6 +426,8 @@ $csrfToken = generateCustomerCsrfToken();
                 ticketRadios.forEach(radio => {
                     if (radio.value === selectedTicket) {
                         radio.checked = true;
+                        // Trigger change event to update day ticket visibility
+                        radio.dispatchEvent(new Event('change'));
                     }
                 });
             }

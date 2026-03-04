@@ -208,6 +208,61 @@ class Booking {
     }
 
     /**
+     * Recalculate payment schedule amounts when booking total changes
+     * Redistributes outstanding amount across unpaid schedules
+     */
+    public function recalculatePaymentSchedule() {
+        // Get unpaid schedules
+        $unpaidSchedules = $this->db->fetchAll(
+            "SELECT * FROM payment_schedules
+            WHERE booking_id = ?
+            AND status IN ('pending', 'failed')
+            ORDER BY due_date ASC",
+            [$this->id]
+        );
+
+        if (empty($unpaidSchedules)) {
+            return; // No unpaid schedules to update
+        }
+
+        // Get current outstanding amount
+        $this->load(); // Reload to get latest amounts
+        $outstandingAmount = (float)$this->data['amount_outstanding'];
+
+        if ($outstandingAmount <= 0) {
+            // No outstanding amount - mark all as cancelled or leave as is
+            return;
+        }
+
+        // Calculate new amount per schedule
+        $numSchedules = count($unpaidSchedules);
+        $amountPerSchedule = $outstandingAmount / $numSchedules;
+
+        // Round to 2 decimal places
+        $amountPerSchedule = round($amountPerSchedule, 2);
+
+        // Calculate remainder to add to last payment (to handle rounding)
+        $totalDistributed = $amountPerSchedule * $numSchedules;
+        $remainder = round($outstandingAmount - $totalDistributed, 2);
+
+        // Update each schedule
+        foreach ($unpaidSchedules as $index => $schedule) {
+            $newAmount = $amountPerSchedule;
+
+            // Add remainder to last schedule
+            if ($index === $numSchedules - 1) {
+                $newAmount += $remainder;
+            }
+
+            // Update schedule amount
+            $this->db->execute(
+                "UPDATE payment_schedules SET amount = ? WHERE id = ?",
+                [$newAmount, $schedule['id']]
+            );
+        }
+    }
+
+    /**
      * Update booking data
      *
      * @param array $updates Associative array of fields to update

@@ -234,7 +234,7 @@ $csrfToken = generateCustomerCsrfToken();
 <body>
     <div class="delete-container">
         <div class="logo">
-            <img src="<?php echo basePath('public/assets/images/echo-logo.png'); ?>" alt="ECHO2026">
+            <img src="<?php echo basePath('public/assets/images/ECHO-logo-dark.png'); ?>" alt="ECHO2026">
             <h1>⚠️ Request Data Deletion</h1>
             <p class="subtitle">GDPR Right to be Forgotten</p>
         </div>

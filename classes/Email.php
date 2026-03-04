@@ -9,6 +9,8 @@ require_once __DIR__ . '/Booking.php';
 
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
+use Dompdf\Dompdf;
+use Dompdf\Options;
 
 class Email
 {
@@ -76,6 +78,7 @@ class Email
             $booking = new Booking($bookingId);
             $bookingData = $booking->getData();
             $attendees = $booking->getAttendees();
+            $payments = $booking->getPayments();
 
             // Get payment schedule if installment plan
             $paymentSchedule = [];
@@ -102,6 +105,27 @@ class Email
             ];
 
             $body = $this->loadTemplate('booking-confirmation', $data);
+
+            // Generate and attach booking confirmation PDF
+            require_once __DIR__ . '/../includes/generate-booking-pdf.php';
+
+            $pdfHtml = generateBookingPDF($bookingData, $attendees, $payments);
+
+            $options = new Options();
+            $options->set('isHtml5ParserEnabled', true);
+            $options->set('isRemoteEnabled', true);
+            $options->set('defaultFont', 'Arial');
+
+            $dompdf = new Dompdf($options);
+            $dompdf->loadHtml($pdfHtml);
+            $dompdf->setPaper('A4', 'portrait');
+            $dompdf->render();
+
+            $pdfOutput = $dompdf->output();
+            $filename = 'ECHO2026-Booking-' . $bookingData['booking_reference'] . '.pdf';
+
+            // Attach PDF to email
+            $this->mailer->addStringAttachment($pdfOutput, $filename, 'base64', 'application/pdf');
 
             return $this->send($recipient, $subject, $body, $bookingId, 'booking_confirmation');
 
@@ -270,6 +294,7 @@ class Email
     {
         try {
             $this->mailer->clearAddresses();
+            $this->mailer->clearAttachments();
             $this->mailer->addAddress($recipient);
             $this->mailer->Subject = $subject;
             $this->mailer->Body = $body;

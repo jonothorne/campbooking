@@ -5,6 +5,7 @@
  */
 
 // Initialize
+require_once __DIR__ . '/../vendor/autoload.php';
 require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/functions.php';
 require_once __DIR__ . '/../includes/customer-auth.php';
@@ -70,22 +71,90 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             // Check if customer has saved payment method
             if (!empty($bookingData['stripe_customer_id']) && !empty($bookingData['stripe_payment_method_id'])) {
-                // Use saved payment method
-                foreach ($paymentsToPay as $schedule) {
-                    $stripe->chargePaymentMethod(
-                        $bookingData['stripe_customer_id'],
-                        $bookingData['stripe_payment_method_id'],
-                        $schedule['amount'],
-                        $schedule['id']
+                // Use saved payment method - charge all schedules in one payment
+                $scheduleIds = array_column($paymentsToPay, 'id');
+                $amountInPence = (int)round($totalAmount * 100);
+
+                // Create payment intent with saved payment method
+                $paymentIntent = \Stripe\PaymentIntent::create([
+                    'amount' => $amountInPence,
+                    'currency' => 'gbp',
+                    'customer' => $bookingData['stripe_customer_id'],
+                    'payment_method' => $bookingData['stripe_payment_method_id'],
+                    'off_session' => false, // Customer is present
+                    'confirm' => true,
+                    'receipt_email' => $bookingData['booker_email'],
+                    'description' => 'Portal Payment - ' . $bookingData['booking_reference'],
+                    'metadata' => [
+                        'booking_id' => $customerId,
+                        'payment_type' => 'portal_payment',
+                        'schedule_ids' => json_encode($scheduleIds)
+                    ],
+                ]);
+
+                // In development mode, process payment synchronously (webhook won't work locally)
+                if (isDevelopment() && $paymentIntent->status === 'succeeded') {
+                    // Record payment
+                    $amount = $totalAmount;
+                    $paymentId = $booking->addPayment(
+                        $amount,
+                        'stripe',
+                        [
+                            'payment_type' => 'portal_payment',
+                            'status' => 'succeeded',
+                            'stripe_payment_intent_id' => $paymentIntent->id,
+                            'stripe_charge_id' => $paymentIntent->charges->data[0]->id ?? null,
+                            'admin_notes' => 'Portal payment for ' . count($scheduleIds) . ' schedule(s)'
+                        ]
                     );
+
+                    // Mark all schedules as paid
+                    foreach ($scheduleIds as $scheduleId) {
+                        $db->execute(
+                            "UPDATE payment_schedules SET status = 'paid', payment_id = ?, paid_at = NOW() WHERE id = ? AND booking_id = ?",
+                            [$paymentId, $scheduleId, $customerId]
+                        );
+                    }
                 }
-                $_SESSION['success'] = 'Payment processed successfully!';
+
+                // Payment will be processed by webhook (or already processed above in dev mode)
+                // Show success and redirect to dashboard
+                $_SESSION['success'] = 'Payment processed successfully! Your payment schedule has been updated.';
                 redirect(url('portal/dashboard.php'));
             } else {
-                // Create new payment session
-                $_SESSION['portal_payment_schedules'] = array_column($paymentsToPay, 'id');
-                $checkoutSession = $stripe->createCheckoutSession($customerId, $totalAmount, 'portal_payment');
-                redirect($checkoutSession->url);
+                // Create new payment intent and redirect to checkout
+                // Include schedule IDs in metadata so webhook knows which schedules to mark as paid
+                $scheduleIds = array_column($paymentsToPay, 'id');
+
+                $stripe = new StripeHandler();
+                $amountInPence = (int)round($totalAmount * 100);
+
+                // Create payment intent with custom metadata
+                $paymentIntent = \Stripe\PaymentIntent::create([
+                    'amount' => $amountInPence,
+                    'currency' => 'gbp',
+                    'receipt_email' => $bookingData['booker_email'],
+                    'description' => 'Portal Payment - ' . $bookingData['booking_reference'],
+                    'metadata' => [
+                        'booking_id' => $customerId,
+                        'payment_type' => 'portal_payment',
+                        'schedule_ids' => json_encode($scheduleIds)
+                    ],
+                    'automatic_payment_methods' => [
+                        'enabled' => true,
+                    ],
+                ]);
+
+                // Store in session for stripe-checkout.php
+                $_SESSION['stripe_client_secret'] = $paymentIntent->client_secret;
+                $_SESSION['stripe_payment_intent_id'] = $paymentIntent->id;
+                $_SESSION['stripe_is_setup_intent'] = false;
+                $_SESSION['booking_reference'] = $bookingData['booking_reference'];
+                $_SESSION['portal_payment_schedules'] = $scheduleIds;
+                $_SESSION['is_portal_payment'] = true;
+
+                // Redirect to Stripe checkout page
+                redirect(url('stripe-checkout.php'));
             }
         } catch (Exception $e) {
             $error = 'Payment failed: ' . $e->getMessage();
@@ -117,10 +186,14 @@ $csrfToken = generateCustomerCsrfToken();
             color: #1f2937;
         }
         .portal-header {
-            background: linear-gradient(135deg, #eb008b 0%, #d40080 100%);
             color: white;
             padding: 30px 20px;
             margin-bottom: 30px;
+            background: linear-gradient(135deg, #1f2937 0%, #d40080 100%);
+            border-color:#eb008b;
+            border-top-style: solid;
+            border-width: 5px;
+
         }
         .portal-header-content {
             max-width: 800px;
@@ -231,7 +304,7 @@ $csrfToken = generateCustomerCsrfToken();
 <body>
     <div class="portal-header">
         <div class="portal-header-content">
-            <img src="<?php echo basePath('public/assets/images/echo-logo.png'); ?>" alt="ECHO2026" class="portal-logo" style="filter: brightness(0) invert(1);">
+            <img src="<?php echo basePath('public/assets/images/echo-logo.png'); ?>" alt="ECHO2026" class="portal-logo">
             <h1 style="margin: 0; font-size: 28px;">Process Payment</h1>
             <p style="margin: 10px 0 0 0; opacity: 0.9;">Complete your outstanding payment(s)</p>
         </div>

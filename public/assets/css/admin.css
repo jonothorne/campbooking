@@ -21,7 +21,7 @@
     --bg-white: #ffffff;
     --bg-dark: #111827;
     --sidebar-width: 250px;
-    --topnav-height: 60px;
+    --topnav-height: 70px;
 }
 
 /* ============================================
@@ -52,10 +52,15 @@
     left: 0;
     right: 0;
     height: var(--topnav-height);
-    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    background: linear-gradient(135deg, #1f2937 0%, var(--primary-color) 100%);
+    border-color:#eb008b;
+    border-top-width: 5px;
+    border-top-style: solid;
     color: white;
     z-index: 1000;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    padding:10px 0;
+
 }
 
 .top-nav-content {
@@ -111,7 +116,7 @@
     height: 40px;
     width: auto;
     object-fit: contain;
-    filter: brightness(0) invert(1); /* Make logo white */
+    //filter: brightness(0) invert(1); /* Make logo white */
 }
 
 .top-nav-text {

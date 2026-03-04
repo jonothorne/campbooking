@@ -104,6 +104,18 @@ function handlePaymentIntentSucceeded($paymentIntent)
     }
 
     try {
+        // Check if payment already recorded (prevent duplicates from dev mode sync processing)
+        $db = Database::getInstance();
+        $existingPayment = $db->fetchOne(
+            "SELECT id FROM payments WHERE stripe_payment_intent_id = ?",
+            [$paymentIntent->id]
+        );
+
+        if ($existingPayment) {
+            logMessage("[$timestamp] Payment already recorded (ID: {$existingPayment['id']}), skipping duplicate", $logFile);
+            return;
+        }
+
         $booking = new Booking((int)$bookingId);
         $bookingData = $booking->getData();
         $amount = StripeHandler::formatAmountFromPence($paymentIntent->amount);
@@ -115,7 +127,7 @@ function handlePaymentIntentSucceeded($paymentIntent)
         $amountDifference = abs($amount - $expectedAmount);
 
         // Allow small rounding differences (1 penny)
-        if ($amountDifference > 0.01 && $paymentType === 'full_payment') {
+        if ($amountDifference > 0.01 && $paymentType === 'full') {
             logMessage("[$timestamp] WARNING: Amount mismatch! Expected: £{$expectedAmount}, Received: £{$amount}", $logFile);
             // Continue processing but log the discrepancy for admin review
         }
@@ -145,10 +157,27 @@ function handlePaymentIntentSucceeded($paymentIntent)
             $db = Database::getInstance();
             $db->execute(
                 "UPDATE payment_schedules
-                SET status = 'paid', payment_id = ?
+                SET status = 'paid', payment_id = ?, paid_at = NOW()
                 WHERE booking_id = ? AND installment_number = ?",
                 [$paymentId, $bookingId, $installmentNumber]
             );
+        }
+
+        // If portal payment with schedule IDs, mark those schedules as paid
+        if ($paymentType === 'portal_payment' && isset($paymentIntent->metadata->schedule_ids)) {
+            $scheduleIds = json_decode($paymentIntent->metadata->schedule_ids, true);
+            if ($scheduleIds && is_array($scheduleIds)) {
+                $db = Database::getInstance();
+                foreach ($scheduleIds as $scheduleId) {
+                    $db->execute(
+                        "UPDATE payment_schedules
+                        SET status = 'paid', payment_id = ?, paid_at = NOW()
+                        WHERE id = ? AND booking_id = ?",
+                        [$paymentId, $scheduleId, $bookingId]
+                    );
+                    logMessage("[$timestamp] Marked schedule #{$scheduleId} as paid", $logFile);
+                }
+            }
         }
 
         // Send emails
@@ -156,7 +185,7 @@ function handlePaymentIntentSucceeded($paymentIntent)
             $email = new Email();
 
             // Send booking confirmation for first payment
-            if ($installmentNumber == 1 || $paymentType === 'full_payment') {
+            if ($installmentNumber == 1 || $paymentType === 'full') {
                 $email->sendBookingConfirmation($bookingId);
                 logMessage("[$timestamp] Booking confirmation email sent", $logFile);
             }

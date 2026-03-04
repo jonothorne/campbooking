@@ -9,7 +9,7 @@
 - [ ] Verify HTTPS works: https://camp.alivechur.ch
 
 ### 2. Email Configuration
-- [ ] Create email account in cPanel: `bookings@alivechur.ch`
+- [ ] Create email account in cPanel: `office@alive.me.uk`
 - [ ] Verify `office@alive.me.uk` exists for replies
 - [ ] Test email sending from server using `test-email.php`
 
@@ -86,7 +86,7 @@ SMTP_HOST=localhost
 SMTP_PORT=25
 SMTP_USER=
 SMTP_PASS=
-SMTP_FROM_EMAIL=bookings@alivechur.ch
+SMTP_FROM_EMAIL=office@alive.me.uk
 SMTP_FROM_NAME=Alive Church Camp
 SMTP_AUTH_REQUIRED=false
 
@@ -207,7 +207,7 @@ Enter `office@alive.me.uk` when prompted. Check inbox.
 - [ ] Verify payment processes
 - [ ] Check Stripe dashboard for transaction
 - [ ] Verify booking shows as paid in admin panel
-- [ ] Check `bookings@alivechur.ch` receives confirmation email
+- [ ] Check `office@alive.me.uk` receives confirmation email
 - [ ] **IMPORTANT**: Refund test payment in Stripe dashboard
 
 ### 4. Test Stripe Webhook
@@ -260,7 +260,7 @@ rm -rf install/
 ## Support Contacts
 
 - **Primary Email**: office@alive.me.uk
-- **Booking Notifications**: bookings@alivechur.ch
+- **Booking Notifications**: office@alive.me.uk
 - **Stripe Support**: https://support.stripe.com
 - **GoDaddy Support**: https://godaddy.com/help
 

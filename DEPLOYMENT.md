@@ -4,7 +4,7 @@ Complete guide for deploying the booking system to production.
 
 **Production URL**: https://camp.alivechur.ch
 **Contact Email**: office@alive.me.uk
-**Booking Email**: bookings@alivechur.ch
+**Booking Email**: office@alive.me.uk
 
 ---
 

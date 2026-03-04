@@ -216,7 +216,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $tokenData) {
 <body>
     <div class="setup-container">
         <div class="logo">
-            <img src="<?php echo basePath('public/assets/images/echo-logo.png'); ?>" alt="ECHO2026">
+            <img src="<?php echo basePath('public/assets/images/ECHO-logo-dark.png'); ?>" alt="ECHO2026">
             <h1>Set Up Your Password</h1>
             <p class="subtitle">Create a password to access your booking</p>
         </div>

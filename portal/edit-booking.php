@@ -89,10 +89,14 @@ $csrfToken = generateCustomerCsrfToken();
             color: #1f2937;
         }
         .portal-header {
-            background: linear-gradient(135deg, #eb008b 0%, #d40080 100%);
             color: white;
             padding: 30px 20px;
             margin-bottom: 30px;
+            background: linear-gradient(135deg, #1f2937 0%, #d40080 100%);
+            border-color:#eb008b;
+            border-top-style: solid;
+            border-width: 5px;
+
         }
         .portal-header-content {
             max-width: 800px;
@@ -184,7 +188,7 @@ $csrfToken = generateCustomerCsrfToken();
 <body>
     <div class="portal-header">
         <div class="portal-header-content">
-            <img src="<?php echo basePath('public/assets/images/echo-logo.png'); ?>" alt="ECHO2026" class="portal-logo" style="filter: brightness(0) invert(1);">
+            <img src="<?php echo basePath('public/assets/images/echo-logo.png'); ?>" alt="ECHO2026" class="portal-logo" >
             <h1 style="margin: 0; font-size: 28px;">Edit Your Booking</h1>
             <p style="margin: 10px 0 0 0; opacity: 0.9;">Update your contact and camping information</p>
         </div>

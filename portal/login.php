@@ -174,7 +174,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <body>
     <div class="login-container">
         <div class="logo">
-            <img src="<?php echo basePath('public/assets/images/echo-logo.png'); ?>" alt="ECHO2026">
+            <img src="<?php echo basePath('public/assets/images/ECHO-logo-dark.png'); ?>" alt="ECHO2026">
             <h1>Customer Portal</h1>
             <p class="subtitle">View and manage your booking</p>
         </div>

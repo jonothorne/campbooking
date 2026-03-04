@@ -55,7 +55,7 @@ class StripeHandler
                 'description' => $description ?? "Camp Booking #{$bookingId}",
                 'metadata' => [
                     'booking_id' => $bookingId,
-                    'payment_type' => 'full_payment'
+                    'payment_type' => 'full'
                 ],
                 'automatic_payment_methods' => [
                     'enabled' => true,
