@@ -111,7 +111,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     // Mark all schedules as paid
                     foreach ($scheduleIds as $scheduleId) {
                         $db->execute(
-                            "UPDATE payment_schedules SET status = 'paid', payment_id = ?, paid_at = NOW() WHERE id = ? AND booking_id = ?",
+                            "UPDATE payment_schedules SET status = 'paid', payment_id = ?, last_attempt_date = NOW() WHERE id = ? AND booking_id = ?",
                             [$paymentId, $scheduleId, $customerId]
                         );
                     }

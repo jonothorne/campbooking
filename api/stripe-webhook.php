@@ -157,7 +157,7 @@ function handlePaymentIntentSucceeded($paymentIntent)
             $db = Database::getInstance();
             $db->execute(
                 "UPDATE payment_schedules
-                SET status = 'paid', payment_id = ?, paid_at = NOW()
+                SET status = 'paid', payment_id = ?, last_attempt_date = NOW()
                 WHERE booking_id = ? AND installment_number = ?",
                 [$paymentId, $bookingId, $installmentNumber]
             );
@@ -171,7 +171,7 @@ function handlePaymentIntentSucceeded($paymentIntent)
                 foreach ($scheduleIds as $scheduleId) {
                     $db->execute(
                         "UPDATE payment_schedules
-                        SET status = 'paid', payment_id = ?, paid_at = NOW()
+                        SET status = 'paid', payment_id = ?, last_attempt_date = NOW()
                         WHERE id = ? AND booking_id = ?",
                         [$paymentId, $scheduleId, $bookingId]
                     );

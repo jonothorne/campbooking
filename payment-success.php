@@ -176,7 +176,7 @@ if (isset($_SESSION['is_portal_payment']) && $_SESSION['is_portal_payment'] === 
                         // Mark all schedules as paid
                         foreach ($scheduleIds as $scheduleId) {
                             $db->execute(
-                                "UPDATE payment_schedules SET status = 'paid', payment_id = ?, paid_at = NOW() WHERE id = ? AND booking_id = ?",
+                                "UPDATE payment_schedules SET status = 'paid', payment_id = ?, last_attempt_date = NOW() WHERE id = ? AND booking_id = ?",
                                 [$paymentId, $scheduleId, $bookingId]
                             );
                         }

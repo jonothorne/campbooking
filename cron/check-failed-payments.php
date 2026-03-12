@@ -86,7 +86,7 @@ try {
 
                     $db->execute(
                         "UPDATE payment_schedules
-                        SET status = 'paid', paid_date = NOW(), last_attempt_date = NOW()
+                        SET status = 'paid', last_attempt_date = NOW()
                         WHERE id = ?",
                         [$scheduleId]
                     );
