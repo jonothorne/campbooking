@@ -164,15 +164,15 @@
 <body>
     <div class="email-container">
         <div class="header">
-            <img src="<?php echo url('public/assets/images/echo-logo.png'); ?>" alt="ECHO2026" style="width: 280px; height: auto; margin: 0 auto 20px; display: block; filter: brightness(0) invert(1);">
-            <p style="color: rgba(255,255,255,0.95); margin: 8px 0 0 0; font-size: 15px; letter-spacing: 1px;">May 29-31, 2026 • Sizewell Hall, Suffolk</p>
-            <p style="color: rgba(255,255,255,0.9); margin: 20px 0 0 0; font-size: 14px; font-style: italic; border-top: 1px solid rgba(255,255,255,0.3); padding-top: 15px;">"The Spirit and the bride say, 'Come!'" - Revelation 22:17</p>
+            <img src="<?php echo url('public/assets/images/echo-logo.png'); ?>" alt="ECHO2027" style="width: 280px; height: auto; margin: 0 auto 20px; display: block; filter: brightness(0) invert(1);">
+            <p style="color: rgba(255,255,255,0.95); margin: 8px 0 0 0; font-size: 15px; letter-spacing: 1px;">June 3-6, 2027 • Sizewell Hall, Suffolk</p>
+            <p style="color: rgba(255,255,255,0.9); margin: 20px 0 0 0; font-size: 14px; font-style: italic; border-top: 1px solid rgba(255,255,255,0.3); padding-top: 15px;">ECHO2027: Amplified</p>
         </div>
 
         <div style="padding: 35px 30px;">
         <p><strong>Dear <?php echo e($booker_name); ?>,</strong></p>
 
-        <p>Thank you for answering the call! We're excited to confirm your registration for ECHO2026.</p>
+        <p>We're excited to confirm your registration for ECHO2027: Amplified!</p>
 
         <div class="booking-ref">
             Booking Reference: <?php echo e($booking_reference); ?>
@@ -290,14 +290,14 @@
             <?php elseif ($payment_method === 'cash'): ?>
                 <div class="payment-info">
                     <strong>Payment Method:</strong> Cash
-                    <p style="margin: 10px 0 0 0;">Please hand your payment<?php echo $payment_plan !== 'full' ? 's' : ''; ?> to Jon at church. He will confirm receipt and mark your booking as paid.</p>
+                    <p style="margin: 10px 0 0 0;">Please pay cash to your group leader. They will confirm receipt and your booking will be marked as paid.</p>
                 </div>
 
             <?php else: ?>
                 <div class="payment-info">
                     <strong>Payment Method:</strong> Card (Stripe)
                     <p style="margin: 10px 0 0 0;">
-                        <?php if ($payment_plan === 'full'): ?>
+                        <?php if ($payment_plan == 1): ?>
                             Your payment has been processed successfully.
                         <?php else: ?>
                             Your card has been saved securely. Payments will be automatically charged according to your payment plan.
@@ -307,18 +307,12 @@
             <?php endif; ?>
 
             <!-- Payment Schedule (for installment plans) -->
-            <?php if ($payment_plan !== 'full' && !empty($payment_schedule)): ?>
+            <?php if ($payment_plan > 1 && !empty($payment_schedule)): ?>
                 <div class="section" style="margin-top: 20px;">
                     <h2>Payment Schedule</h2>
                     <div style="background: #f0f9ff; border: 2px solid #eb008b; padding: 20px; border-radius: 8px;">
                         <p style="margin: 0 0 15px 0; color: #666;">
-                            <?php
-                                $planNames = [
-                                    'monthly' => 'Monthly Installments',
-                                    'three_payments' => '3 Equal Payments'
-                                ];
-                                echo '<strong>' . ($planNames[$payment_plan] ?? 'Installment Plan') . '</strong>';
-                            ?>
+                            <strong><?php echo (int)$payment_plan; ?> Split Payments</strong>
                         </p>
 
                         <?php foreach ($payment_schedule as $schedule): ?>
@@ -345,7 +339,7 @@
                             </p>
                         <?php else: ?>
                             <p style="margin: 15px 0 0 0; font-size: 13px; color: #666;">
-                                ℹ️ Please hand each payment to Jon at church by the due dates above.
+                                ℹ️ Please pay each installment to your group leader by the due dates above.
                             </p>
                         <?php endif; ?>
                     </div>
@@ -368,7 +362,7 @@
         </div>
 
         <div class="footer" style="background: #1a1a1a; color: #9ca3af; padding: 30px; text-align: center; font-size: 13px;">
-            <p style="margin: 0;"><strong style="color: #e5e7eb;">ECHO2026</strong> - Respond to the Call</p>
+            <p style="margin: 0;"><strong style="color: #e5e7eb;">ECHO2027: Amplified</strong></p>
             <p style="margin: 10px 0;">Questions? Contact us at <a href="mailto:<?php echo e(env('SMTP_FROM_EMAIL')); ?>" style="color: #eb008b; text-decoration: none;"><?php echo e(env('SMTP_FROM_EMAIL')); ?></a></p>
             <p style="margin-top: 20px; font-size: 12px; color: #6b7280;">
                 This is an automated email. Please keep this for your records.<br>

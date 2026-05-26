@@ -159,6 +159,50 @@
     transition: background 0.3s;
 }
 
+/* Year Switcher */
+.year-switcher {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.year-switcher-label {
+    font-size: 13px;
+    color: rgba(255,255,255,0.7);
+    white-space: nowrap;
+}
+
+.year-switcher-select {
+    background: rgba(255,255,255,0.15);
+    color: white;
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    appearance: auto;
+}
+
+.year-switcher-select:hover {
+    background: rgba(255,255,255,0.25);
+}
+
+.year-switcher-select option {
+    color: #111827;
+    background: white;
+}
+
+.archive-badge {
+    background: #f59e0b;
+    color: #1f2937;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
 .btn-logout:hover {
     background: rgba(255,255,255,0.3);
 }
@@ -753,6 +797,10 @@
     }
 
     .admin-user {
+        display: none;
+    }
+
+    .year-switcher-label {
         display: none;
     }
 

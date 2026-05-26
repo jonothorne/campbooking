@@ -37,7 +37,7 @@ $clientSecret = $_SESSION['stripe_client_secret'] ?? null;
 $isSetupIntent = $_SESSION['stripe_is_setup_intent'] ?? false;
 
 if (!$bookingReference || !$clientSecret) {
-    redirect('/book/');
+    redirect(url(''));
 }
 
 // Load booking
@@ -55,7 +55,7 @@ try {
     $booking = new Booking($bookingData['id']);
 
 } catch (Exception $e) {
-    redirect('/book/');
+    redirect(url(''));
 }
 
 // Get Stripe public key
@@ -75,7 +75,7 @@ $returnUrl = url('payment-success.php?booking=' . $bookingReference);
     <script src="https://js.stripe.com/v3/"></script>
     <style>
         body {
-            background: #1a1a1a;
+            background: #121214;
             padding: 40px 20px;
             margin: 0;
         }
@@ -83,9 +83,21 @@ $returnUrl = url('payment-success.php?booking=' . $bookingReference);
         .payment-container {
             max-width: 600px;
             margin: 0 auto;
-            background: #f5f5f5;
+            background: #f0f0f2;
             border-radius: 12px;
             padding: 40px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .payment-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #00e5ff, #eb008b);
         }
 
         .payment-header {
@@ -94,9 +106,11 @@ $returnUrl = url('payment-success.php?booking=' . $bookingReference);
         }
 
         .payment-header h1 {
-            color: #eb008b;
+            color: #1f2937;
             margin-bottom: 10px;
-            font-size: 28px;
+            font-size: 26px;
+            font-weight: 700;
+            letter-spacing: 1px;
         }
 
         .payment-header p {
@@ -104,36 +118,51 @@ $returnUrl = url('payment-success.php?booking=' . $bookingReference);
             margin: 0;
         }
 
+        .payment-header p strong {
+            color: #eb008b;
+            font-family: 'Courier New', monospace;
+        }
+
         .payment-summary {
-            background: #f9fafb;
+            background: #121214;
             border-radius: 8px;
-            padding: 20px;
+            padding: 24px;
             margin-bottom: 30px;
+            color: white;
+            position: relative;
         }
 
         .payment-summary h2 {
-            font-size: 18px;
+            font-size: 14px;
             margin-bottom: 15px;
-            color: #1f2937;
+            color: rgba(255, 255, 255, 0.6);
             font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
         .summary-row {
             display: flex;
             justify-content: space-between;
             padding: 10px 0;
-            border-bottom: 1px solid #e5e7eb;
-            color: #6b7280;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            color: rgba(255, 255, 255, 0.7);
         }
 
         .summary-row:last-child {
             border-bottom: none;
-            font-weight: 600;
-            font-size: 20px;
-            color: #eb008b;
+            font-weight: 700;
+            font-size: 22px;
             padding-top: 15px;
             margin-top: 5px;
-            border-top: 2px solid #e5e7eb;
+            border-top: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .summary-row:last-child span:last-child {
+            background: linear-gradient(90deg, #00e5ff, #eb008b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
         .payment-form-card {
@@ -160,13 +189,15 @@ $returnUrl = url('payment-success.php?booking=' . $bookingReference);
 
         #stripe-errors {
             display: none;
-            background: #fee;
-            color: #c33;
-            border: 1px solid #fcc;
-            border-radius: 6px;
-            padding: 12px 16px;
+            background: #fef2f2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+            border-radius: 8px;
+            padding: 16px 20px;
             margin: 20px 0;
-            font-size: 14px;
+            font-size: 15px;
+            font-weight: 500;
+            line-height: 1.5;
         }
 
         .payment-actions {
@@ -175,13 +206,15 @@ $returnUrl = url('payment-success.php?booking=' . $bookingReference);
 
         #stripe-submit-btn {
             width: 100%;
-            padding: 16px;
+            padding: 18px;
             background: linear-gradient(135deg, #eb008b 0%, #d40080 100%);
             color: white;
             border: none;
-            border-radius: 8px;
-            font-size: 18px;
-            font-weight: 600;
+            border-radius: 4px;
+            font-size: 16px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
             cursor: pointer;
             transition: all 0.3s ease;
             font-family: inherit;
@@ -189,7 +222,7 @@ $returnUrl = url('payment-success.php?booking=' . $bookingReference);
 
         #stripe-submit-btn:hover:not(:disabled) {
             transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+            box-shadow: 0 0 30px rgba(235, 0, 139, 0.4);
         }
 
         #stripe-submit-btn:disabled {
@@ -221,7 +254,7 @@ $returnUrl = url('payment-success.php?booking=' . $bookingReference);
         }
 
         .cancel-link:hover {
-            color: #1f2937;
+            color: #00e5ff;
             text-decoration: underline;
         }
 
@@ -262,12 +295,8 @@ $returnUrl = url('payment-success.php?booking=' . $bookingReference);
                 <span>Payment Plan:</span>
                 <span>
                     <?php
-                    $plans = [
-                        'full' => 'Pay in Full',
-                        'monthly' => 'Monthly Installments',
-                        'three_payments' => '3 Equal Payments'
-                    ];
-                    echo $plans[$bookingData['payment_plan']] ?? 'Unknown';
+                    $planCount = (int)$bookingData['payment_plan'];
+                    echo $planCount <= 1 ? 'Pay in Full' : $planCount . ' Split Payments';
                     ?>
                 </span>
             </div>
@@ -276,7 +305,7 @@ $returnUrl = url('payment-success.php?booking=' . $bookingReference);
                 <span><?php echo formatCurrency($bookingData['total_amount']); ?></span>
             </div>
             <?php if ($isSetupIntent): ?>
-                <div style="margin-top: 15px; padding: 10px; background: #fff3cd; border-radius: 6px; font-size: 14px;">
+                <div style="margin-top: 15px; padding: 12px 15px; background: rgba(0, 229, 255, 0.08); border-left: 3px solid #00e5ff; border-radius: 0 6px 6px 0; font-size: 14px; color: rgba(255, 255, 255, 0.8);">
                     Your payment method will be saved securely. Payments will be automatically charged according to your payment schedule.
                 </div>
             <?php endif; ?>
@@ -310,7 +339,7 @@ $returnUrl = url('payment-success.php?booking=' . $bookingReference);
             Payments are securely processed by Stripe. Your card details are never stored on our servers.
         </div>
 
-        <a href="payment-cancel.php" class="cancel-link">Cancel Payment</a>
+        <a href="<?php echo basePath('payment-cancel.php'); ?>" class="cancel-link">Cancel and choose a different payment method</a>
     </div>
 
     <script src="<?php echo basePath('public/assets/js/stripe-handler.js'); ?>"></script>

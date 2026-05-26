@@ -136,7 +136,30 @@ class StripePaymentHandler {
         const errorDiv = document.getElementById('stripe-errors');
 
         if (errorDiv) {
-            errorDiv.textContent = error.message || 'An unexpected error occurred.';
+            const message = error.message || 'An unexpected error occurred.';
+            const cancelHref = document.querySelector('.cancel-link')?.href || '#';
+
+            // Use textContent for user-supplied message to prevent XSS
+            errorDiv.textContent = '';
+            const strong = document.createElement('strong');
+            strong.textContent = 'Payment failed: ';
+            const msgSpan = document.createElement('span');
+            msgSpan.textContent = message;
+            const br = document.createElement('br');
+            const small = document.createElement('small');
+            small.style.fontWeight = 'normal';
+            const link = document.createElement('a');
+            link.href = cancelHref;
+            link.style.color = 'inherit';
+            link.style.textDecoration = 'underline';
+            link.textContent = 'choose a different payment method';
+            small.textContent = 'Please check your card details and try again, or ';
+            small.appendChild(link);
+            small.appendChild(document.createTextNode('.'));
+            errorDiv.appendChild(strong);
+            errorDiv.appendChild(msgSpan);
+            errorDiv.appendChild(br);
+            errorDiv.appendChild(small);
             errorDiv.style.display = 'block';
         }
 

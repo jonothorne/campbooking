@@ -28,14 +28,16 @@ try {
     $db = Database::getInstance();
     $stripe = new StripeHandler();
 
-    // Find all payment schedules due today or overdue
+    // Find all payment schedules due today or overdue (pending or failed retries)
     $duePayments = $db->fetchAll(
         "SELECT ps.*, b.booker_name, b.booker_email, b.stripe_customer_id, b.stripe_payment_method_id
         FROM payment_schedules ps
         JOIN bookings b ON ps.booking_id = b.id
-        WHERE ps.status = 'pending'
-        AND ps.due_date <= CURDATE()
-        AND ps.attempt_count < 3
+        WHERE ps.attempt_count < 3
+        AND (
+            (ps.status = 'pending' AND ps.due_date <= CURDATE())
+            OR (ps.status = 'failed' AND ps.next_retry_date IS NOT NULL AND ps.next_retry_date <= CURDATE())
+        )
         ORDER BY ps.due_date ASC"
     );
 
@@ -57,6 +59,16 @@ try {
 
         logMessage("[$timestamp] Processing booking #{$bookingId}, installment #{$installmentNumber}, amount: £{$amount}", $logFile);
 
+        // Re-check schedule status just before charging (race condition guard)
+        $freshSchedule = $db->fetchOne(
+            "SELECT status, stripe_payment_intent_id FROM payment_schedules WHERE id = ?",
+            [$scheduleId]
+        );
+        if ($freshSchedule && ($freshSchedule['status'] === 'paid' || !empty($freshSchedule['stripe_payment_intent_id']))) {
+            logMessage("[$timestamp] SKIPPED: Schedule #{$scheduleId} already paid/charged, avoiding double charge", $logFile);
+            continue;
+        }
+
         // Check if booking has saved payment method
         if (!$schedule['stripe_customer_id'] || !$schedule['stripe_payment_method_id']) {
             logMessage("[$timestamp] ERROR: No payment method saved for booking #{$bookingId}", $logFile);
@@ -76,13 +88,14 @@ try {
 
             if ($result['status'] === 'succeeded' || $result['status'] === 'requires_capture') {
                 // Payment charge initiated successfully
-                // Update schedule status to 'paid' to prevent double charging
+                // Update schedule status to 'paid' and store payment_intent_id to prevent double charging
                 $db->execute(
                     "UPDATE payment_schedules
                     SET status = 'paid',
+                        stripe_payment_intent_id = ?,
                         last_attempt_date = NOW()
                     WHERE id = ?",
-                    [$scheduleId]
+                    [$result['payment_intent_id'], $scheduleId]
                 );
 
                 // NOTE: Webhook will record the payment in the payments table

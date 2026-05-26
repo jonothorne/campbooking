@@ -12,17 +12,22 @@ require_once __DIR__ . '/../classes/Booking.php';
 // Require authentication
 requireCustomerAuth();
 
-$customerId = currentCustomerId();
+$portalUserId = currentPortalUserId();
+$bookingRow = getPortalUserBooking($portalUserId);
+if (!$bookingRow) {
+    $_SESSION['error'] = 'No booking found for the current event.';
+    redirect(url('portal/dashboard.php'));
+}
+$bookingId = $bookingRow['id'];
 $error = null;
 $success = false;
 
 // Load booking data
 try {
-    $booking = new Booking($customerId);
+    $booking = new Booking($bookingId);
     $bookingData = $booking->getData();
 } catch (Exception $e) {
-    customerLogout();
-    redirect(url('portal/login.php'));
+    redirect(url('portal/dashboard.php'));
 }
 
 // Check if already requested
@@ -43,7 +48,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = 'Please type DELETE to confirm.';
     } else {
         // Submit deletion request
-        if (requestDataDeletion($customerId, $reason)) {
+        if (requestDataDeletion($bookingId, $reason)) {
             $_SESSION['success'] = 'Your data deletion request has been submitted. We will process it within 30 days as required by GDPR.';
             redirect(url('portal/dashboard.php'));
         } else {
@@ -234,7 +239,7 @@ $csrfToken = generateCustomerCsrfToken();
 <body>
     <div class="delete-container">
         <div class="logo">
-            <img src="<?php echo basePath('public/assets/images/ECHO-logo-dark.png'); ?>" alt="ECHO2026">
+            <img src="<?php echo basePath('public/assets/images/ECHO-logo-dark.png'); ?>" alt="ECHO2027">
             <h1>⚠️ Request Data Deletion</h1>
             <p class="subtitle">GDPR Right to be Forgotten</p>
         </div>
@@ -258,7 +263,7 @@ $csrfToken = generateCustomerCsrfToken();
                 <li>Your portal access</li>
             </ul>
             <p style="color: #666; font-size: 14px; margin: 10px 0;">
-                <strong>Important:</strong> This will cancel your booking for ECHO2026. If you still wish to attend the event, you will need to create a new booking.
+                <strong>Important:</strong> This will cancel your booking for ECHO2027. If you still wish to attend the event, you will need to create a new booking.
             </p>
             <p style="color: #666; font-size: 14px; margin: 10px 0;">
                 We will process your request within 30 days as required by GDPR regulations.

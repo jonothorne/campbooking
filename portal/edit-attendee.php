@@ -13,9 +13,15 @@ require_once __DIR__ . '/../classes/Booking.php';
 // Require authentication
 requireCustomerAuth();
 
-$customerId = currentCustomerId();
-$error = null;
+$portalUserId = currentPortalUserId();
 $db = Database::getInstance();
+$bookingRow = getPortalUserBooking($portalUserId);
+if (!$bookingRow) {
+    $_SESSION['error'] = 'No booking found for the current event.';
+    redirect(url('portal/dashboard.php'));
+}
+$bookingId = $bookingRow['id'];
+$error = null;
 
 // Get attendee ID
 $attendeeId = isset($_GET['id']) ? (int)$_GET['id'] : 0;
@@ -24,7 +30,7 @@ $attendeeId = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 try {
     $attendee = $db->fetchOne(
         "SELECT * FROM attendees WHERE id = ? AND booking_id = ?",
-        [$attendeeId, $customerId]
+        [$attendeeId, $bookingId]
     );
 
     if (!$attendee) {
@@ -38,11 +44,10 @@ try {
 
 // Load booking
 try {
-    $booking = new Booking($customerId);
+    $booking = new Booking($bookingId);
     $bookingData = $booking->getData();
 } catch (Exception $e) {
-    customerLogout();
-    redirect(url('portal/login.php'));
+    redirect(url('portal/dashboard.php'));
 }
 
 // Handle form submission
@@ -97,7 +102,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         try {
             $rowsAffected = $db->execute(
                 "UPDATE attendees SET name = ?, age = ?, ticket_type = ?, ticket_price = ?, day_ticket_dates = ? WHERE id = ? AND booking_id = ?",
-                [$attendeeName, $attendeeAge, $ticketType, $ticketPrice, $dayTicketDatesJson, $attendeeId, $customerId]
+                [$attendeeName, $attendeeAge, $ticketType, $ticketPrice, $dayTicketDatesJson, $attendeeId, $bookingId]
             );
             $updated = true; // Query succeeded
         } catch (Exception $e) {
@@ -110,7 +115,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Recalculate booking total
             $newTotal = $db->fetchOne(
                 "SELECT SUM(ticket_price) as total FROM attendees WHERE booking_id = ?",
-                [$customerId]
+                [$bookingId]
             )['total'];
 
             // Calculate the difference
@@ -122,13 +127,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     total_amount = ?,
                     amount_outstanding = amount_outstanding + ?
                 WHERE id = ?",
-                [$newTotal, $priceDifference, $customerId]
+                [$newTotal, $priceDifference, $bookingId]
             );
 
             // Recalculate payment schedule to redistribute outstanding amount
             $booking->recalculatePaymentSchedule();
 
-            logGDPRAction($customerId, 'privacy_update', "Customer updated attendee: $attendeeName");
+            logGDPRAction($bookingId, 'privacy_update', "Customer updated attendee: $attendeeName");
 
             $_SESSION['success'] = "Updated $attendeeName successfully!";
             redirect(url('portal/dashboard.php'));
@@ -278,7 +283,7 @@ if (!empty($attendee['day_ticket_dates'])) {
 <body>
     <div class="portal-header">
         <div class="portal-header-content">
-            <img src="<?php echo basePath('public/assets/images/echo-logo.png'); ?>" alt="ECHO2026" class="portal-logo">
+            <img src="<?php echo basePath('public/assets/images/echo-logo.png'); ?>" alt="ECHO2027" class="portal-logo">
             <h1 style="margin: 0; font-size: 28px;">Edit Attendee</h1>
             <p style="margin: 10px 0 0 0; opacity: 0.9;">Update attendee information</p>
         </div>

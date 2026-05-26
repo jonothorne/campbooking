@@ -13,17 +13,22 @@ require_once __DIR__ . '/../classes/Booking.php';
 // Require authentication
 requireCustomerAuth();
 
-$customerId = currentCustomerId();
-$error = null;
+$portalUserId = currentPortalUserId();
 $db = Database::getInstance();
+$bookingRow = getPortalUserBooking($portalUserId);
+if (!$bookingRow) {
+    $_SESSION['error'] = 'No booking found for the current event.';
+    redirect(url('portal/dashboard.php'));
+}
+$bookingId = $bookingRow['id'];
+$error = null;
 
 // Load booking
 try {
-    $booking = new Booking($customerId);
+    $booking = new Booking($bookingId);
     $bookingData = $booking->getData();
 } catch (Exception $e) {
-    customerLogout();
-    redirect(url('portal/login.php'));
+    redirect(url('portal/dashboard.php'));
 }
 
 // Handle form submission
@@ -76,14 +81,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Add attendee
         $attendeeId = $db->insert(
             "INSERT INTO attendees (booking_id, name, age, ticket_type, ticket_price, day_ticket_dates) VALUES (?, ?, ?, ?, ?, ?)",
-            [$customerId, $attendeeName, $attendeeAge, $ticketType, $ticketPrice, $dayTicketDatesJson]
+            [$bookingId, $attendeeName, $attendeeAge, $ticketType, $ticketPrice, $dayTicketDatesJson]
         );
 
         if ($attendeeId) {
             // Recalculate booking total
             $newTotal = $db->fetchOne(
                 "SELECT SUM(ticket_price) as total FROM attendees WHERE booking_id = ?",
-                [$customerId]
+                [$bookingId]
             )['total'];
 
             // Update booking total and outstanding amount
@@ -92,13 +97,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     total_amount = ?,
                     amount_outstanding = total_amount - amount_paid
                 WHERE id = ?",
-                [$newTotal, $customerId]
+                [$newTotal, $bookingId]
             );
 
             // Recalculate payment schedule to redistribute outstanding amount
             $booking->recalculatePaymentSchedule();
 
-            logGDPRAction($customerId, 'privacy_update', "Customer added attendee: $attendeeName");
+            logGDPRAction($bookingId, 'privacy_update', "Customer added attendee: $attendeeName");
 
             $_SESSION['success'] = "Added $attendeeName to your booking! Your new total is " . formatCurrency($newTotal) . ".";
             redirect(url('portal/dashboard.php'));
@@ -243,7 +248,7 @@ $csrfToken = generateCustomerCsrfToken();
 <body>
     <div class="portal-header">
         <div class="portal-header-content">
-            <img src="<?php echo basePath('public/assets/images/echo-logo.png'); ?>" alt="ECHO2026" class="portal-logo">
+            <img src="<?php echo basePath('public/assets/images/echo-logo.png'); ?>" alt="ECHO2027" class="portal-logo">
             <h1 style="margin: 0; font-size: 28px;">Add Attendee</h1>
             <p style="margin: 10px 0 0 0; opacity: 0.9;">Add another person to your booking</p>
         </div>

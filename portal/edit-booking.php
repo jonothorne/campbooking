@@ -13,17 +13,22 @@ require_once __DIR__ . '/../classes/Booking.php';
 // Require authentication
 requireCustomerAuth();
 
-$customerId = currentCustomerId();
+$portalUserId = currentPortalUserId();
+$bookingRow = getPortalUserBooking($portalUserId);
+if (!$bookingRow) {
+    $_SESSION['error'] = 'No booking found for the current event.';
+    redirect(url('portal/dashboard.php'));
+}
+$bookingId = $bookingRow['id'];
 $error = null;
 $success = null;
 
 // Load booking
 try {
-    $booking = new Booking($customerId);
+    $booking = new Booking($bookingId);
     $bookingData = $booking->getData();
 } catch (Exception $e) {
-    customerLogout();
-    redirect(url('portal/login.php'));
+    redirect(url('portal/dashboard.php'));
 }
 
 // Handle form submission
@@ -55,11 +60,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 has_caravan = ?,
                 needs_tent_provided = ?
             WHERE id = ?",
-            [$bookerName, $bookerEmail, $bookerPhone, $specialRequirements, $numTents, $hasCaravan, $needsTentProvided, $customerId]
+            [$bookerName, $bookerEmail, $bookerPhone, $specialRequirements, $numTents, $hasCaravan, $needsTentProvided, $bookingId]
         );
 
         if ($updated) {
-            logGDPRAction($customerId, 'privacy_update', 'Customer updated booking details');
+            logGDPRAction($bookingId, 'privacy_update', 'Customer updated booking details');
             $_SESSION['success'] = 'Your booking details have been updated successfully!';
             redirect(url('portal/dashboard.php'));
         } else {
@@ -188,7 +193,7 @@ $csrfToken = generateCustomerCsrfToken();
 <body>
     <div class="portal-header">
         <div class="portal-header-content">
-            <img src="<?php echo basePath('public/assets/images/echo-logo.png'); ?>" alt="ECHO2026" class="portal-logo" >
+            <img src="<?php echo basePath('public/assets/images/echo-logo.png'); ?>" alt="ECHO2027" class="portal-logo" >
             <h1 style="margin: 0; font-size: 28px;">Edit Your Booking</h1>
             <p style="margin: 10px 0 0 0; opacity: 0.9;">Update your contact and camping information</p>
         </div>

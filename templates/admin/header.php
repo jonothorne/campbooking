@@ -36,6 +36,24 @@ requireAuth();
                     </div>
                 </div>
                 <div class="top-nav-right">
+                    <?php
+                    $availableYears = getAvailableEventYears();
+                    $selectedYear = getAdminEventYear();
+                    if (count($availableYears) > 1): ?>
+                    <div class="year-switcher">
+                        <label for="event_year" class="year-switcher-label">Event Year:</label>
+                        <select id="event_year" class="year-switcher-select" onchange="window.location.href='<?php echo url('admin/set-event-year.php'); ?>?year='+this.value">
+                            <?php foreach ($availableYears as $year): ?>
+                                <option value="<?php echo $year; ?>" <?php echo $year == $selectedYear ? 'selected' : ''; ?>>
+                                    <?php echo $year; ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <?php endif; ?>
+                    <?php if ($selectedYear != EVENT_YEAR): ?>
+                        <span class="archive-badge">Viewing Archive</span>
+                    <?php endif; ?>
                     <span class="admin-user">
                         👤 <?php echo e(currentAdminUsername()); ?>
                     </span>

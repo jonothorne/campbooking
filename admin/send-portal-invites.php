@@ -38,7 +38,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             try {
                 // Check if booking exists and doesn't have password
                 $booking = $db->fetchOne(
-                    "SELECT id, booker_name, booker_email, password_hash FROM bookings WHERE id = ?",
+                    "SELECT b.id, b.booker_name, b.booker_email, b.portal_user_id
+                    FROM bookings b
+                    WHERE b.id = ?",
                     [$bookingId]
                 );
 
@@ -52,13 +54,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     continue;
                 }
 
-                if (!empty($booking['password_hash'])) {
+                if (!empty($booking['portal_user_id'])) {
                     $sendResults[] = [
                         'booking_id' => $bookingId,
                         'name' => $booking['booker_name'],
                         'email' => $booking['booker_email'],
                         'status' => 'skipped',
-                        'message' => 'Already has password'
+                        'message' => 'Already has portal access'
                     ];
                     continue;
                 }
@@ -112,7 +114,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Get all bookings without passwords
+// Get selected event year
+$eventYear = getAdminEventYear();
+
+// Get all bookings without portal accounts
 $bookingsWithoutPassword = $db->fetchAll(
     "SELECT
         b.id,
@@ -123,21 +128,25 @@ $bookingsWithoutPassword = $db->fetchAll(
         (SELECT COUNT(*) FROM password_setup_tokens WHERE booking_id = b.id) as token_count,
         (SELECT MAX(created_at) FROM password_setup_tokens WHERE booking_id = b.id) as last_invite_sent
     FROM bookings b
-    WHERE b.password_hash IS NULL OR b.password_hash = ''
-    ORDER BY b.created_at DESC"
+    WHERE b.portal_user_id IS NULL
+    AND b.event_year = ?
+    ORDER BY b.created_at DESC",
+    [$eventYear]
 );
 
-// Get bookings that already have passwords
+// Get bookings that have portal accounts
 $bookingsWithPassword = $db->fetchAll(
     "SELECT
         b.id,
         b.booking_reference,
         b.booker_name,
         b.booker_email,
-        b.last_portal_login
+        pu.last_login as last_portal_login
     FROM bookings b
-    WHERE b.password_hash IS NOT NULL AND b.password_hash != ''
-    ORDER BY b.last_portal_login IS NULL, b.last_portal_login DESC"
+    JOIN portal_users pu ON b.portal_user_id = pu.id
+    WHERE b.event_year = ?
+    ORDER BY pu.last_login IS NULL, pu.last_login DESC",
+    [$eventYear]
 );
 
 $csrfToken = generateCsrfToken();

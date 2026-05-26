@@ -57,6 +57,6 @@ $dompdf->setPaper('A4', 'portrait');
 $dompdf->render();
 
 // Output PDF
-$filename = 'ECHO2026-Booking-' . $bookingData['booking_reference'] . '.pdf';
+$filename = 'ECHO2027-Booking-' . $bookingData['booking_reference'] . '.pdf';
 $dompdf->stream($filename, ['Attachment' => true]);
 exit;

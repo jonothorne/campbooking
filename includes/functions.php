@@ -78,103 +78,61 @@ function monthsBetween($fromDate, $toDate) {
  * Calculate payment schedule for a booking
  *
  * @param float $totalAmount
- * @param string $paymentPlan 'full', 'monthly', or 'three_payments'
+ * @param int $numInstallments Number of installments (1-11)
  * @param string $bookingDate Y-m-d format
  * @return array Array of schedule items with installment_number, amount, due_date
  */
-function calculatePaymentSchedule($totalAmount, $paymentPlan, $bookingDate) {
+function calculatePaymentSchedule($totalAmount, $numInstallments, $bookingDate) {
     $schedule = [];
-    $paymentDeadline = PAYMENT_DEADLINE; // Payment deadline (configured in .env)
+    $paymentDeadline = PAYMENT_DEADLINE;
+    $numInstallments = max(1, min(MAX_INSTALLMENTS, (int)$numInstallments));
 
-    switch ($paymentPlan) {
-        case 'full':
-            // Single payment immediately
-            $schedule[] = [
-                'installment_number' => 1,
-                'amount' => round($totalAmount, 2),
-                'due_date' => $bookingDate
-            ];
-            break;
+    if ($numInstallments === 1) {
+        // Single payment immediately
+        $schedule[] = [
+            'installment_number' => 1,
+            'amount' => round($totalAmount, 2),
+            'due_date' => $bookingDate
+        ];
+        return $schedule;
+    }
 
-        case 'monthly':
-            // First payment immediately, then monthly until deadline
-            $monthsUntilDeadline = monthsBetween($bookingDate, $paymentDeadline);
+    // Multiple installments: first payment immediate, rest spread monthly until deadline
+    $installmentAmount = $totalAmount / $numInstallments;
 
-            // Ensure at least 1 month
-            if ($monthsUntilDeadline < 1) {
-                $monthsUntilDeadline = 1;
+    // Calculate the interval between payments
+    $bookingTime = strtotime($bookingDate);
+    $deadlineTime = strtotime($paymentDeadline);
+    $daysUntilDeadline = max(1, ($deadlineTime - $bookingTime) / 86400);
+    $daysBetweenPayments = $daysUntilDeadline / ($numInstallments - 1);
+
+    for ($i = 0; $i < $numInstallments; $i++) {
+        if ($i === 0) {
+            $dueDate = $bookingDate;
+        } elseif ($i === $numInstallments - 1) {
+            $dueDate = $paymentDeadline;
+        } else {
+            $daysToAdd = (int)round($daysBetweenPayments * $i);
+            $dueDate = date('Y-m-d', strtotime($bookingDate . " +{$daysToAdd} days"));
+
+            // Ensure due date doesn't exceed deadline
+            if (strtotime($dueDate) > $deadlineTime) {
+                $dueDate = $paymentDeadline;
             }
+        }
 
-            $monthlyAmount = $totalAmount / $monthsUntilDeadline;
+        // Adjust last payment for rounding
+        if ($i === $numInstallments - 1) {
+            $amount = $totalAmount - (round($installmentAmount, 2) * ($numInstallments - 1));
+        } else {
+            $amount = round($installmentAmount, 2);
+        }
 
-            for ($i = 0; $i < $monthsUntilDeadline; $i++) {
-                if ($i == 0) {
-                    // First payment is immediate (on booking date)
-                    $dueDate = $bookingDate;
-                } else {
-                    // Subsequent payments are monthly
-                    $dueDate = date('Y-m-d', strtotime($bookingDate . " +{$i} month"));
-                }
-
-                // Ensure due date doesn't exceed deadline
-                if (strtotime($dueDate) > strtotime($paymentDeadline)) {
-                    $dueDate = $paymentDeadline;
-                }
-
-                // Adjust last payment for rounding
-                if ($i == $monthsUntilDeadline - 1) {
-                    $amount = $totalAmount - (round($monthlyAmount, 2) * ($monthsUntilDeadline - 1));
-                } else {
-                    $amount = round($monthlyAmount, 2);
-                }
-
-                $schedule[] = [
-                    'installment_number' => $i + 1,
-                    'amount' => round($amount, 2),
-                    'due_date' => $dueDate
-                ];
-            }
-            break;
-
-        case 'three_payments':
-            // First payment immediately, then 2 more evenly spaced until deadline
-            $paymentAmount = $totalAmount / 3;
-
-            // Calculate days between booking and deadline
-            $bookingTime = strtotime($bookingDate);
-            $deadlineTime = strtotime($paymentDeadline);
-            $daysUntilDeadline = ($deadlineTime - $bookingTime) / (60 * 60 * 24);
-
-            // Space payments evenly
-            $daysBetweenPayments = $daysUntilDeadline / 2; // 2 gaps (for 3 payments)
-
-            for ($i = 0; $i < 3; $i++) {
-                if ($i == 0) {
-                    // First payment is immediate
-                    $dueDate = $bookingDate;
-                } else if ($i == 2) {
-                    // Last payment is on deadline
-                    $dueDate = $paymentDeadline;
-                } else {
-                    // Second payment is halfway between booking and deadline
-                    $daysToAdd = (int)round($daysBetweenPayments);
-                    $dueDate = date('Y-m-d', strtotime($bookingDate . " +{$daysToAdd} days"));
-                }
-
-                // Adjust last payment for rounding
-                if ($i == 2) {
-                    $amount = $totalAmount - (round($paymentAmount, 2) * 2);
-                } else {
-                    $amount = round($paymentAmount, 2);
-                }
-
-                $schedule[] = [
-                    'installment_number' => $i + 1,
-                    'amount' => round($amount, 2),
-                    'due_date' => $dueDate
-                ];
-            }
-            break;
+        $schedule[] = [
+            'installment_number' => $i + 1,
+            'amount' => round($amount, 2),
+            'due_date' => $dueDate
+        ];
     }
 
     return $schedule;
@@ -408,18 +366,59 @@ function logMessage($message, $logFile = 'app.log') {
 function getTicketTypesForAge($age) {
     if ($age <= FREE_CHILD_MAX_AGE) {
         return [
-            'free_child' => 'Free (Age 0-4)'
+            'free_child' => 'Free (Under 4s)'
         ];
     } elseif ($age <= CHILD_MAX_AGE) {
         return [
-            'child_weekend' => 'Child Weekend Ticket (' . formatCurrency(CHILD_PRICE) . ')',
-            'child_day' => 'Child Day Ticket (' . formatCurrency(CHILD_DAY_PRICE) . ' per day)'
+            'child_weekend' => 'Child Ticket (' . formatCurrency(ACTIVE_CHILD_PRICE) . ')',
+            'child_day' => 'Child Day Ticket (' . formatCurrency(ACTIVE_CHILD_DAY_PRICE) . ' per day)'
         ];
     } else {
         return [
-            'adult_weekend' => 'Adult Weekend Ticket (' . formatCurrency(ADULT_PRICE) . ')',
-            'adult_sponsor' => 'Adult Sponsor Ticket (' . formatCurrency(ADULT_SPONSOR_PRICE) . ') - Help fund a young person',
-            'adult_day' => 'Adult Day Ticket (' . formatCurrency(ADULT_DAY_PRICE) . ' per day)'
+            'adult_weekend' => 'Adult Ticket (' . formatCurrency(ACTIVE_ADULT_PRICE) . ')',
+            'adult_sponsor' => 'Adult Sponsor Ticket (suggested ' . formatCurrency(ADULT_SPONSOR_SUGGESTED) . ') - Help fund a young person',
+            'adult_day' => 'Adult Day Ticket (' . formatCurrency(ACTIVE_ADULT_DAY_PRICE) . ' per day)'
         ];
     }
+}
+
+/**
+ * Check if currently in the early bird pricing period
+ *
+ * @return bool
+ */
+function isEarlyBird() {
+    return IS_EARLY_BIRD;
+}
+
+/**
+ * Get the event year currently selected in the admin panel.
+ * Defaults to EVENT_YEAR (the current event year).
+ */
+function getAdminEventYear() {
+    return (int)($_SESSION['admin_event_year'] ?? EVENT_YEAR);
+}
+
+/**
+ * Set the event year for the admin panel view.
+ */
+function setAdminEventYear($year) {
+    $_SESSION['admin_event_year'] = (int)$year;
+}
+
+/**
+ * Get available event years (distinct years that have bookings, plus the current event year).
+ */
+function getAvailableEventYears() {
+    $db = Database::getInstance();
+    $rows = $db->fetchAll("SELECT DISTINCT event_year FROM bookings ORDER BY event_year DESC");
+    $years = array_column($rows, 'event_year');
+
+    // Always include the current event year
+    if (!in_array(EVENT_YEAR, $years)) {
+        $years[] = EVENT_YEAR;
+    }
+
+    rsort($years);
+    return $years;
 }

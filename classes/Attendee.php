@@ -201,17 +201,26 @@ class Attendee {
      *
      * @return array Statistics
      */
-    public static function getStatistics() {
+    public static function getStatistics($eventYear = null) {
         $db = Database::getInstance();
+        $join = '';
+        $yearFilter = '';
+        $yearParam = [];
+
+        if ($eventYear !== null) {
+            $join = ' JOIN bookings b ON a.booking_id = b.id';
+            $yearFilter = ' AND b.event_year = ?';
+            $yearParam = [(int)$eventYear];
+        }
 
         return [
-            'total_attendees' => $db->fetchOne("SELECT COUNT(*) as count FROM attendees")['count'],
-            'adult_weekend' => $db->fetchOne("SELECT COUNT(*) as count FROM attendees WHERE ticket_type = 'adult_weekend'")['count'],
-            'adult_sponsor' => $db->fetchOne("SELECT COUNT(*) as count FROM attendees WHERE ticket_type = 'adult_sponsor'")['count'],
-            'child_weekend' => $db->fetchOne("SELECT COUNT(*) as count FROM attendees WHERE ticket_type = 'child_weekend'")['count'],
-            'free_child' => $db->fetchOne("SELECT COUNT(*) as count FROM attendees WHERE ticket_type = 'free_child'")['count'],
-            'adult_day' => $db->fetchOne("SELECT COUNT(*) as count FROM attendees WHERE ticket_type = 'adult_day'")['count'],
-            'child_day' => $db->fetchOne("SELECT COUNT(*) as count FROM attendees WHERE ticket_type = 'child_day'")['count'],
+            'total_attendees' => $db->fetchOne("SELECT COUNT(*) as count FROM attendees a{$join} WHERE 1=1{$yearFilter}", $yearParam)['count'],
+            'adult_weekend' => $db->fetchOne("SELECT COUNT(*) as count FROM attendees a{$join} WHERE a.ticket_type = 'adult_weekend'{$yearFilter}", $yearParam)['count'],
+            'adult_sponsor' => $db->fetchOne("SELECT COUNT(*) as count FROM attendees a{$join} WHERE a.ticket_type = 'adult_sponsor'{$yearFilter}", $yearParam)['count'],
+            'child_weekend' => $db->fetchOne("SELECT COUNT(*) as count FROM attendees a{$join} WHERE a.ticket_type = 'child_weekend'{$yearFilter}", $yearParam)['count'],
+            'free_child' => $db->fetchOne("SELECT COUNT(*) as count FROM attendees a{$join} WHERE a.ticket_type = 'free_child'{$yearFilter}", $yearParam)['count'],
+            'adult_day' => $db->fetchOne("SELECT COUNT(*) as count FROM attendees a{$join} WHERE a.ticket_type = 'adult_day'{$yearFilter}", $yearParam)['count'],
+            'child_day' => $db->fetchOne("SELECT COUNT(*) as count FROM attendees a{$join} WHERE a.ticket_type = 'child_day'{$yearFilter}", $yearParam)['count'],
         ];
     }
 

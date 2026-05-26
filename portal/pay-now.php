@@ -15,17 +15,22 @@ require_once __DIR__ . '/../classes/StripeHandler.php';
 // Require authentication
 requireCustomerAuth();
 
-$customerId = currentCustomerId();
+$portalUserId = currentPortalUserId();
 $db = Database::getInstance();
+$bookingRow = getPortalUserBooking($portalUserId);
+if (!$bookingRow) {
+    $_SESSION['error'] = 'No booking found for the current event.';
+    redirect(url('portal/dashboard.php'));
+}
+$bookingId = $bookingRow['id'];
 
 // Load booking
 try {
-    $booking = new Booking($customerId);
+    $booking = new Booking($bookingId);
     $bookingData = $booking->getData();
     $paymentSchedule = $booking->getPaymentSchedule();
 } catch (Exception $e) {
-    customerLogout();
-    redirect(url('portal/login.php'));
+    redirect(url('portal/dashboard.php'));
 }
 
 // Get specific schedule ID if provided, otherwise show all overdue
@@ -86,7 +91,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'receipt_email' => $bookingData['booker_email'],
                     'description' => 'Portal Payment - ' . $bookingData['booking_reference'],
                     'metadata' => [
-                        'booking_id' => $customerId,
+                        'booking_id' => $bookingId,
                         'payment_type' => 'portal_payment',
                         'schedule_ids' => json_encode($scheduleIds)
                     ],
@@ -112,7 +117,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     foreach ($scheduleIds as $scheduleId) {
                         $db->execute(
                             "UPDATE payment_schedules SET status = 'paid', payment_id = ?, last_attempt_date = NOW() WHERE id = ? AND booking_id = ?",
-                            [$paymentId, $scheduleId, $customerId]
+                            [$paymentId, $scheduleId, $bookingId]
                         );
                     }
                 }
@@ -136,7 +141,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'receipt_email' => $bookingData['booker_email'],
                     'description' => 'Portal Payment - ' . $bookingData['booking_reference'],
                     'metadata' => [
-                        'booking_id' => $customerId,
+                        'booking_id' => $bookingId,
                         'payment_type' => 'portal_payment',
                         'schedule_ids' => json_encode($scheduleIds)
                     ],
@@ -304,7 +309,7 @@ $csrfToken = generateCustomerCsrfToken();
 <body>
     <div class="portal-header">
         <div class="portal-header-content">
-            <img src="<?php echo basePath('public/assets/images/echo-logo.png'); ?>" alt="ECHO2026" class="portal-logo">
+            <img src="<?php echo basePath('public/assets/images/echo-logo.png'); ?>" alt="ECHO2027" class="portal-logo">
             <h1 style="margin: 0; font-size: 28px;">Process Payment</h1>
             <p style="margin: 10px 0 0 0; opacity: 0.9;">Complete your outstanding payment(s)</p>
         </div>

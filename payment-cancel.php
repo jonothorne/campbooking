@@ -17,8 +17,14 @@ if (session_status() === PHP_SESSION_NONE) {
 // Set a flag that payment was cancelled
 $_SESSION['payment_cancelled'] = true;
 
+// Clean up Stripe session data (but keep pending_booking_id for cleanup on form reload)
+unset($_SESSION['stripe_client_secret']);
+unset($_SESSION['stripe_is_setup_intent']);
+unset($_SESSION['stripe_payment_intent_id']);
+unset($_SESSION['booking_reference']);
+
 // Redirect back to booking form
-redirect('/book/?payment_cancelled=1');
+redirect(url('?payment_cancelled=1'));
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -33,7 +39,7 @@ redirect('/book/?payment_cancelled=1');
             font-size: 16px;
             line-height: 1.6;
             color: #1f2937;
-            background: #1a1a1a;
+            background: #121214;
             min-height: 100vh;
             padding: 40px 20px;
             margin: 0;
@@ -44,9 +50,20 @@ redirect('/book/?payment_cancelled=1');
         .container {
             max-width: 600px;
             width: 100%;
-            background: #f5f5f5;
+            background: #f0f0f2;
             border-radius: 12px;
             padding: 40px;
+            position: relative;
+            overflow: hidden;
+        }
+        .container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #00e5ff, #eb008b);
         }
         .form-section {
             background: white;
@@ -83,11 +100,13 @@ redirect('/book/?payment_cancelled=1');
         }
         .btn {
             display: inline-block;
-            padding: 12px 24px;
+            padding: 14px 32px;
             border: none;
-            border-radius: 8px;
-            font-size: 15px;
-            font-weight: 600;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
             text-align: center;
             cursor: pointer;
             transition: all 0.3s ease;
@@ -98,7 +117,7 @@ redirect('/book/?payment_cancelled=1');
         }
         .btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+            box-shadow: 0 0 30px rgba(235, 0, 139, 0.4);
         }
         a {
             color: #eb008b;

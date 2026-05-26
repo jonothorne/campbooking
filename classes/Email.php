@@ -84,7 +84,7 @@ class Email
 
             // Get payment schedule if installment plan
             $paymentSchedule = [];
-            if ($bookingData['payment_plan'] !== 'full') {
+            if ($bookingData['payment_plan'] > 1) {
                 $paymentSchedule = $this->db->fetchAll(
                     "SELECT * FROM payment_schedules WHERE booking_id = ? ORDER BY due_date ASC",
                     [$bookingId]
@@ -132,7 +132,7 @@ class Email
             $dompdf->render();
 
             $pdfOutput = $dompdf->output();
-            $filename = 'ECHO2026-Booking-' . $bookingData['booking_reference'] . '.pdf';
+            $filename = 'ECHO2027-Booking-' . $bookingData['booking_reference'] . '.pdf';
 
             // Attach PDF to email
             $this->mailer->addStringAttachment($pdfOutput, $filename, 'base64', 'application/pdf');
@@ -250,7 +250,8 @@ class Email
                 'due_date' => $schedule['due_date'],
                 'installment_number' => $schedule['installment_number'],
                 'attempt_count' => $schedule['attempt_count'],
-                'next_retry_date' => $schedule['next_retry_date']
+                'next_retry_date' => $schedule['next_retry_date'],
+                'portal_url' => url('portal/login.php')
             ];
 
             $body = $this->loadTemplate('payment-failed', $data);
@@ -275,7 +276,7 @@ class Email
             $bookingData = $booking->getData();
 
             $recipient = $bookingData['booker_email'];
-            $subject = "Access Your ECHO2026 Booking Portal";
+            $subject = "Access Your ECHO2027 Booking Portal";
 
             // Build setup link
             $setupLink = url('portal/setup-password.php?token=' . $token);

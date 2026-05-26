@@ -1,7 +1,8 @@
 <?php
 /**
- * Shared Email Styles for ECHO2026
+ * Shared Email Styles for ECHO2027: Amplified
  * Consistent branding across all email templates
+ * Cyan (#00e5ff) and Magenta (#eb008b) dual accent theme
  */
 ?>
 <style>
@@ -12,7 +13,7 @@
         max-width: 600px;
         margin: 0 auto;
         padding: 20px;
-        background-color: #f5f5f5;
+        background-color: #f0f0f2;
     }
     .email-container {
         background: white;
@@ -22,41 +23,51 @@
         overflow: hidden;
     }
 
-    /* Header with ECHO branding */
+    /* Header with ECHO Amplified branding */
     .email-header {
-        background: linear-gradient(135deg, #eb008b 0%, #d40080 100%);
+        background: #121214;
         text-align: center;
         padding: 40px 30px 30px;
         color: white;
         position: relative;
+    }
+    .email-header::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, #00e5ff, #eb008b);
     }
     .email-header-logo {
         width: 180px;
         height: auto;
         margin: 0 auto 15px;
         display: block;
-        filter: brightness(0) invert(1);
     }
     .email-header h1 {
         color: white;
         margin: 0 0 8px 0;
         font-size: 36px;
-        font-weight: 700;
-        letter-spacing: 4px;
+        font-weight: 900;
+        letter-spacing: 6px;
+        text-transform: uppercase;
     }
     .email-header-subtitle {
-        color: rgba(255,255,255,0.95);
+        color: #00e5ff;
         margin: 0;
-        font-size: 14px;
-        font-weight: 400;
-        letter-spacing: 1px;
+        font-size: 13px;
+        font-weight: 600;
+        letter-spacing: 3px;
+        text-transform: uppercase;
     }
     .email-header-verse {
-        color: rgba(255,255,255,0.9);
+        color: rgba(255,255,255,0.5);
         margin: 20px 0 0 0;
         font-size: 13px;
         font-style: italic;
-        border-top: 1px solid rgba(255,255,255,0.3);
+        border-top: 1px solid rgba(255,255,255,0.1);
         padding-top: 15px;
     }
 
@@ -67,15 +78,17 @@
 
     /* Booking reference badge */
     .booking-ref {
-        background: linear-gradient(135deg, #eb008b 0%, #d40080 100%);
+        background: #121214;
         color: white;
-        padding: 18px 25px;
+        padding: 20px 25px;
         border-radius: 8px;
         text-align: center;
         margin: 25px 0;
-        font-size: 18px;
+        font-size: 20px;
         font-weight: 700;
-        letter-spacing: 2px;
+        letter-spacing: 3px;
+        border-left: 4px solid #00e5ff;
+        border-right: 4px solid #eb008b;
     }
 
     /* Sections */
@@ -83,12 +96,14 @@
         margin: 30px 0;
     }
     .section h2 {
-        color: #eb008b;
-        font-size: 20px;
+        color: #1f2937;
+        font-size: 18px;
         margin-bottom: 18px;
-        border-bottom: 2px solid #eb008b;
+        border-bottom: 2px solid #00e5ff;
         padding-bottom: 10px;
         font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
     }
 
     /* Detail rows */
@@ -113,7 +128,7 @@
         padding: 18px;
         border-radius: 8px;
         margin: 15px 0;
-        border-left: 4px solid #eb008b;
+        border-left: 4px solid #00e5ff;
     }
     .attendee-item {
         padding: 10px 0;
@@ -125,20 +140,22 @@
 
     /* Total amount */
     .total-amount {
-        background: linear-gradient(135deg, #eb008b10 0%, #d4008010 100%);
-        border: 2px solid #eb008b;
-        padding: 20px;
+        background: #121214;
+        border: none;
+        padding: 22px;
         border-radius: 8px;
         margin: 25px 0;
-        font-size: 22px;
+        font-size: 24px;
         font-weight: 700;
         text-align: center;
-        color: #eb008b;
+        color: white;
+        border-left: 4px solid #00e5ff;
+        border-right: 4px solid #eb008b;
     }
 
     /* Amount displays */
     .amount-paid {
-        background: linear-gradient(135deg, #10b98120 0%, #059669 20 100%);
+        background: linear-gradient(135deg, #10b98120 0%, #05966920 100%);
         border: 3px solid #10b981;
         color: #047857;
         padding: 25px;
@@ -199,7 +216,7 @@
 
     /* Footer */
     .email-footer {
-        background: #1a1a1a;
+        background: #121214;
         color: #9ca3af;
         padding: 30px;
         text-align: center;
@@ -210,7 +227,7 @@
         color: #e5e7eb;
     }
     .email-footer a {
-        color: #eb008b;
+        color: #00e5ff;
         text-decoration: none;
     }
 
@@ -221,9 +238,11 @@
         color: white;
         padding: 14px 32px;
         text-decoration: none;
-        border-radius: 8px;
+        border-radius: 4px;
         margin: 20px 0;
         font-weight: 700;
-        letter-spacing: 1px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        font-size: 14px;
     }
 </style>

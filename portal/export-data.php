@@ -17,12 +17,17 @@ use Dompdf\Options;
 // Require authentication
 requireCustomerAuth();
 
-$customerId = currentCustomerId();
+$portalUserId = currentPortalUserId();
 $db = Database::getInstance();
+$bookingRow = getPortalUserBooking($portalUserId);
+if (!$bookingRow) {
+    die('No booking found for the current event.');
+}
+$bookingId = $bookingRow['id'];
 
 // Load booking data
 try {
-    $booking = new Booking($customerId);
+    $booking = new Booking($bookingId);
     $bookingData = $booking->getData();
     $attendees = $booking->getAttendees();
     $payments = $booking->getPayments();
@@ -50,6 +55,6 @@ $dompdf->setPaper('A4', 'portrait');
 $dompdf->render();
 
 // Output PDF
-$filename = 'ECHO2026-Booking-' . $bookingData['booking_reference'] . '.pdf';
+$filename = 'ECHO2027-Booking-' . $bookingData['booking_reference'] . '.pdf';
 $dompdf->stream($filename, ['Attachment' => true]);
 exit;

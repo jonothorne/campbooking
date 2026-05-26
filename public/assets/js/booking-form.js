@@ -1,6 +1,7 @@
 /**
  * Booking Form JavaScript
- * Handles dynamic attendees, price calculation, and form interactions
+ * ECHO2027: Amplified
+ * Handles dynamic attendees, price calculation, sponsor tickets, and split payments
  */
 
 /**
@@ -16,23 +17,18 @@ class VideoModal {
         this.iframe = document.getElementById('promo-video');
 
         // Set your YouTube video ID here
-        this.videoId = 'VRr_5ZLL2gg'; // ECHO2026 Promo Video
+        this.videoId = 'VRr_5ZLL2gg'; // TODO: Update for ECHO2027 promo
 
         this.init();
     }
 
     init() {
-        // Open modal
         this.openBtn.addEventListener('click', () => this.open());
-
-        // Close modal
         this.closeBtn.addEventListener('click', () => this.close());
         this.overlay.addEventListener('click', () => this.close());
 
-        // Book now button - close and scroll to form
         this.bookNowBtn.addEventListener('click', () => {
             this.close();
-            // Scroll to form after a short delay to allow modal to close
             setTimeout(() => {
                 const form = document.getElementById('booking-form');
                 if (form) {
@@ -41,7 +37,6 @@ class VideoModal {
             }, 300);
         });
 
-        // Close on ESC key
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape' && this.modal.classList.contains('active')) {
                 this.close();
@@ -50,24 +45,14 @@ class VideoModal {
     }
 
     open() {
-        // Set YouTube iframe src with autoplay
         this.iframe.src = `https://www.youtube.com/embed/${this.videoId}?autoplay=1&rel=0`;
-
-        // Show modal
         this.modal.classList.add('active');
-
-        // Prevent body scroll
         document.body.style.overflow = 'hidden';
     }
 
     close() {
-        // Stop video by clearing src
         this.iframe.src = '';
-
-        // Hide modal
         this.modal.classList.remove('active');
-
-        // Restore body scroll
         document.body.style.overflow = '';
     }
 }
@@ -75,12 +60,22 @@ class VideoModal {
 class BookingForm {
     constructor() {
         this.attendeeCount = 1;
+
+        // Read prices from the DOM data attributes (set by PHP)
+        const firstTicketSelect = document.getElementById('attendee_ticket_type_0');
+        const adultOption = firstTicketSelect.querySelector('[value="adult_weekend"]');
+        const childOption = firstTicketSelect.querySelector('[value="child_weekend"]');
+        const sponsorOption = firstTicketSelect.querySelector('[value="adult_sponsor"]');
+        const adultDayOption = firstTicketSelect.querySelector('[value="adult_day"]');
+        const childDayOption = firstTicketSelect.querySelector('[value="child_day"]');
+
         this.prices = {
-            adult: 85.00,
-            adultSponsor: 110.00,
-            child: 55.00,
-            adultDay: 25.00,
-            childDay: 15.00,
+            adult: parseFloat(adultOption.dataset.price),
+            child: parseFloat(childOption.dataset.price),
+            sponsorSuggested: parseFloat(sponsorOption.dataset.price),
+            sponsorMin: parseFloat(sponsorOption.dataset.minPrice),
+            adultDay: parseFloat(adultDayOption.textContent.match(/£([\d.]+)/)[1]),
+            childDay: parseFloat(childDayOption.textContent.match(/£([\d.]+)/)[1]),
             free: 0.00
         };
 
@@ -88,78 +83,50 @@ class BookingForm {
     }
 
     init() {
-        // Setup event listeners
         this.setupAddAttendeeButton();
         this.setupPaymentMethodListeners();
         this.setupPaymentPlanListeners();
         this.setupBookerNameListener();
         this.setupFormSubmit();
-
-        // Setup listeners for first attendee
         this.setupAttendeeListeners(0);
-
-        // Initial calculations
         this.updateTotalPrice();
         this.updatePaymentMethodVisibility();
     }
 
-    /**
-     * Setup "Add Attendee" button
-     */
     setupAddAttendeeButton() {
         const addBtn = document.getElementById('add-attendee-btn');
         addBtn.addEventListener('click', () => this.addAttendee());
     }
 
-    /**
-     * Add new attendee to form
-     */
     addAttendee() {
         const container = document.getElementById('attendees-container');
         const template = document.getElementById('attendee-template');
 
-        // Clone template
         let html = template.innerHTML;
-
-        // Replace placeholders
         html = html.replace(/{INDEX}/g, this.attendeeCount);
         html = html.replace(/{NUMBER}/g, this.attendeeCount + 1);
 
-        // Create temporary div to hold HTML
         const temp = document.createElement('div');
         temp.innerHTML = html;
         const newAttendee = temp.firstElementChild;
 
-        // Append to container
         container.appendChild(newAttendee);
-
-        // Setup listeners for new attendee
         this.setupAttendeeListeners(this.attendeeCount);
-
-        // Increment counter
         this.attendeeCount++;
-
-        // Update price
         this.updateTotalPrice();
     }
 
-    /**
-     * Setup listeners for a specific attendee
-     */
     setupAttendeeListeners(index) {
-        // Remove button
         const removeBtn = document.querySelector(`[data-attendee-index="${index}"] .btn-remove-attendee`);
         if (removeBtn) {
             removeBtn.addEventListener('click', () => this.removeAttendee(index));
         }
 
-        // Age input - suggest ticket type
         const ageInput = document.getElementById(`attendee_age_${index}`);
         if (ageInput) {
             ageInput.addEventListener('change', () => this.handleAgeChange(index));
         }
 
-        // Ticket type - show/hide day selection
         const ticketTypeSelect = document.getElementById(`attendee_ticket_type_${index}`);
         if (ticketTypeSelect) {
             ticketTypeSelect.addEventListener('change', () => {
@@ -168,16 +135,17 @@ class BookingForm {
             });
         }
 
-        // Day checkboxes - recalculate price
         const dayCheckboxes = document.querySelectorAll(`#day_dates_${index} .day-checkbox`);
         dayCheckboxes.forEach(checkbox => {
             checkbox.addEventListener('change', () => this.updateTotalPrice());
         });
+
+        const sponsorInput = document.getElementById(`attendee_sponsor_amount_${index}`);
+        if (sponsorInput) {
+            sponsorInput.addEventListener('input', () => this.updateTotalPrice());
+        }
     }
 
-    /**
-     * Remove attendee from form
-     */
     removeAttendee(index) {
         const attendeeCard = document.querySelector(`[data-attendee-index="${index}"]`);
         if (attendeeCard) {
@@ -186,9 +154,6 @@ class BookingForm {
         }
     }
 
-    /**
-     * Handle age input change - suggest appropriate ticket type
-     */
     handleAgeChange(index) {
         const ageInput = document.getElementById(`attendee_age_${index}`);
         const ticketTypeSelect = document.getElementById(`attendee_ticket_type_${index}`);
@@ -196,11 +161,9 @@ class BookingForm {
         if (!ageInput || !ticketTypeSelect) return;
 
         const age = parseInt(ageInput.value);
-
         if (isNaN(age)) return;
 
-        // Auto-suggest ticket type based on age
-        if (age <= 4) {
+        if (age <= 3) {
             ticketTypeSelect.value = 'free_child';
         } else if (age <= 15) {
             if (!ticketTypeSelect.value || ticketTypeSelect.value === 'free_child') {
@@ -212,44 +175,49 @@ class BookingForm {
             }
         }
 
-        // Trigger ticket type change
         this.handleTicketTypeChange(index);
         this.updateTotalPrice();
     }
 
-    /**
-     * Handle ticket type change - show/hide day selection
-     */
     handleTicketTypeChange(index) {
         const ticketTypeSelect = document.getElementById(`attendee_ticket_type_${index}`);
         const dayDatesDiv = document.getElementById(`day_dates_${index}`);
+        const sponsorDiv = document.getElementById(`sponsor_amount_${index}`);
 
-        if (!ticketTypeSelect || !dayDatesDiv) return;
+        if (!ticketTypeSelect) return;
 
         const ticketType = ticketTypeSelect.value;
 
-        // Show day selection for day tickets
-        if (ticketType === 'adult_day' || ticketType === 'child_day') {
-            dayDatesDiv.style.display = 'block';
+        // Show/hide day selection for day tickets
+        if (dayDatesDiv) {
+            if (ticketType === 'adult_day' || ticketType === 'child_day') {
+                dayDatesDiv.style.display = 'block';
+                const checkboxes = dayDatesDiv.querySelectorAll('.day-checkbox');
+                checkboxes.forEach(cb => cb.required = true);
+            } else {
+                dayDatesDiv.style.display = 'none';
+                const checkboxes = dayDatesDiv.querySelectorAll('.day-checkbox');
+                checkboxes.forEach(cb => {
+                    cb.required = false;
+                    cb.checked = false;
+                });
+            }
+        }
 
-            // Make day checkboxes required
-            const checkboxes = dayDatesDiv.querySelectorAll('.day-checkbox');
-            checkboxes.forEach(cb => cb.required = true);
-        } else {
-            dayDatesDiv.style.display = 'none';
-
-            // Remove required from day checkboxes and uncheck them
-            const checkboxes = dayDatesDiv.querySelectorAll('.day-checkbox');
-            checkboxes.forEach(cb => {
-                cb.required = false;
-                cb.checked = false;
-            });
+        // Show/hide sponsor amount input
+        if (sponsorDiv) {
+            if (ticketType === 'adult_sponsor') {
+                sponsorDiv.style.display = 'block';
+                const input = sponsorDiv.querySelector('.sponsor-amount-input');
+                if (input) input.required = true;
+            } else {
+                sponsorDiv.style.display = 'none';
+                const input = sponsorDiv.querySelector('.sponsor-amount-input');
+                if (input) input.required = false;
+            }
         }
     }
 
-    /**
-     * Calculate total price from all attendees
-     */
     calculateTotal() {
         let total = 0;
         const attendeeCards = document.querySelectorAll('.attendee-card');
@@ -268,7 +236,13 @@ class BookingForm {
                     price = this.prices.adult;
                     break;
                 case 'adult_sponsor':
-                    price = this.prices.adultSponsor;
+                    const sponsorInput = document.getElementById(`attendee_sponsor_amount_${index}`);
+                    if (sponsorInput) {
+                        const customAmount = parseFloat(sponsorInput.value) || this.prices.sponsorSuggested;
+                        price = Math.max(this.prices.sponsorMin, customAmount);
+                    } else {
+                        price = this.prices.sponsorSuggested;
+                    }
                     break;
                 case 'child_weekend':
                     price = this.prices.child;
@@ -292,9 +266,6 @@ class BookingForm {
         return total;
     }
 
-    /**
-     * Update total price display
-     */
     updateTotalPrice() {
         const total = this.calculateTotal();
         const totalElement = document.getElementById('total-price');
@@ -309,16 +280,11 @@ class BookingForm {
             peopleCountElement.textContent = attendeeCount;
         }
 
-        // Update installment preview if needed
         this.updateInstallmentPreview();
     }
 
-    /**
-     * Setup payment method radio listeners
-     */
     setupPaymentMethodListeners() {
         const paymentMethodRadios = document.querySelectorAll('input[name="payment_method"]');
-
         paymentMethodRadios.forEach(radio => {
             radio.addEventListener('change', () => {
                 this.updatePaymentMethodVisibility();
@@ -326,197 +292,182 @@ class BookingForm {
         });
     }
 
-    /**
-     * Update visibility based on payment method selection
-     */
     updatePaymentMethodVisibility() {
         const selectedMethod = document.querySelector('input[name="payment_method"]:checked');
         if (!selectedMethod) return;
 
         const method = selectedMethod.value;
-
         const bankTransferDetails = document.getElementById('bank-transfer-details');
         const paymentPlanGroup = document.getElementById('payment-plan-group');
         const stripeNote = document.getElementById('stripe-note');
 
-        // Show/hide bank transfer details
         if (method === 'bank_transfer') {
             bankTransferDetails.style.display = 'block';
         } else {
             bankTransferDetails.style.display = 'none';
         }
 
-        // Show payment plan group
         paymentPlanGroup.style.display = 'block';
 
-        // Get installment radio buttons
-        const monthlyRadio = document.querySelector('input[name="payment_plan"][value="monthly"]');
-        const threePaymentRadio = document.querySelector('input[name="payment_plan"][value="three_payments"]');
+        // Only show split payment option for Stripe
+        const splitRadio = document.querySelector('input[name="payment_plan"][value="split"]');
+        const splitRadioCard = splitRadio ? splitRadio.closest('.radio-card') : null;
 
-        // Show Stripe note only for Stripe payments
         if (method === 'stripe') {
             if (stripeNote) stripeNote.style.display = 'block';
+            if (splitRadioCard) splitRadioCard.style.display = '';
+            if (splitRadio) splitRadio.disabled = false;
         } else {
             if (stripeNote) stripeNote.style.display = 'none';
-        }
+            if (splitRadioCard) splitRadioCard.style.display = 'none';
+            if (splitRadio) splitRadio.disabled = true;
 
-        // Enable installment options for all payment methods
-        if (monthlyRadio) monthlyRadio.disabled = false;
-        if (threePaymentRadio) threePaymentRadio.disabled = false;
+            // Reset to full payment if split was selected
+            const fullRadio = document.querySelector('input[name="payment_plan"][value="1"]');
+            if (fullRadio && splitRadio && splitRadio.checked) {
+                fullRadio.checked = true;
+                document.getElementById('split-count-group').style.display = 'none';
+            }
+        }
 
         this.updateInstallmentPreview();
     }
 
-    /**
-     * Setup payment plan radio listeners
-     */
     setupPaymentPlanListeners() {
         const paymentPlanRadios = document.querySelectorAll('input[name="payment_plan"]');
+        const splitCountGroup = document.getElementById('split-count-group');
+        const splitSlider = document.getElementById('split-count');
+        const splitDisplay = document.getElementById('split-count-display');
 
         paymentPlanRadios.forEach(radio => {
             radio.addEventListener('change', () => {
+                if (radio.value === 'split') {
+                    splitCountGroup.style.display = 'block';
+                } else {
+                    splitCountGroup.style.display = 'none';
+                }
                 this.updateInstallmentPreview();
             });
         });
+
+        if (splitSlider) {
+            splitSlider.addEventListener('input', () => {
+                const count = splitSlider.value;
+                splitDisplay.textContent = count + ' payments';
+                this.updateInstallmentPreview();
+            });
+        }
     }
 
-    /**
-     * Update installment preview display
-     */
-    updateInstallmentPreview() {
+    getSelectedInstallments() {
         const selectedPlan = document.querySelector('input[name="payment_plan"]:checked');
+        if (!selectedPlan) return 1;
+
+        if (selectedPlan.value === '1') return 1;
+        if (selectedPlan.value === 'split') {
+            const slider = document.getElementById('split-count');
+            return slider ? parseInt(slider.value) : 2;
+        }
+        return 1;
+    }
+
+    updateInstallmentPreview() {
         const previewDiv = document.getElementById('installment-preview');
         const detailsDiv = document.getElementById('installment-details');
 
-        if (!selectedPlan || !previewDiv || !detailsDiv) return;
+        if (!previewDiv || !detailsDiv) return;
 
-        const plan = selectedPlan.value;
+        const numInstallments = this.getSelectedInstallments();
         const total = this.calculateTotal();
 
-        if (plan === 'full' || total === 0) {
+        if (numInstallments <= 1 || total === 0) {
             previewDiv.style.display = 'none';
             return;
         }
 
-        // Calculate installments
-        let installments = [];
-
-        if (plan === 'monthly') {
-            // Calculate months until payment deadline (May 20, 2026) - matches server logic
-            const now = new Date();
-            const paymentDeadline = new Date('2026-05-20');
-
-            // Calculate months properly (not just days/30)
-            let months = (paymentDeadline.getFullYear() - now.getFullYear()) * 12;
-            months += paymentDeadline.getMonth() - now.getMonth();
-
-            // If there are remaining days, count as additional month
-            if (paymentDeadline.getDate() > now.getDate()) {
-                months++;
-            }
-
-            months = Math.max(1, months); // At least 1 month
-            const monthlyAmount = total / months;
-
-            for (let i = 1; i <= months; i++) {
-                const amount = (i === months) ? (total - (monthlyAmount * (months - 1))) : monthlyAmount;
-                installments.push({
-                    number: i,
-                    amount: amount.toFixed(2)
-                });
-            }
-        } else if (plan === 'three_payments') {
-            const paymentAmount = total / 3;
-
-            for (let i = 1; i <= 3; i++) {
-                const amount = (i === 3) ? (total - (paymentAmount * 2)) : paymentAmount;
-                installments.push({
-                    number: i,
-                    amount: amount.toFixed(2)
-                });
-            }
-        }
-
-        // Build HTML
+        const installmentAmount = total / numInstallments;
         let html = '';
-        installments.forEach(inst => {
+
+        for (let i = 1; i <= numInstallments; i++) {
+            const amount = (i === numInstallments) ? (total - (installmentAmount * (numInstallments - 1))) : installmentAmount;
+            const label = i === 1 ? 'Payment 1 (now)' : `Payment ${i}`;
             html += `
                 <div class="installment-row">
-                    <span>Payment ${inst.number}</span>
-                    <span>£${inst.amount}</span>
+                    <span>${label}</span>
+                    <span>£${amount.toFixed(2)}</span>
                 </div>
             `;
-        });
+        }
 
         detailsDiv.innerHTML = html;
         previewDiv.style.display = 'block';
     }
 
-    /**
-     * Setup booker name listener to update bank reference
-     */
     setupBookerNameListener() {
         const bookerNameInput = document.getElementById('booker_name');
         const bankReferenceSpan = document.getElementById('bank-reference');
 
         if (!bookerNameInput || !bankReferenceSpan) return;
 
+        const prefix = bankReferenceSpan.textContent.split('[')[0] || 'ECHO';
+
         bookerNameInput.addEventListener('input', () => {
             const name = bookerNameInput.value.trim();
 
             if (!name) {
-                bankReferenceSpan.textContent = 'Camp[YourSurname]';
+                bankReferenceSpan.textContent = prefix + '[YourSurname]';
                 return;
             }
 
-            // Extract surname (last word)
             const nameParts = name.split(' ');
             const surname = nameParts[nameParts.length - 1];
-
-            // Clean surname (alphanumeric only)
             const cleanSurname = surname.replace(/[^A-Za-z0-9]/g, '');
 
             if (cleanSurname) {
-                bankReferenceSpan.textContent = 'Camp' + cleanSurname.charAt(0).toUpperCase() + cleanSurname.slice(1).toLowerCase();
+                bankReferenceSpan.textContent = prefix + cleanSurname.charAt(0).toUpperCase() + cleanSurname.slice(1).toLowerCase();
             } else {
-                bankReferenceSpan.textContent = 'Camp[YourSurname]';
+                bankReferenceSpan.textContent = prefix + '[YourSurname]';
             }
         });
     }
 
-    /**
-     * Setup form submission
-     */
     setupFormSubmit() {
         const form = document.getElementById('booking-form');
         const submitBtn = document.getElementById('submit-btn');
+        this.isSubmitting = false;
 
         form.addEventListener('submit', (e) => {
-            // Generate unique submission token to prevent duplicate submissions
-            const submissionToken = Date.now() + '-' + Math.random().toString(36).substr(2, 9);
-            const tokenInput = document.createElement('input');
-            tokenInput.type = 'hidden';
-            tokenInput.name = 'submission_token';
-            tokenInput.value = submissionToken;
-            form.appendChild(tokenInput);
-
-            // Disable submit button to prevent double-click
-            if (submitBtn) {
-                submitBtn.disabled = true;
-                submitBtn.textContent = 'Processing...';
+            // Prevent double submission
+            if (this.isSubmitting) {
+                e.preventDefault();
+                return false;
             }
 
-            // Basic validation
+            // Validate total amount first
             const total = this.calculateTotal();
-
             if (total === 0) {
                 alert('Please add at least one paid attendee to your booking.');
                 e.preventDefault();
-                // Re-enable submit button
-                if (submitBtn) {
-                    submitBtn.disabled = false;
-                    submitBtn.textContent = 'Complete Booking';
+                return false;
+            }
+
+            // Validate sponsor amounts
+            const sponsorInputs = document.querySelectorAll('.sponsor-amount-input');
+            let sponsorError = false;
+            sponsorInputs.forEach(input => {
+                const group = input.closest('.sponsor-amount-group');
+                if (group && group.style.display !== 'none') {
+                    const val = parseFloat(input.value);
+                    if (isNaN(val) || val < this.prices.sponsorMin) {
+                        alert(`Sponsor ticket amount must be at least £${this.prices.sponsorMin.toFixed(2)}`);
+                        sponsorError = true;
+                        input.focus();
+                    }
                 }
+            });
+
+            if (sponsorError) {
+                e.preventDefault();
                 return false;
             }
 
@@ -529,7 +480,6 @@ class BookingForm {
                 if (value === 'adult_day' || value === 'child_day') {
                     const index = select.id.split('_').pop();
                     const checkedDays = document.querySelectorAll(`#day_dates_${index} .day-checkbox:checked`).length;
-
                     if (checkedDays === 0) {
                         dayTicketError = true;
                     }
@@ -542,17 +492,30 @@ class BookingForm {
                 return false;
             }
 
-            // Disable submit button to prevent double submission
+            // Resolve the actual payment_plan value before submit
+            const numInstallments = this.getSelectedInstallments();
+            const selectedPlan = document.querySelector('input[name="payment_plan"]:checked');
+
+            // If "split" is selected, add a hidden input with the actual count
+            // (don't mutate the radio value — it breaks retries)
+            if (selectedPlan && selectedPlan.value === 'split') {
+                const existing = form.querySelector('input[name="payment_plan_count"]');
+                if (existing) existing.remove();
+                const hidden = document.createElement('input');
+                hidden.type = 'hidden';
+                hidden.name = 'payment_plan_count';
+                hidden.value = numInstallments;
+                form.appendChild(hidden);
+            }
+
+            // All validation passed - lock the form to prevent double submission
+            this.isSubmitting = true;
             submitBtn.disabled = true;
             submitBtn.classList.add('loading');
             submitBtn.textContent = 'Processing...';
 
-            // Re-enable after 3 seconds (in case of error)
-            setTimeout(() => {
-                submitBtn.disabled = false;
-                submitBtn.classList.remove('loading');
-                submitBtn.textContent = 'Complete Booking';
-            }, 3000);
+            // Do NOT re-enable the button - the form is submitting and will redirect.
+            // The server-side idempotency token prevents duplicates even if this somehow fires twice.
         });
     }
 }

@@ -69,12 +69,16 @@ class Booking {
             // Insert booking
             $sql = "INSERT INTO bookings (
                 booking_reference,
+                idempotency_token,
                 booker_name,
                 booker_email,
                 booker_phone,
                 num_tents,
                 has_caravan,
                 needs_tent_provided,
+                tent_details,
+                needs_transport,
+                transport_details,
                 special_requirements,
                 payment_method,
                 payment_plan,
@@ -82,17 +86,22 @@ class Booking {
                 amount_paid,
                 amount_outstanding,
                 booking_status,
-                payment_status
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                payment_status,
+                event_year
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
             $bookingId = $this->db->insert($sql, [
                 $bookingReference,
+                $bookingData['idempotency_token'] ?? null,
                 $bookingData['booker_name'],
                 $bookingData['booker_email'],
                 $bookingData['booker_phone'],
                 $bookingData['num_tents'] ?? 0,
                 $bookingData['has_caravan'] ?? 0,
                 $bookingData['needs_tent_provided'] ?? 0,
+                $bookingData['tent_details'] ?? '',
+                $bookingData['needs_transport'] ?? 0,
+                $bookingData['transport_details'] ?? '',
                 $bookingData['special_requirements'] ?? '',
                 $bookingData['payment_method'],
                 $bookingData['payment_plan'],
@@ -100,8 +109,21 @@ class Booking {
                 0.00, // amount_paid
                 $totalAmount, // amount_outstanding
                 'pending',
-                'unpaid'
+                'unpaid',
+                EVENT_YEAR
             ]);
+
+            // Auto-link to existing portal user if one exists for this email
+            $portalUser = $this->db->fetchOne(
+                "SELECT id FROM portal_users WHERE email = ?",
+                [$bookingData['booker_email']]
+            );
+            if ($portalUser) {
+                $this->db->execute(
+                    "UPDATE bookings SET portal_user_id = ? WHERE id = ?",
+                    [$portalUser['id'], $bookingId]
+                );
+            }
 
             // Insert attendees
             foreach ($attendees as $attendee) {
@@ -346,10 +368,21 @@ class Booking {
             $metadata['processed_by_admin_id'] ?? null
         ]);
 
-        // Update booking amounts
-        $newAmountPaid = (float)$this->data['amount_paid'] + $amount;
-        $this->update(['amount_paid' => $newAmountPaid]);
-        $this->updatePaymentStatus();
+        // Only update booking amounts for successful payments
+        $status = $metadata['status'] ?? 'succeeded';
+        if ($status === 'succeeded') {
+            $newAmountPaid = (float)$this->data['amount_paid'] + $amount;
+            $totalAmount = (float)$this->data['total_amount'];
+
+            // Overcharge guard: never credit more than the total booking amount
+            if ($newAmountPaid > $totalAmount) {
+                error_log("OVERCHARGE PREVENTED: Booking #{$this->id} - would set amount_paid to £{$newAmountPaid} but total is £{$totalAmount}. Capping at total.");
+                $newAmountPaid = $totalAmount;
+            }
+
+            $this->update(['amount_paid' => $newAmountPaid]);
+            $this->updatePaymentStatus();
+        }
 
         return $paymentId;
     }
@@ -357,14 +390,14 @@ class Booking {
     /**
      * Create payment schedule for installments
      *
-     * @param string $paymentPlan monthly or three_payments
+     * @param int $numInstallments Number of installments (1-11)
      */
-    public function createPaymentSchedule($paymentPlan) {
+    public function createPaymentSchedule($numInstallments) {
         $totalAmount = (float)$this->data['total_amount'];
         $bookingDate = $this->data['created_at'];
 
         // Calculate schedule
-        $schedule = calculatePaymentSchedule($totalAmount, $paymentPlan, $bookingDate);
+        $schedule = calculatePaymentSchedule($totalAmount, $numInstallments, $bookingDate);
 
         // Insert schedule records
         foreach ($schedule as $item) {
@@ -413,6 +446,12 @@ class Booking {
 
         $params = [];
 
+        // Filter by event year
+        if (isset($filters['event_year'])) {
+            $sql .= " AND b.event_year = ?";
+            $params[] = (int)$filters['event_year'];
+        }
+
         // Apply filters
         if (!empty($filters['payment_status'])) {
             $sql .= " AND b.payment_status = ?";
@@ -445,17 +484,26 @@ class Booking {
     /**
      * Get booking statistics
      */
-    public static function getStatistics() {
+    public static function getStatistics($eventYear = null) {
         $db = Database::getInstance();
+        $yearFilter = '';
+        $yearParam = [];
+        $attendeeYearFilter = '';
+
+        if ($eventYear !== null) {
+            $yearFilter = ' AND event_year = ?';
+            $yearParam = [(int)$eventYear];
+            $attendeeYearFilter = ' AND a.booking_id IN (SELECT id FROM bookings WHERE event_year = ?)';
+        }
 
         return [
-            'total_bookings' => $db->fetchOne("SELECT COUNT(*) as count FROM bookings")['count'],
-            'total_attendees' => $db->fetchOne("SELECT COUNT(*) as count FROM attendees")['count'],
-            'total_revenue' => $db->fetchOne("SELECT SUM(amount_paid) as total FROM bookings")['total'] ?? 0,
-            'outstanding_amount' => $db->fetchOne("SELECT SUM(amount_outstanding) as total FROM bookings WHERE payment_status != 'paid'")['total'] ?? 0,
-            'paid_bookings' => $db->fetchOne("SELECT COUNT(*) as count FROM bookings WHERE payment_status = 'paid'")['count'],
-            'unpaid_bookings' => $db->fetchOne("SELECT COUNT(*) as count FROM bookings WHERE payment_status = 'unpaid'")['count'],
-            'partial_bookings' => $db->fetchOne("SELECT COUNT(*) as count FROM bookings WHERE payment_status = 'partial'")['count']
+            'total_bookings' => $db->fetchOne("SELECT COUNT(*) as count FROM bookings WHERE 1=1{$yearFilter}", $yearParam)['count'],
+            'total_attendees' => $db->fetchOne("SELECT COUNT(*) as count FROM attendees a WHERE 1=1{$attendeeYearFilter}", $yearParam)['count'],
+            'total_revenue' => $db->fetchOne("SELECT COALESCE(SUM(amount_paid), 0) as total FROM bookings WHERE 1=1{$yearFilter}", $yearParam)['total'],
+            'outstanding_amount' => $db->fetchOne("SELECT COALESCE(SUM(amount_outstanding), 0) as total FROM bookings WHERE payment_status != 'paid'{$yearFilter}", $yearParam)['total'],
+            'paid_bookings' => $db->fetchOne("SELECT COUNT(*) as count FROM bookings WHERE payment_status = 'paid'{$yearFilter}", $yearParam)['count'],
+            'unpaid_bookings' => $db->fetchOne("SELECT COUNT(*) as count FROM bookings WHERE payment_status = 'unpaid'{$yearFilter}", $yearParam)['count'],
+            'partial_bookings' => $db->fetchOne("SELECT COUNT(*) as count FROM bookings WHERE payment_status = 'partial'{$yearFilter}", $yearParam)['count']
         ];
     }
 

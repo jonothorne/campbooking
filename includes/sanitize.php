@@ -86,7 +86,7 @@ function sanitizeAge($age) {
  * @return string
  */
 function sanitizeTextarea($input) {
-    return trim(htmlspecialchars($input, ENT_QUOTES, 'UTF-8'));
+    return trim(strip_tags($input));
 }
 
 /**
@@ -174,6 +174,9 @@ function sanitizeBookingData($data) {
     $sanitized['num_tents'] = max(0, sanitizeInt($data['num_tents'] ?? 0));
     $sanitized['has_caravan'] = !empty($data['has_caravan']) ? 1 : 0;
     $sanitized['needs_tent_provided'] = !empty($data['needs_tent_provided']) ? 1 : 0;
+    $sanitized['tent_details'] = sanitizeTextarea($data['tent_details'] ?? '');
+    $sanitized['needs_transport'] = !empty($data['needs_transport']) ? 1 : 0;
+    $sanitized['transport_details'] = sanitizeTextarea($data['transport_details'] ?? '');
     $sanitized['special_requirements'] = sanitizeTextarea($data['special_requirements'] ?? '');
 
     // Payment method
@@ -183,12 +186,12 @@ function sanitizeBookingData($data) {
         return ['error' => 'Invalid payment method'];
     }
 
-    // Payment plan
-    $validPaymentPlans = ['full', 'monthly', 'three_payments'];
-    $sanitized['payment_plan'] = $data['payment_plan'] ?? '';
-    if (!isValidEnum($sanitized['payment_plan'], $validPaymentPlans)) {
-        return ['error' => 'Invalid payment plan'];
+    // Payment plan - number of installments (1-11)
+    $paymentPlan = $data['payment_plan'] ?? 1;
+    if ($paymentPlan === 'split') {
+        $paymentPlan = sanitizeInt($data['payment_plan_count'] ?? 2);
     }
+    $sanitized['payment_plan'] = max(1, min(MAX_INSTALLMENTS, sanitizeInt($paymentPlan)));
 
     return $sanitized;
 }
@@ -229,7 +232,7 @@ function sanitizeAttendeeData($attendee) {
         }
 
         $sanitized['day_ticket_dates'] = [];
-        $validEventDates = getEventDates(); // Get valid event dates (May 29-31, 2026)
+        $validEventDates = getEventDates(); // Get valid event dates (June 3-6, 2027)
 
         foreach ($dates as $date) {
             $cleanDate = sanitizeDate($date);
@@ -249,8 +252,22 @@ function sanitizeAttendeeData($attendee) {
         $sanitized['day_ticket_dates'] = null;
     }
 
+    // Sponsor custom amount
+    if ($sanitized['ticket_type'] === 'adult_sponsor') {
+        $customAmount = sanitizeFloat($attendee['sponsor_amount'] ?? ADULT_SPONSOR_SUGGESTED);
+        if ($customAmount < ACTIVE_SPONSOR_MIN) {
+            return ['error' => 'Sponsor ticket amount must be at least ' . formatCurrency(ACTIVE_SPONSOR_MIN)];
+        }
+        $sanitized['sponsor_amount'] = round($customAmount, 2);
+    }
+
     // Calculate ticket price based on age and type
-    $sanitized['ticket_price'] = calculateTicketPrice($sanitized['age'], $sanitized['ticket_type'], $sanitized['day_ticket_dates']);
+    $sanitized['ticket_price'] = calculateTicketPrice(
+        $sanitized['age'],
+        $sanitized['ticket_type'],
+        $sanitized['day_ticket_dates'],
+        $sanitized['sponsor_amount'] ?? null
+    );
 
     return $sanitized;
 }
@@ -261,34 +278,37 @@ function sanitizeAttendeeData($attendee) {
  * @param int $age
  * @param string $ticketType
  * @param array|null $dayTicketDates
+ * @param float|null $sponsorAmount Custom sponsor amount
  * @return float
  */
-function calculateTicketPrice($age, $ticketType, $dayTicketDates = null) {
-    // Free for children 0-4
+function calculateTicketPrice($age, $ticketType, $dayTicketDates = null, $sponsorAmount = null) {
+    // Free for under 4s
     if ($age <= FREE_CHILD_MAX_AGE) {
         return 0.00;
     }
 
     switch ($ticketType) {
         case 'adult_weekend':
-            return ADULT_PRICE;
+            return ACTIVE_ADULT_PRICE;
 
         case 'adult_sponsor':
-            return ADULT_SPONSOR_PRICE;
+            // Custom amount with minimum of adult price
+            $amount = $sponsorAmount ?? ADULT_SPONSOR_SUGGESTED;
+            return max(ACTIVE_SPONSOR_MIN, round($amount, 2));
 
         case 'child_weekend':
-            return CHILD_PRICE;
+            return ACTIVE_CHILD_PRICE;
 
         case 'free_child':
             return 0.00;
 
         case 'adult_day':
             $numDays = is_array($dayTicketDates) ? count($dayTicketDates) : 1;
-            return ADULT_DAY_PRICE * $numDays;
+            return ACTIVE_ADULT_DAY_PRICE * $numDays;
 
         case 'child_day':
             $numDays = is_array($dayTicketDates) ? count($dayTicketDates) : 1;
-            return CHILD_DAY_PRICE * $numDays;
+            return ACTIVE_CHILD_DAY_PRICE * $numDays;
 
         default:
             return 0.00;

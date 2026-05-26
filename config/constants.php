@@ -102,29 +102,50 @@ define('APP_BASE_PATH', getenv('APP_BASE_PATH') ?: '');
 define('APP_ENV', $appEnv);
 
 // Event Details
-define('EVENT_NAME', getenv('EVENT_NAME') ?: 'Alive Church Camp 2026');
-define('EVENT_START_DATE', getenv('EVENT_START_DATE') ?: '2026-05-29');
-define('EVENT_END_DATE', getenv('EVENT_END_DATE') ?: '2026-05-31');
-define('PAYMENT_DEADLINE', getenv('PAYMENT_DEADLINE') ?: '2026-05-20');
+define('EVENT_NAME', getenv('EVENT_NAME') ?: 'ECHO2027: Amplified');
+define('EVENT_START_DATE', getenv('EVENT_START_DATE') ?: '2027-06-03');
+define('EVENT_YEAR', (int)date('Y', strtotime(EVENT_START_DATE)));
+define('EVENT_END_DATE', getenv('EVENT_END_DATE') ?: '2027-06-06');
+define('PAYMENT_DEADLINE', getenv('PAYMENT_DEADLINE') ?: '2027-05-20');
 
-// Pricing
-define('ADULT_PRICE', (float)(getenv('ADULT_PRICE') ?: 85.00));
-define('ADULT_SPONSOR_PRICE', (float)(getenv('ADULT_SPONSOR_PRICE') ?: 110.00));
-define('CHILD_PRICE', (float)(getenv('CHILD_PRICE') ?: 55.00));
-define('ADULT_DAY_PRICE', (float)(getenv('ADULT_DAY_PRICE') ?: 25.00));
-define('CHILD_DAY_PRICE', (float)(getenv('CHILD_DAY_PRICE') ?: 15.00));
+// Early Bird System
+define('EARLY_BIRD_CUTOFF', getenv('EARLY_BIRD_CUTOFF') ?: '2026-07-31');
+
+// Early Bird Pricing (active until EARLY_BIRD_CUTOFF)
+define('ADULT_PRICE', (float)(getenv('ADULT_PRICE') ?: 120.00));
+define('CHILD_PRICE', (float)(getenv('CHILD_PRICE') ?: 70.00));
+define('ADULT_DAY_PRICE', (float)(getenv('ADULT_DAY_PRICE') ?: 50.00));
+define('CHILD_DAY_PRICE', (float)(getenv('CHILD_DAY_PRICE') ?: 20.00));
+define('ADULT_SPONSOR_SUGGESTED', (float)(getenv('ADULT_SPONSOR_SUGGESTED') ?: 150.00));
+
+// Standard Pricing (after early bird period)
+define('STANDARD_ADULT_PRICE', (float)(getenv('STANDARD_ADULT_PRICE') ?: 135.00));
+define('STANDARD_CHILD_PRICE', (float)(getenv('STANDARD_CHILD_PRICE') ?: 85.00));
+define('STANDARD_ADULT_DAY_PRICE', (float)(getenv('STANDARD_ADULT_DAY_PRICE') ?: 60.00));
+define('STANDARD_CHILD_DAY_PRICE', (float)(getenv('STANDARD_CHILD_DAY_PRICE') ?: 25.00));
+
+// Active pricing (determined by current date vs early bird cutoff)
+define('IS_EARLY_BIRD', strtotime(date('Y-m-d')) <= strtotime(EARLY_BIRD_CUTOFF));
+define('ACTIVE_ADULT_PRICE', IS_EARLY_BIRD ? ADULT_PRICE : STANDARD_ADULT_PRICE);
+define('ACTIVE_CHILD_PRICE', IS_EARLY_BIRD ? CHILD_PRICE : STANDARD_CHILD_PRICE);
+define('ACTIVE_ADULT_DAY_PRICE', IS_EARLY_BIRD ? ADULT_DAY_PRICE : STANDARD_ADULT_DAY_PRICE);
+define('ACTIVE_CHILD_DAY_PRICE', IS_EARLY_BIRD ? CHILD_DAY_PRICE : STANDARD_CHILD_DAY_PRICE);
+define('ACTIVE_SPONSOR_MIN', ACTIVE_ADULT_PRICE);
 
 // Age thresholds
-define('FREE_CHILD_MAX_AGE', 4);  // 0-4 years old
-define('CHILD_MIN_AGE', 5);       // 5-15 years old
+define('FREE_CHILD_MAX_AGE', 3);  // 0-3 years old (under 4s free)
+define('CHILD_MIN_AGE', 4);       // 4-15 years old
 define('CHILD_MAX_AGE', 15);
 define('ADULT_MIN_AGE', 16);      // 16+ years old
+
+// Payment Plans
+define('MAX_INSTALLMENTS', (int)(getenv('MAX_INSTALLMENTS') ?: 11));
 
 // Bank Transfer Details
 define('BANK_NAME', getenv('BANK_NAME') ?: 'Alive UK');
 define('BANK_ACCOUNT', getenv('BANK_ACCOUNT') ?: '67366334');
 define('BANK_SORT_CODE', getenv('BANK_SORT_CODE') ?: '08-92-99');
-define('BANK_REFERENCE_PREFIX', getenv('BANK_REFERENCE_PREFIX') ?: 'Camp');
+define('BANK_REFERENCE_PREFIX', getenv('BANK_REFERENCE_PREFIX') ?: 'ECHO');
 
 // Stripe
 define('STRIPE_PUBLIC_KEY', getenv('STRIPE_PUBLIC_KEY') ?: '');
@@ -137,7 +158,7 @@ define('SMTP_PORT', getenv('SMTP_PORT') ?: 587);
 define('SMTP_USER', getenv('SMTP_USER') ?: '');
 define('SMTP_PASS', getenv('SMTP_PASS') ?: '');
 define('SMTP_FROM_EMAIL', getenv('SMTP_FROM_EMAIL') ?: 'bookings@alivechurch.com');
-define('SMTP_FROM_NAME', getenv('SMTP_FROM_NAME') ?: 'Alive Church Camp');
+define('SMTP_FROM_NAME', getenv('SMTP_FROM_NAME') ?: 'ECHO2027');
 
 // Payment Retry Settings
 define('MAX_PAYMENT_RETRIES', 3);

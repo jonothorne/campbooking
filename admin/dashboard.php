@@ -14,12 +14,15 @@ require_once __DIR__ . '/../classes/Attendee.php';
 // Set page title
 $pageTitle = 'Dashboard';
 
+// Get selected event year
+$eventYear = getAdminEventYear();
+
 // Get statistics
-$stats = Booking::getStatistics();
-$attendeeStats = Attendee::getStatistics();
+$stats = Booking::getStatistics($eventYear);
+$attendeeStats = Attendee::getStatistics($eventYear);
 
 // Get recent bookings
-$recentBookings = Booking::getAll(['limit' => 10]);
+$recentBookings = Booking::getAll(['limit' => 10, 'event_year' => $eventYear]);
 
 // Include header
 include __DIR__ . '/../templates/admin/header.php';

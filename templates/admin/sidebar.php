@@ -9,7 +9,7 @@ $currentPage = basename($_SERVER['PHP_SELF']);
 ?>
 <aside class="admin-sidebar">
     <div class="sidebar-header">
-        <img src="<?php echo basePath('public/assets/images/ECHO-logo-dark.png'); ?>" alt="ECHO2026" class="sidebar-logo">
+        <img src="<?php echo basePath('public/assets/images/logo-dark.png'); ?>" alt="ECHO2027" class="sidebar-logo">
     </div>
     <nav class="sidebar-nav">
         <a href="<?php echo url('admin/dashboard.php'); ?>"

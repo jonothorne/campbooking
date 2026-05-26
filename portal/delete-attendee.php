@@ -13,8 +13,14 @@ require_once __DIR__ . '/../classes/Booking.php';
 // Require authentication
 requireCustomerAuth();
 
-$customerId = currentCustomerId();
+$portalUserId = currentPortalUserId();
 $db = Database::getInstance();
+$bookingRow = getPortalUserBooking($portalUserId);
+if (!$bookingRow) {
+    $_SESSION['error'] = 'No booking found for the current event.';
+    redirect(url('portal/dashboard.php'));
+}
+$bookingId = $bookingRow['id'];
 
 // Get attendee ID
 $attendeeId = isset($_GET['id']) ? (int)$_GET['id'] : 0;
@@ -23,7 +29,7 @@ $attendeeId = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 try {
     $attendee = $db->fetchOne(
         "SELECT * FROM attendees WHERE id = ? AND booking_id = ?",
-        [$attendeeId, $customerId]
+        [$attendeeId, $bookingId]
     );
 
     if (!$attendee) {
@@ -39,7 +45,7 @@ try {
 try {
     $attendeeCount = $db->fetchOne(
         "SELECT COUNT(*) as count FROM attendees WHERE booking_id = ?",
-        [$customerId]
+        [$bookingId]
     )['count'];
 
     if ($attendeeCount <= 1) {
@@ -59,13 +65,13 @@ try {
     // Delete attendee
     $db->execute(
         "DELETE FROM attendees WHERE id = ? AND booking_id = ?",
-        [$attendeeId, $customerId]
+        [$attendeeId, $bookingId]
     );
 
     // Recalculate booking total
     $newTotal = $db->fetchOne(
         "SELECT SUM(ticket_price) as total FROM attendees WHERE booking_id = ?",
-        [$customerId]
+        [$bookingId]
     )['total'] ?? 0;
 
     // Update booking total and outstanding amount
@@ -74,15 +80,15 @@ try {
             total_amount = ?,
             amount_outstanding = total_amount - amount_paid
         WHERE id = ?",
-        [$newTotal, $customerId]
+        [$newTotal, $bookingId]
     );
 
     // Recalculate payment schedule to redistribute outstanding amount
-    $booking = new Booking($customerId);
+    $booking = new Booking($bookingId);
     $booking->recalculatePaymentSchedule();
 
     // Log GDPR action
-    logGDPRAction($customerId, 'privacy_update', "Customer removed attendee: $attendeeName");
+    logGDPRAction($bookingId, 'privacy_update', "Customer removed attendee: $attendeeName");
 
     // Success message
     $_SESSION['success'] = "Removed $attendeeName from your booking. Your new total is " . formatCurrency($newTotal) . ".";

@@ -146,10 +146,13 @@ function handlePaymentIntentSucceeded($paymentIntent)
         );
 
         // Reload booking data to get updated amounts
-        $booking->getData(); // This calls load() internally
+        $booking = new Booking((int)$bookingId); // Reload fresh
         $updatedBookingData = $booking->getData();
-        if ($updatedBookingData['amount_outstanding'] <= 0) {
+
+        // Confirm booking on any successful payment (it was pending until now)
+        if ($updatedBookingData['booking_status'] === 'pending') {
             $booking->update(['booking_status' => 'confirmed']);
+            logMessage("[$timestamp] Booking #{$bookingId} confirmed after successful payment", $logFile);
         }
 
         // If installment, mark schedule as paid and link to payment
@@ -300,14 +303,13 @@ function handleSetupIntentSucceeded($setupIntent)
 
         logMessage("[$timestamp] Setup intent succeeded - Booking #{$bookingId}", $logFile);
 
-        // Update booking with Stripe IDs
+        // Update booking with Stripe IDs (keep status as 'pending' until first payment succeeds)
         $booking->update([
             'stripe_customer_id' => $setupIntent->customer,
-            'stripe_payment_method_id' => $setupIntent->payment_method,
-            'booking_status' => 'confirmed'
+            'stripe_payment_method_id' => $setupIntent->payment_method
         ]);
 
-        logMessage("[$timestamp] Payment method saved - Customer: {$setupIntent->customer}", $logFile);
+        logMessage("[$timestamp] Payment method saved - Customer: {$setupIntent->customer} (booking remains pending until first payment)", $logFile);
 
         // Charge the first installment immediately
         $firstInstallment = $db->fetchOne(
@@ -331,14 +333,41 @@ function handleSetupIntentSucceeded($setupIntent)
                     $firstInstallment['installment_number']
                 );
 
-                logMessage("[$timestamp] First installment charged - Payment Intent: {$result['payment_intent_id']}", $logFile);
-                logMessage("[$timestamp] Payment will be recorded when payment_intent.succeeded webhook fires", $logFile);
+                if ($result['status'] === 'failed') {
+                    logMessage("[$timestamp] First installment charge FAILED: " . ($result['error'] ?? 'Unknown error'), $logFile);
+                    logMessage("[$timestamp] Booking #{$bookingId} remains pending - payment method saved, cron will retry", $logFile);
+
+                    // Mark as failed so cron knows about it
+                    $db->execute(
+                        "UPDATE payment_schedules
+                        SET status = 'failed',
+                            attempt_count = attempt_count + 1,
+                            last_attempt_date = NOW(),
+                            next_retry_date = DATE_ADD(NOW(), INTERVAL 2 DAY)
+                        WHERE id = ?",
+                        [$firstInstallment['id']]
+                    );
+                } else {
+                    logMessage("[$timestamp] First installment charged - Payment Intent: {$result['payment_intent_id']}", $logFile);
+                    logMessage("[$timestamp] Payment will be recorded when payment_intent.succeeded webhook fires", $logFile);
+
+                    // Mark schedule as paid immediately to prevent cron from charging it again
+                    $db->execute(
+                        "UPDATE payment_schedules
+                        SET status = 'paid',
+                            stripe_payment_intent_id = ?,
+                            last_attempt_date = NOW()
+                        WHERE id = ?",
+                        [$result['payment_intent_id'], $firstInstallment['id']]
+                    );
+                }
 
                 // NOTE: Do NOT record payment here - the payment_intent.succeeded webhook will handle it
                 // This prevents duplicate payment recording
 
             } catch (Exception $e) {
-                logMessage("[$timestamp] Error charging first installment: " . $e->getMessage(), $logFile);
+                logMessage("[$timestamp] ERROR charging first installment: " . $e->getMessage(), $logFile);
+                logMessage("[$timestamp] Booking #{$bookingId} remains pending - payment method saved, cron will retry", $logFile);
                 // Don't throw - payment method is saved, cron will retry
             }
         }

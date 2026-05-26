@@ -110,11 +110,11 @@ if (!empty($errors)) {
 
 // Calculate payment schedule if requested
 $paymentSchedule = null;
-$paymentPlan = $_POST['payment_plan'] ?? 'full';
+$numInstallments = max(1, min(MAX_INSTALLMENTS, (int)($_POST['payment_plan'] ?? 1)));
 
-if (in_array($paymentPlan, ['monthly', 'three_payments']) && $totalAmount > 0) {
+if ($numInstallments > 1 && $totalAmount > 0) {
     $bookingDate = date('Y-m-d');
-    $schedule = calculatePaymentSchedule($totalAmount, $paymentPlan, $bookingDate);
+    $schedule = calculatePaymentSchedule($totalAmount, $numInstallments, $bookingDate);
 
     $paymentSchedule = array_map(function($item) {
         return [

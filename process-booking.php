@@ -16,7 +16,7 @@ require_once __DIR__ . '/classes/StripeHandler.php';
 
 // Only allow POST requests
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    redirect('/book/');
+    redirect(url(''));
 }
 
 // Start session for error messages
@@ -27,17 +27,32 @@ if (session_status() === PHP_SESSION_NONE) {
 // Verify CSRF token
 requireCsrfToken();
 
-// Prevent duplicate submission (double-click protection)
-$submissionToken = $_POST['submission_token'] ?? '';
-if (!empty($submissionToken) && isset($_SESSION['last_submission_token']) && $_SESSION['last_submission_token'] === $submissionToken) {
-    // Duplicate submission detected
-    $_SESSION['booking_error'] = 'This booking has already been submitted. Please check your booking confirmation.';
-    redirect('/book/?error=1');
+// Verify idempotency token (prevents duplicate submissions)
+$idempotencyToken = $_POST['idempotency_token'] ?? '';
+if (empty($idempotencyToken)) {
+    $_SESSION['booking_error'] = 'Invalid form submission. Please try again.';
+    redirect(url('?error=1'));
 }
 
-// Store submission token to prevent duplicates
-if (!empty($submissionToken)) {
-    $_SESSION['last_submission_token'] = $submissionToken;
+// Check if this token matches the session (prevents replay from old forms)
+if (!isset($_SESSION['idempotency_token']) || $_SESSION['idempotency_token'] !== $idempotencyToken) {
+    $_SESSION['booking_error'] = 'This form has expired or was already submitted. Please try again.';
+    redirect(url('?error=1'));
+}
+
+// Immediately clear the session token so it can't be reused
+unset($_SESSION['idempotency_token']);
+
+// Check if a booking with this idempotency token already exists in the database
+$db = Database::getInstance();
+$existingBooking = $db->fetchOne(
+    "SELECT id, booking_reference FROM bookings WHERE idempotency_token = ?",
+    [$idempotencyToken]
+);
+
+if ($existingBooking) {
+    // Booking already exists - redirect to success page instead of creating duplicate
+    redirect(url('payment-success.php?booking=' . $existingBooking['booking_reference']));
 }
 
 try {
@@ -49,6 +64,23 @@ try {
 
     if (isset($bookingData['error'])) {
         throw new Exception($bookingData['error']);
+    }
+
+    // Attach idempotency token to booking data
+    $bookingData['idempotency_token'] = $idempotencyToken;
+
+    // ============================================
+    // Step 1b: Check for existing booking with same email
+    // ============================================
+
+    $existingEmailBooking = $db->fetchOne(
+        "SELECT id, booking_reference FROM bookings WHERE booker_email = ? AND booking_status != 'cancelled' AND event_year = ?",
+        [$bookingData['booker_email'], EVENT_YEAR]
+    );
+
+    if ($existingEmailBooking) {
+        $_SESSION['booking_error_email_exists'] = true;
+        redirect(url('?error=1'));
     }
 
     // ============================================
@@ -82,9 +114,9 @@ try {
     // Step 3: Validate Payment Method & Plan
     // ============================================
 
-    // For non-Stripe payments, only allow "full" payment plan
-    if ($bookingData['payment_method'] !== 'stripe' && $bookingData['payment_plan'] !== 'full') {
-        $bookingData['payment_plan'] = 'full';
+    // For non-Stripe payments, only allow single payment
+    if ($bookingData['payment_method'] !== 'stripe' && $bookingData['payment_plan'] > 1) {
+        $bookingData['payment_plan'] = 1;
     }
 
     // ============================================
@@ -95,8 +127,8 @@ try {
     $booking = new Booking();
     $bookingId = $booking->create($bookingData, $attendees);
 
-    // Create payment schedule if installments selected
-    if (in_array($bookingData['payment_plan'], ['monthly', 'three_payments'])) {
+    // Create payment schedule if multiple installments selected
+    if ($bookingData['payment_plan'] > 1) {
         $booking->createPaymentSchedule($bookingData['payment_plan']);
     }
 
@@ -122,7 +154,7 @@ try {
                 'total_amount' => $totalAmount
             ];
 
-            if ($bookingData['payment_plan'] === 'full') {
+            if ($bookingData['payment_plan'] == 1) {
                 // One-time payment - create Payment Intent
                 $result = $stripe->createPaymentIntent(
                     $bookerData['total_amount'],
@@ -164,6 +196,12 @@ try {
 
         } catch (Exception $e) {
             error_log("Stripe Error: " . $e->getMessage());
+            // Clean up the orphaned booking since payment setup failed
+            try {
+                $booking->delete();
+            } catch (Exception $deleteErr) {
+                error_log("Failed to clean up booking after Stripe error: " . $deleteErr->getMessage());
+            }
             throw new Exception("Payment processing failed. Please try again or choose a different payment method.");
         }
 
@@ -216,5 +254,5 @@ try {
     $_SESSION['booking_error'] = $e->getMessage();
 
     // Redirect back to form
-    redirect('/book/?error=1');
+    redirect(url('?error=1'));
 }

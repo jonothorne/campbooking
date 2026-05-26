@@ -7,17 +7,18 @@
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
             line-height: 1.6;
-            color: #333;
+            color: #1f2937;
             max-width: 600px;
             margin: 0 auto;
             padding: 20px;
-            background-color: #f5f5f5;
+            background-color: #1a1a1a;
         }
         .email-container {
             background: white;
-            border-radius: 10px;
-            padding: 30px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border-radius: 12px;
+            padding: 0;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
         }
         .header {
             background: url('<?php echo url('public/assets/images/poster-background-echo2026.png'); ?>') center center / cover no-repeat;
@@ -101,6 +102,33 @@
             border-radius: 8px;
             margin: 20px 0;
         }
+        .portal-box {
+            background: linear-gradient(135deg, #eb008b 0%, #d40080 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 12px;
+            margin: 25px 0;
+            text-align: center;
+        }
+        .portal-box h3 {
+            margin: 0 0 12px 0;
+            font-size: 20px;
+        }
+        .portal-box p {
+            margin: 0 0 20px 0;
+            color: rgba(255,255,255,0.95);
+        }
+        .portal-button {
+            display: inline-block;
+            background: white;
+            color: #eb008b;
+            padding: 14px 32px;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 16px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
         .footer {
             margin-top: 40px;
             padding-top: 20px;
@@ -114,14 +142,14 @@
 <body>
     <div class="email-container">
         <div class="header">
-            <img src="<?php echo url('public/assets/images/echo-logo.png'); ?>" alt="ECHO2026" style="width: 280px; height: auto; margin: 0 auto 20px; display: block; filter: brightness(0) invert(1);">
-            <p style="color: rgba(255,255,255,0.95); margin: 8px 0 0 0; font-size: 15px; letter-spacing: 1px;">May 29-31, 2026 • Sizewell Hall, Suffolk</p>
-            <p style="color: rgba(255,255,255,0.9); margin: 20px 0 0 0; font-size: 14px; font-style: italic; border-top: 1px solid rgba(255,255,255,0.3); padding-top: 15px;">"The Spirit and the bride say, 'Come!'" - Revelation 22:17</p>
+            <img src="<?php echo url('public/assets/images/echo-logo.png'); ?>" alt="ECHO2027" style="width: 280px; height: auto; margin: 0 auto 20px; display: block; filter: brightness(0) invert(1);">
+            <p style="color: rgba(255,255,255,0.95); margin: 8px 0 0 0; font-size: 15px; letter-spacing: 1px;">June 3-6, 2027 &bull; Sizewell Hall, Suffolk</p>
+            <p style="color: rgba(255,255,255,0.9); margin: 20px 0 0 0; font-size: 14px; font-style: italic; border-top: 1px solid rgba(255,255,255,0.3); padding-top: 15px;">ECHO2027: Amplified</p>
         </div>
 
         <div style="padding: 35px 30px;">
         <div class="alert-badge">
-            ⚠ Payment Unsuccessful
+            Payment Unsuccessful
         </div>
 
         <p><strong>Dear <?php echo e($booker_name); ?>,</strong></p>
@@ -149,14 +177,22 @@
             <?php echo formatCurrency($payment_amount); ?>
         </div>
 
+        <!-- Portal CTA - Update Payment Method -->
+        <div class="portal-box">
+            <h3>Update Your Payment Method</h3>
+            <p>Log in to your booking portal to update your card details or change your payment method so we can process your payment.</p>
+            <a href="<?php echo e($portal_url); ?>" class="portal-button">Log In to Booking Portal</a>
+        </div>
+
         <!-- Action Required -->
         <div class="action-required">
-            <h3 style="margin-top: 0; color: #856404;">⚡ Action Required</h3>
+            <h3 style="margin-top: 0; color: #856404;">Action Required</h3>
             <p style="margin: 0;">
                 <strong>Please take one of the following actions:</strong>
             </p>
             <ul style="margin: 10px 0; padding-left: 20px;">
                 <?php if ($booking['payment_method'] === 'stripe'): ?>
+                    <li><strong>Update your payment method</strong> via the booking portal above</li>
                     <li>Ensure your card has sufficient funds</li>
                     <li>Check your card hasn't expired</li>
                     <li>Contact your bank if the card should be working</li>
@@ -164,7 +200,7 @@
                     <li>Complete the bank transfer as soon as possible</li>
                     <li>Use the correct reference: <strong><?php echo getBankTransferReference($booker_name); ?></strong></li>
                 <?php else: ?>
-                    <li>Contact Jon at church to arrange payment</li>
+                    <li>Contact your group leader to arrange payment</li>
                 <?php endif; ?>
                 <li>Contact us if you need to discuss payment options</li>
             </ul>
@@ -178,14 +214,14 @@
                 We will automatically retry this payment on <strong><?php echo formatDate($next_retry_date, 'd/m/Y'); ?></strong>.
             </p>
             <p style="margin: 10px 0 0 0; font-size: 14px;">
-                Please ensure your card is valid and has sufficient funds before the retry date.
+                Please update your card or ensure it has sufficient funds before the retry date.
             </p>
         </div>
         <?php elseif ($attempt_count >= 3): ?>
         <div style="background: #f8d7da; border: 2px solid #dc3545; padding: 15px; border-radius: 8px; margin: 20px 0;">
             <h3 style="margin-top: 0; color: #721c24;">Maximum Attempts Reached</h3>
             <p style="margin: 0; color: #721c24;">
-                We have attempted to process this payment 3 times without success. Please contact us urgently to arrange alternative payment.
+                We have attempted to process this payment 3 times without success. Please <a href="<?php echo e($portal_url); ?>" style="color: #721c24; font-weight: bold;">log in to your booking portal</a> to update your payment method, or contact us urgently to arrange alternative payment.
             </p>
         </div>
         <?php endif; ?>
@@ -242,7 +278,7 @@
         </div>
 
         <div class="footer" style="background: #1a1a1a; color: #9ca3af; padding: 30px; text-align: center; font-size: 13px;">
-            <p style="margin: 0;"><strong style="color: #e5e7eb;">ECHO2026</strong> - Respond to the Call</p>
+            <p style="margin: 0;"><strong style="color: #e5e7eb;">ECHO2027: Amplified</strong></p>
             <p style="margin: 10px 0;"><strong>Need Help?</strong> Contact us immediately at <a href="mailto:<?php echo e(env('SMTP_FROM_EMAIL')); ?>" style="color: #eb008b; text-decoration: none;"><?php echo e(env('SMTP_FROM_EMAIL')); ?></a></p>
             <p style="margin-top: 5px;">We're here to help resolve this issue.</p>
             <p style="margin-top: 20px; font-size: 12px; color: #6b7280;">

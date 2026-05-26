@@ -2,6 +2,7 @@
 /**
  * Customer Authentication Functions
  * Handles customer portal login, password setup, GDPR requests
+ * Auth is against the portal_users table (independent of bookings)
  */
 
 /**
@@ -36,7 +37,7 @@ function verifyPasswordSetupToken($token) {
     $db = Database::getInstance();
 
     $tokenData = $db->fetchOne(
-        "SELECT pst.id as token_id, pst.booking_id, b.booker_email, b.booker_name
+        "SELECT pst.id as token_id, pst.booking_id, b.booker_email, b.booker_name, b.booker_phone
         FROM password_setup_tokens pst
         JOIN bookings b ON pst.booking_id = b.id
         WHERE pst.token = ? AND pst.expires_at > NOW() AND pst.used = 0",
@@ -60,86 +61,124 @@ function markTokenAsUsed($tokenId) {
 }
 
 /**
- * Set password for a booking
+ * Create or update a portal user and link to booking.
+ * Called when a customer sets up their password via the setup token.
  *
- * @param int $bookingId
- * @param string $password
- * @return bool
+ * @param int $bookingId The booking that triggered the setup
+ * @param string $password Plain text password
+ * @return int portal_user ID
  */
-function setBookingPassword($bookingId, $password) {
+function createOrUpdatePortalUser($bookingId, $password) {
     $db = Database::getInstance();
     $passwordHash = password_hash($password, PASSWORD_BCRYPT, ['cost' => 10]);
 
-    return $db->execute(
-        "UPDATE bookings SET password_hash = ? WHERE id = ?",
-        [$passwordHash, $bookingId]
-    ) > 0;
+    // Get booking details
+    $booking = $db->fetchOne("SELECT booker_email, booker_name, booker_phone FROM bookings WHERE id = ?", [$bookingId]);
+    if (!$booking) {
+        throw new Exception("Booking not found");
+    }
+
+    // Check if portal user already exists for this email
+    $existingUser = $db->fetchOne("SELECT id FROM portal_users WHERE email = ?", [$booking['booker_email']]);
+
+    if ($existingUser) {
+        // Update existing user's password
+        $db->execute(
+            "UPDATE portal_users SET password_hash = ?, name = ?, phone = ? WHERE id = ?",
+            [$passwordHash, $booking['booker_name'], $booking['booker_phone'], $existingUser['id']]
+        );
+        $portalUserId = $existingUser['id'];
+    } else {
+        // Create new portal user
+        $portalUserId = $db->insert(
+            "INSERT INTO portal_users (email, name, phone, password_hash) VALUES (?, ?, ?, ?)",
+            [$booking['booker_email'], $booking['booker_name'], $booking['booker_phone'], $passwordHash]
+        );
+    }
+
+    // Link this booking to the portal user
+    $db->execute(
+        "UPDATE bookings SET portal_user_id = ? WHERE id = ?",
+        [$portalUserId, $bookingId]
+    );
+
+    // Also link any other bookings with the same email that aren't linked yet
+    $db->execute(
+        "UPDATE bookings SET portal_user_id = ? WHERE booker_email = ? AND portal_user_id IS NULL",
+        [$portalUserId, $booking['booker_email']]
+    );
+
+    return $portalUserId;
 }
 
 /**
- * Customer login
+ * Customer login - authenticates against portal_users table
  *
  * @param string $email
  * @param string $password
- * @return array ['success' => bool, 'error' => string|null, 'booking_id' => int|null]
+ * @return array ['success' => bool, 'error' => string|null, 'portal_user_id' => int|null]
  */
 function customerLogin($email, $password) {
     $db = Database::getInstance();
 
-    // Fetch booking by email
-    $booking = $db->fetchOne(
-        "SELECT id, booker_email, booker_name, password_hash, booking_status
-        FROM bookings
-        WHERE booker_email = ?
-        LIMIT 1",
+    // Fetch portal user by email
+    $user = $db->fetchOne(
+        "SELECT id, email, name, password_hash
+        FROM portal_users
+        WHERE email = ?",
         [$email]
     );
 
-    if (!$booking) {
-        return [
-            'success' => false,
-            'error' => 'No booking found with this email address.'
-        ];
-    }
+    if (!$user) {
+        // Check if they have a booking but no portal account yet
+        $hasBooking = $db->fetchOne(
+            "SELECT id FROM bookings WHERE booker_email = ? AND booking_status != 'cancelled' LIMIT 1",
+            [$email]
+        );
 
-    // Check if password is set
-    if (empty($booking['password_hash'])) {
+        if ($hasBooking) {
+            return [
+                'success' => false,
+                'error' => 'Please use the password setup link sent to your email to create your password first.'
+            ];
+        }
+
         return [
             'success' => false,
-            'error' => 'Please use the password setup link sent to your email to create your password first.'
+            'error' => 'No account found with this email address.'
         ];
     }
 
     // Verify password
-    if (password_verify($password, $booking['password_hash'])) {
-        // Update last portal login
-        $db->execute(
-            "UPDATE bookings SET last_portal_login = NOW() WHERE id = ?",
-            [$booking['id']]
-        );
-
-        // Regenerate session ID for security
-        session_regenerate_id(true);
-
-        // Set session variables
-        $_SESSION['customer_id'] = $booking['id'];
-        $_SESSION['customer_email'] = $booking['booker_email'];
-        $_SESSION['customer_name'] = $booking['booker_name'];
-        $_SESSION['customer_csrf_token'] = bin2hex(random_bytes(32));
-        $_SESSION['customer_last_activity'] = time();
-
-        // Log GDPR access
-        logGDPRAction($booking['id'], 'data_access', 'Customer portal login');
-
+    if (!password_verify($password, $user['password_hash'])) {
         return [
-            'success' => true,
-            'booking_id' => $booking['id']
+            'success' => false,
+            'error' => 'Invalid password.'
         ];
     }
 
+    // Update last login
+    $db->execute("UPDATE portal_users SET last_login = NOW() WHERE id = ?", [$user['id']]);
+
+    // Regenerate session ID for security
+    session_regenerate_id(true);
+
+    // Set session variables
+    $_SESSION['portal_user_id'] = $user['id'];
+    $_SESSION['customer_email'] = $user['email'];
+    $_SESSION['customer_name'] = $user['name'];
+    $_SESSION['customer_csrf_token'] = bin2hex(random_bytes(32));
+    $_SESSION['customer_last_activity'] = time();
+
+    // Find the current event year booking for GDPR logging
+    $currentBooking = getPortalUserBooking($user['id']);
+    if ($currentBooking) {
+        logGDPRAction($currentBooking['id'], 'data_access', 'Customer portal login');
+    }
+
     return [
-        'success' => false,
-        'error' => 'Invalid password.'
+        'success' => true,
+        'portal_user_id' => $user['id']
     ];
 }
 
@@ -147,8 +186,7 @@ function customerLogin($email, $password) {
  * Customer logout
  */
 function customerLogout() {
-    // Unset customer session variables
-    unset($_SESSION['customer_id']);
+    unset($_SESSION['portal_user_id']);
     unset($_SESSION['customer_email']);
     unset($_SESSION['customer_name']);
     unset($_SESSION['customer_csrf_token']);
@@ -161,7 +199,7 @@ function customerLogout() {
  * @return bool
  */
 function isCustomerLoggedIn() {
-    if (!isset($_SESSION['customer_id']) || !isset($_SESSION['customer_last_activity'])) {
+    if (!isset($_SESSION['portal_user_id']) || !isset($_SESSION['customer_last_activity'])) {
         return false;
     }
 
@@ -187,12 +225,12 @@ function requireCustomerAuth() {
 }
 
 /**
- * Get current customer booking ID
+ * Get current portal user ID
  *
  * @return int|null
  */
-function currentCustomerId() {
-    return $_SESSION['customer_id'] ?? null;
+function currentPortalUserId() {
+    return $_SESSION['portal_user_id'] ?? null;
 }
 
 /**
@@ -202,6 +240,49 @@ function currentCustomerId() {
  */
 function currentCustomerEmail() {
     return $_SESSION['customer_email'] ?? null;
+}
+
+/**
+ * Get portal user data
+ *
+ * @param int $portalUserId
+ * @return array|null
+ */
+function getPortalUser($portalUserId) {
+    $db = Database::getInstance();
+    return $db->fetchOne("SELECT * FROM portal_users WHERE id = ?", [$portalUserId]);
+}
+
+/**
+ * Get the booking for a portal user for a given event year.
+ * Defaults to the current EVENT_YEAR.
+ *
+ * @param int $portalUserId
+ * @param int|null $eventYear
+ * @return array|null Booking row or null
+ */
+function getPortalUserBooking($portalUserId, $eventYear = null) {
+    $db = Database::getInstance();
+    $year = $eventYear ?? EVENT_YEAR;
+
+    return $db->fetchOne(
+        "SELECT * FROM bookings WHERE portal_user_id = ? AND event_year = ? AND booking_status != 'cancelled' ORDER BY id DESC LIMIT 1",
+        [$portalUserId, $year]
+    );
+}
+
+/**
+ * Get all bookings for a portal user (across all event years)
+ *
+ * @param int $portalUserId
+ * @return array
+ */
+function getPortalUserBookings($portalUserId) {
+    $db = Database::getInstance();
+    return $db->fetchAll(
+        "SELECT * FROM bookings WHERE portal_user_id = ? AND booking_status != 'cancelled' ORDER BY event_year DESC, id DESC",
+        [$portalUserId]
+    );
 }
 
 /**
@@ -275,25 +356,13 @@ function logGDPRAction($bookingId, $action, $details = '') {
 function exportCustomerData($bookingId) {
     $db = Database::getInstance();
 
-    // Get booking data
     $booking = $db->fetchOne("SELECT * FROM bookings WHERE id = ?", [$bookingId]);
-
-    // Get attendees
     $attendees = $db->fetchAll("SELECT * FROM attendees WHERE booking_id = ?", [$bookingId]);
-
-    // Get payments
     $payments = $db->fetchAll("SELECT * FROM payments WHERE booking_id = ?", [$bookingId]);
-
-    // Get payment schedule
     $schedule = $db->fetchAll("SELECT * FROM payment_schedules WHERE booking_id = ?", [$bookingId]);
-
-    // Get email logs
     $emails = $db->fetchAll("SELECT * FROM email_logs WHERE booking_id = ?", [$bookingId]);
-
-    // Get GDPR log
     $gdprLog = $db->fetchAll("SELECT * FROM gdpr_log WHERE booking_id = ?", [$bookingId]);
 
-    // Log this export
     logGDPRAction($bookingId, 'data_export', 'Customer data exported');
 
     return [
@@ -304,7 +373,7 @@ function exportCustomerData($bookingId) {
         'email_logs' => $emails,
         'gdpr_log' => $gdprLog,
         'export_date' => date('Y-m-d H:i:s'),
-        'export_requested_by' => currentCustomerEmail() ?? currentAdminUsername() ?? 'unknown'
+        'export_requested_by' => currentCustomerEmail() ?? 'unknown'
     ];
 }
 
@@ -318,16 +387,12 @@ function exportCustomerData($bookingId) {
 function requestDataDeletion($bookingId, $reason = '') {
     $db = Database::getInstance();
 
-    // Mark booking for deletion
     $db->execute(
         "UPDATE bookings SET data_deletion_requested = 1, data_deletion_requested_at = NOW() WHERE id = ?",
         [$bookingId]
     );
 
-    // Log the request
     logGDPRAction($bookingId, 'data_deletion_request', 'Reason: ' . $reason);
-
-    // TODO: Send notification to admin about deletion request
 
     return true;
 }
@@ -344,19 +409,13 @@ function processDataDeletion($bookingId) {
     try {
         $db->beginTransaction();
 
-        // Log the deletion
         logGDPRAction($bookingId, 'data_deletion', 'Data permanently deleted');
 
-        // Delete related records (cascading foreign keys will handle most)
-        // But we'll be explicit for clarity
         $db->execute("DELETE FROM attendees WHERE booking_id = ?", [$bookingId]);
         $db->execute("DELETE FROM payments WHERE booking_id = ?", [$bookingId]);
         $db->execute("DELETE FROM payment_schedules WHERE booking_id = ?", [$bookingId]);
         $db->execute("DELETE FROM email_logs WHERE booking_id = ?", [$bookingId]);
         $db->execute("DELETE FROM password_setup_tokens WHERE booking_id = ?", [$bookingId]);
-        $db->execute("DELETE FROM remember_tokens WHERE user_id IN (SELECT id FROM users WHERE email = (SELECT booker_email FROM bookings WHERE id = ?))", [$bookingId]);
-
-        // Finally delete the booking
         $db->execute("DELETE FROM bookings WHERE id = ?", [$bookingId]);
 
         $db->commit();

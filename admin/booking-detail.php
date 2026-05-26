@@ -251,12 +251,8 @@ include __DIR__ . '/../templates/admin/header.php';
             <div class="detail-label">Payment Plan</div>
             <div class="detail-value">
                 <?php
-                $plans = [
-                    'full' => 'Pay in Full',
-                    'monthly' => 'Monthly Installments',
-                    'three_payments' => '3 Equal Payments'
-                ];
-                echo $plans[$bookingData['payment_plan']] ?? 'Unknown';
+                $planCount = (int)$bookingData['payment_plan'];
+                echo $planCount <= 1 ? 'Pay in Full' : $planCount . ' Split Payments';
                 ?>
             </div>
         </div>

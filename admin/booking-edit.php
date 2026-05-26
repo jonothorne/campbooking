@@ -176,7 +176,7 @@ include __DIR__ . '/../templates/admin/header.php';
                             ?>
                             <div>
                                 <label style="display: block; margin-bottom: 8px;">
-                                    <input type="checkbox" name="attendees[<?php echo $index; ?>][day_ticket_dates][]" value="2026-05-29" <?php echo in_array('2026-05-29', $selectedDays) ? 'checked' : ''; ?>>
+                                    <input type="checkbox" name="attendees[<?php echo $index; ?>][day_ticket_dates][]" value="2027-06-03" <?php echo in_array('2027-06-03', $selectedDays) ? 'checked' : ''; ?>>
                                     Friday, May 29
                                 </label>
                                 <label style="display: block; margin-bottom: 8px;">
@@ -184,7 +184,7 @@ include __DIR__ . '/../templates/admin/header.php';
                                     Saturday, May 30
                                 </label>
                                 <label style="display: block; margin-bottom: 8px;">
-                                    <input type="checkbox" name="attendees[<?php echo $index; ?>][day_ticket_dates][]" value="2026-05-31" <?php echo in_array('2026-05-31', $selectedDays) ? 'checked' : ''; ?>>
+                                    <input type="checkbox" name="attendees[<?php echo $index; ?>][day_ticket_dates][]" value="2027-06-06" <?php echo in_array('2027-06-06', $selectedDays) ? 'checked' : ''; ?>>
                                     Sunday, May 31
                                 </label>
                             </div>
@@ -266,9 +266,11 @@ include __DIR__ . '/../templates/admin/header.php';
         <div class="form-group">
             <label class="form-label">Payment Plan</label>
             <select name="payment_plan" class="form-control" required>
-                <option value="full" <?php echo $bookingData['payment_plan'] === 'full' ? 'selected' : ''; ?>>Pay in Full</option>
-                <option value="monthly" <?php echo $bookingData['payment_plan'] === 'monthly' ? 'selected' : ''; ?>>Monthly Installments</option>
-                <option value="three_payments" <?php echo $bookingData['payment_plan'] === 'three_payments' ? 'selected' : ''; ?>>3 Equal Payments</option>
+                <?php for ($i = 1; $i <= MAX_INSTALLMENTS; $i++): ?>
+                    <option value="<?php echo $i; ?>" <?php echo (int)$bookingData['payment_plan'] === $i ? 'selected' : ''; ?>>
+                        <?php echo $i === 1 ? 'Pay in Full' : $i . ' Split Payments'; ?>
+                    </option>
+                <?php endfor; ?>
             </select>
         </div>
 

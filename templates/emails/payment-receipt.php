@@ -106,9 +106,9 @@
 <body>
     <div class="email-container">
         <div class="header">
-            <img src="<?php echo url('public/assets/images/echo-logo.png'); ?>" alt="ECHO2026" style="width: 280px; height: auto; margin: 0 auto 20px; display: block; filter: brightness(0) invert(1);">
-            <p style="color: rgba(255,255,255,0.95); margin: 8px 0 0 0; font-size: 15px; letter-spacing: 1px;">May 29-31, 2026 • Sizewell Hall, Suffolk</p>
-            <p style="color: rgba(255,255,255,0.9); margin: 20px 0 0 0; font-size: 14px; font-style: italic; border-top: 1px solid rgba(255,255,255,0.3); padding-top: 15px;">"The Spirit and the bride say, 'Come!'" - Revelation 22:17</p>
+            <img src="<?php echo url('public/assets/images/echo-logo.png'); ?>" alt="ECHO2027" style="width: 280px; height: auto; margin: 0 auto 20px; display: block; filter: brightness(0) invert(1);">
+            <p style="color: rgba(255,255,255,0.95); margin: 8px 0 0 0; font-size: 15px; letter-spacing: 1px;">June 3-6, 2027 • Sizewell Hall, Suffolk</p>
+            <p style="color: rgba(255,255,255,0.9); margin: 20px 0 0 0; font-size: 14px; font-style: italic; border-top: 1px solid rgba(255,255,255,0.3); padding-top: 15px;">ECHO2027: Amplified</p>
         </div>
 
         <div style="padding: 35px 30px;">
@@ -183,7 +183,7 @@
                     <strong style="color: #856404;">Remaining Balance:</strong>
                     <p style="margin: 10px 0 0 0; color: #856404;">
                         You have an outstanding balance of <strong><?php echo formatCurrency($amount_outstanding); ?></strong>.
-                        <?php if ($booking['payment_plan'] !== 'full'): ?>
+                        <?php if ($booking['payment_plan'] > 1): ?>
                             This will be charged according to your payment plan.
                         <?php else: ?>
                             Please arrange payment at your earliest convenience.
@@ -195,7 +195,7 @@
         </div>
 
         <div class="footer" style="background: #1a1a1a; color: #9ca3af; padding: 30px; text-align: center; font-size: 13px;">
-            <p style="margin: 0;"><strong style="color: #e5e7eb;">ECHO2026</strong> - Respond to the Call</p>
+            <p style="margin: 0;"><strong style="color: #e5e7eb;">ECHO2027: Amplified</strong></p>
             <p style="margin: 10px 0;">Questions? Contact us at <a href="mailto:<?php echo e(env('SMTP_FROM_EMAIL')); ?>" style="color: #eb008b; text-decoration: none;"><?php echo e(env('SMTP_FROM_EMAIL')); ?></a></p>
             <p style="margin-top: 20px; font-size: 12px; color: #6b7280;">
                 Keep this receipt for your records. Booking Reference: <?php echo e($booking_reference); ?><br>

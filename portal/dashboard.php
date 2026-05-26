@@ -13,18 +13,34 @@ require_once __DIR__ . '/../classes/Booking.php';
 // Require authentication
 requireCustomerAuth();
 
-$customerId = currentCustomerId();
+$portalUserId = currentPortalUserId();
+$portalUser = getPortalUser($portalUserId);
 
-// Load booking
-try {
-    $booking = new Booking($customerId);
-    $bookingData = $booking->getData();
-    $attendees = $booking->getAttendees();
-    $payments = $booking->getPayments();
-    $paymentSchedule = $booking->getPaymentSchedule();
-} catch (Exception $e) {
-    customerLogout();
-    redirect(url('portal/login.php'));
+// Find booking for current event year
+$bookingRow = getPortalUserBooking($portalUserId);
+$hasCurrentBooking = !empty($bookingRow);
+
+if ($hasCurrentBooking) {
+    try {
+        $booking = new Booking($bookingRow['id']);
+        $bookingData = $booking->getData();
+        $attendees = $booking->getAttendees();
+        $payments = $booking->getPayments();
+        $paymentSchedule = $booking->getPaymentSchedule();
+    } catch (Exception $e) {
+        $hasCurrentBooking = false;
+    }
+}
+
+// Get previous bookings for rebook context
+$previousBookings = [];
+if (!$hasCurrentBooking) {
+    $allBookings = getPortalUserBookings($portalUserId);
+    foreach ($allBookings as $b) {
+        if ((int)$b['event_year'] !== EVENT_YEAR) {
+            $previousBookings[] = $b;
+        }
+    }
 }
 
 $welcome = isset($_GET['welcome']);
@@ -32,23 +48,27 @@ $success = $_SESSION['success'] ?? null;
 $error = $_SESSION['error'] ?? null;
 unset($_SESSION['success'], $_SESSION['error']);
 
-// Check for overdue payments
+// Check for overdue payments (only if they have a current booking)
 $overduePayments = [];
 $upcomingPayments = [];
+$hasOverdue = false;
+$totalOverdue = 0;
 $today = date('Y-m-d');
 
-foreach ($paymentSchedule as $schedule) {
-    if ($schedule['status'] === 'pending' || $schedule['status'] === 'failed') {
-        if ($schedule['due_date'] < $today) {
-            $overduePayments[] = $schedule;
-        } else {
-            $upcomingPayments[] = $schedule;
+if ($hasCurrentBooking) {
+    foreach ($paymentSchedule as $schedule) {
+        if ($schedule['status'] === 'pending' || $schedule['status'] === 'failed') {
+            if ($schedule['due_date'] < $today) {
+                $overduePayments[] = $schedule;
+            } else {
+                $upcomingPayments[] = $schedule;
+            }
         }
     }
-}
 
-$hasOverdue = !empty($overduePayments);
-$totalOverdue = array_sum(array_column($overduePayments, 'amount'));
+    $hasOverdue = !empty($overduePayments);
+    $totalOverdue = array_sum(array_column($overduePayments, 'amount'));
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -281,10 +301,10 @@ $totalOverdue = array_sum(array_column($overduePayments, 'amount'));
     <div class="portal-header">
         <div class="portal-header-content">
             <div>
-                <img src="<?php echo basePath('public/assets/images/echo-logo.png'); ?>" alt="ECHO2026" class="portal-logo" >
+                <img src="<?php echo basePath('public/assets/images/echo-logo.png'); ?>" alt="ECHO2027" class="portal-logo" >
             </div>
             <div style="display: flex; gap: 15px; align-items: center;">
-                <span><?php echo e($bookingData['booker_name']); ?></span>
+                <span><?php echo e($portalUser['name']); ?></span>
                 <a href="<?php echo url('portal/logout.php'); ?>" class="btn-logout">Logout</a>
             </div>
         </div>
@@ -294,7 +314,7 @@ $totalOverdue = array_sum(array_column($overduePayments, 'amount'));
         <!-- Hero Section -->
         <div class="hero-section">
             <div class="hero-content">
-                <h1 class="hero-title">YOU'RE COMING TO ECHO2026! 🎉</h1>
+                <h1 class="hero-title">YOU'RE COMING TO ECHO2027! 🎉</h1>
                 <p class="hero-subtitle">The call has been answered. Your journey begins...</p>
 
                 <!-- Countdown Timer -->
@@ -342,6 +362,47 @@ $totalOverdue = array_sum(array_column($overduePayments, 'amount'));
             </div>
         </div>
 
+        <?php if (!$hasCurrentBooking): ?>
+            <!-- No booking for current event year -->
+            <div class="content-card" style="text-align: center; padding: 50px 30px;">
+                <h2 style="margin: 0 0 15px 0; font-size: 28px;">Welcome back, <?php echo e($portalUser['name']); ?>!</h2>
+                <p style="color: #6b7280; font-size: 16px; margin-bottom: 30px;">
+                    You don't have a booking for <?php echo e(EVENT_NAME); ?> yet.
+                </p>
+
+                <?php if (!empty($previousBookings)): ?>
+                    <p style="color: #6b7280; font-size: 14px; margin-bottom: 20px;">
+                        We have your details from your previous booking — getting started will be quick!
+                    </p>
+                <?php endif; ?>
+
+                <a href="<?php echo basePath(''); ?>" class="btn btn-primary" style="display: inline-block; padding: 14px 32px; font-size: 16px; text-decoration: none; border-radius: 8px; background: linear-gradient(135deg, #eb008b 0%, #d40080 100%); color: white; font-weight: 600;">
+                    Book Now for <?php echo EVENT_YEAR; ?>
+                </a>
+            </div>
+
+            <?php if (!empty($previousBookings)): ?>
+                <div class="content-card" style="margin-top: 20px;">
+                    <div class="card-header">
+                        <h2 class="card-title">Previous Bookings</h2>
+                    </div>
+                    <?php foreach ($previousBookings as $prevBooking): ?>
+                        <div style="background: var(--bg-light); padding: 15px; border-radius: 8px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                            <div>
+                                <strong><?php echo e($prevBooking['booking_reference']); ?></strong>
+                                <span style="color: #6b7280; margin-left: 10px;">Event <?php echo $prevBooking['event_year']; ?></span>
+                            </div>
+                            <div style="color: #6b7280;">
+                                <?php echo formatCurrency($prevBooking['total_amount']); ?> &mdash;
+                                <?php echo getPaymentStatusBadge($prevBooking['payment_status']); ?>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            <?php endif; ?>
+
+        <?php else: ?>
+        <!-- Has current booking -->
         <?php if ($hasOverdue): ?>
             <div style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);">
                 <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
@@ -358,7 +419,7 @@ $totalOverdue = array_sum(array_column($overduePayments, 'amount'));
 
         <?php if ($welcome): ?>
             <div class="alert alert-success">
-                <strong>Welcome to your portal!</strong> You now have access to view and manage your ECHO2026 booking.
+                <strong>Welcome to your portal!</strong> You now have access to view and manage your ECHO2027 booking.
             </div>
         <?php endif; ?>
 
@@ -635,6 +696,8 @@ $totalOverdue = array_sum(array_column($overduePayments, 'amount'));
             </div>
         </div>
 
+        <?php endif; // end hasCurrentBooking else ?>
+
         <!-- Help -->
         <div class="content-card">
             <div class="card-header">
@@ -648,7 +711,7 @@ $totalOverdue = array_sum(array_column($overduePayments, 'amount'));
     <script>
         // Countdown Timer to May 29, 2026
         function updateCountdown() {
-            const eventDate = new Date('2026-05-29T00:00:00').getTime();
+            const eventDate = new Date('2027-06-03T00:00:00').getTime();
             const now = new Date().getTime();
             const distance = eventDate - now;
 

@@ -165,7 +165,7 @@ function generateBookingPDF($bookingData, $attendees, $payments) {
 
     if ($logoData) {
         $html .= '
-        <img src="' . $logoData . '" alt="ECHO2026" class="logo">';
+        <img src="' . $logoData . '" alt="ECHO2027" class="logo">';
     }
 
     $html .= '
@@ -180,7 +180,7 @@ function generateBookingPDF($bookingData, $attendees, $payments) {
 
     <div class="check-in-box">
         <h3>📋 Check-In Instructions</h3>
-        <p style="margin: 5px 0;">Please bring this confirmation when you arrive at ECHO2026. Show your booking reference to our registration team for a smooth check-in.</p>
+        <p style="margin: 5px 0;">Please bring this confirmation when you arrive at ECHO2027. Show your booking reference to our registration team for a smooth check-in.</p>
     </div>
 
     <!-- Booker Information -->
@@ -336,7 +336,7 @@ function generateBookingPDF($bookingData, $attendees, $payments) {
     <!-- Footer -->
     <div class="footer">
         <p><strong>Questions?</strong> Contact us at ' . e(env('SMTP_FROM_EMAIL')) . '</p>
-        <p style="margin-top: 10px;">We look forward to seeing you at ECHO2026!</p>
+        <p style="margin-top: 10px;">We look forward to seeing you at ECHO2027!</p>
         <p style="margin-top: 15px; font-size: 8pt;">Generated on ' . date('d M Y H:i') . '</p>
     </div>
 </body>

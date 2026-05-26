@@ -93,15 +93,15 @@
 <body>
     <div class="email-container">
         <div class="header">
-            <img src="<?php echo url('public/assets/images/echo-logo.png'); ?>" alt="ECHO2026" style="width: 280px; height: auto; margin: 0 auto 20px; display: block; filter: brightness(0) invert(1);">
-            <p style="color: rgba(255,255,255,0.95); margin: 8px 0 0 0; font-size: 15px; letter-spacing: 1px;">May 29-31, 2026 • Sizewell Hall, Suffolk</p>
+            <img src="<?php echo url('public/assets/images/echo-logo.png'); ?>" alt="ECHO2027" style="width: 280px; height: auto; margin: 0 auto 20px; display: block; filter: brightness(0) invert(1);">
+            <p style="color: rgba(255,255,255,0.95); margin: 8px 0 0 0; font-size: 15px; letter-spacing: 1px;">June 3-6, 2027 • Sizewell Hall, Suffolk</p>
             <p style="color: rgba(255,255,255,0.9); margin: 20px 0 0 0; font-size: 14px; font-style: italic; border-top: 1px solid rgba(255,255,255,0.3); padding-top: 15px;">"The Spirit and the bride say, 'Come!'" - Revelation 22:17</p>
         </div>
 
         <div style="padding: 35px 30px;">
             <p><strong>Dear <?php echo e($booker_name); ?>,</strong></p>
 
-            <p>We're excited to give you access to your ECHO2026 customer portal! This secure portal allows you to:</p>
+            <p>We're excited to give you access to your ECHO2027 customer portal! This secure portal allows you to:</p>
 
             <ul style="color: #666; line-height: 1.8;">
                 <li>View your booking details and attendees</li>
@@ -152,7 +152,7 @@
         </div>
 
         <div class="footer" style="background: #1a1a1a; color: #9ca3af; padding: 30px; text-align: center; font-size: 13px;">
-            <p style="margin: 0;"><strong style="color: #e5e7eb;">ECHO2026</strong> - Respond to the Call</p>
+            <p style="margin: 0;"><strong style="color: #e5e7eb;">ECHO2027</strong> - Amplified</p>
             <p style="margin: 10px 0;">Questions? Contact us at <a href="mailto:<?php echo e(env('SMTP_FROM_EMAIL')); ?>" style="color: #eb008b; text-decoration: none;"><?php echo e(env('SMTP_FROM_EMAIL')); ?></a></p>
             <p style="margin-top: 20px; font-size: 12px; color: #6b7280;">
                 This is an automated email. Please keep this for your records.<br>

@@ -39,8 +39,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $tokenData) {
     } elseif (strlen($password) < 8) {
         $error = 'Password must be at least 8 characters long.';
     } else {
-        // Set password
-        if (setBookingPassword($tokenData['booking_id'], $password)) {
+        // Create/update portal user and link to booking
+        try {
+            createOrUpdatePortalUser($tokenData['booking_id'], $password);
+
             // Mark token as used
             markTokenAsUsed($tokenData['token_id']);
 
@@ -56,7 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $tokenData) {
             } else {
                 $success = true;
             }
-        } else {
+        } catch (Exception $e) {
             $error = 'Failed to set password. Please try again.';
         }
     }
@@ -216,7 +218,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $tokenData) {
 <body>
     <div class="setup-container">
         <div class="logo">
-            <img src="<?php echo basePath('public/assets/images/ECHO-logo-dark.png'); ?>" alt="ECHO2026">
+            <img src="<?php echo basePath('public/assets/images/ECHO-logo-dark.png'); ?>" alt="ECHO2027">
             <h1>Set Up Your Password</h1>
             <p class="subtitle">Create a password to access your booking</p>
         </div>
@@ -250,7 +252,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $tokenData) {
 
             <div class="welcome-box">
                 <h2>Welcome, <?php echo e($tokenData['booker_name']); ?>!</h2>
-                <p>You're setting up access to your ECHO2026 booking. Create a secure password below to continue.</p>
+                <p>You're setting up access to your ECHO2027 booking. Create a secure password below to continue.</p>
             </div>
 
             <form method="POST" action="">

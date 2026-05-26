@@ -23,7 +23,7 @@ if (session_status() === PHP_SESSION_NONE) {
 $bookingReference = $_GET['booking'] ?? null;
 
 if (!$bookingReference) {
-    redirect('/book/');
+    redirect(url(''));
 }
 
 // Check if this is a redirect from Stripe
@@ -43,7 +43,7 @@ if ($setupIntentId || $paymentIntentId) {
             if ($setupIntent->status !== 'succeeded') {
                 error_log("Setup Intent not succeeded: " . $setupIntent->status);
                 $_SESSION['booking_error'] = 'Payment method setup was not completed. Please try again.';
-                redirect('/book/?error=1');
+                redirect(url('?error=1'));
             }
 
             // Setup Intent will be processed by webhook
@@ -56,7 +56,7 @@ if ($setupIntentId || $paymentIntentId) {
             if ($paymentIntent->status !== 'succeeded') {
                 error_log("Payment Intent not succeeded: " . $paymentIntent->status);
                 $_SESSION['booking_error'] = 'Payment was not completed. Please try again.';
-                redirect('/book/?error=1');
+                redirect(url('?error=1'));
             }
 
             // Payment Intent will be processed by webhook
@@ -65,7 +65,7 @@ if ($setupIntentId || $paymentIntentId) {
     } catch (Exception $e) {
         error_log("Error verifying Stripe intent: " . $e->getMessage());
         $_SESSION['booking_error'] = 'Unable to verify payment. Please contact support with your booking reference: ' . $bookingReference;
-        redirect('/book/?error=1');
+        redirect(url('?error=1'));
     }
 }
 
@@ -223,7 +223,7 @@ try {
     $attendees = $booking->getAttendees();
 
 } catch (Exception $e) {
-    redirect('/book/');
+    redirect(url(''));
 }
 ?>
 <!DOCTYPE html>
@@ -239,7 +239,7 @@ try {
             font-size: 16px;
             line-height: 1.6;
             color: #1f2937;
-            background: #1a1a1a;
+            background: #121214;
             min-height: 100vh;
             padding: 40px 20px;
             margin: 0;
@@ -247,9 +247,20 @@ try {
         .container {
             max-width: 800px;
             margin: 0 auto;
-            background: #f5f5f5;
+            background: #f0f0f2;
             border-radius: 12px;
             padding: 40px;
+            position: relative;
+            overflow: hidden;
+        }
+        .container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #00e5ff, #eb008b);
         }
         .form-section {
             background: white;
@@ -267,24 +278,31 @@ try {
             width: 80px;
             height: 80px;
             margin: 0 auto 20px;
-            background: #10b981;
+            background: linear-gradient(135deg, #00e5ff, #10b981);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 40px;
             color: white;
+            box-shadow: 0 0 30px rgba(0, 229, 255, 0.3);
         }
         .booking-reference {
-            background: #f9fafb;
-            padding: 15px;
+            background: #121214;
+            padding: 20px;
             border-radius: 8px;
             text-align: center;
             margin: 20px 0;
         }
+        .booking-reference p {
+            color: rgba(255, 255, 255, 0.6);
+        }
         .booking-reference strong {
-            font-size: 24px;
-            color: #eb008b;
+            font-size: 28px;
+            background: linear-gradient(90deg, #00e5ff, #eb008b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
             font-family: 'Courier New', monospace;
         }
         .detail-row {
@@ -309,23 +327,26 @@ try {
             padding: 0;
         }
         .attendee-item {
-            padding: 10px;
+            padding: 12px 15px;
             background: #f9fafb;
             border-radius: 6px;
             margin-bottom: 8px;
+            border-left: 3px solid #00e5ff;
         }
         .btn {
             display: inline-block;
             padding: 12px 24px;
             border: none;
-            border-radius: 8px;
-            font-size: 15px;
-            font-weight: 600;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 700;
             text-align: center;
             cursor: pointer;
             transition: all 0.3s ease;
             font-family: inherit;
             text-decoration: none;
+            letter-spacing: 1px;
+            text-transform: uppercase;
         }
         .btn-primary {
             background: linear-gradient(135deg, #eb008b 0%, #d40080 100%);
@@ -333,16 +354,17 @@ try {
         }
         .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+            box-shadow: 0 0 30px rgba(235, 0, 139, 0.4);
         }
         .btn-secondary {
-            background: white;
-            color: #eb008b;
-            border: 2px solid #eb008b;
+            background: transparent;
+            color: #00e5ff;
+            border: 2px solid #00e5ff;
         }
         .btn-secondary:hover {
-            background: #eb008b;
-            color: white;
+            background: #00e5ff;
+            color: #121214;
+            box-shadow: 0 0 20px rgba(0, 229, 255, 0.3);
         }
         h1 {
             color: #1f2937;
@@ -351,6 +373,12 @@ try {
         p {
             color: #6b7280;
             line-height: 1.6;
+        }
+        a {
+            color: #eb008b;
+        }
+        a:hover {
+            color: #c7006f;
         }
         @media (max-width: 768px) {
             body {
@@ -378,11 +406,27 @@ try {
         <?php endif; ?>
 
         <div class="form-section" style="text-align: center;">
-            <div class="success-icon">✓</div>
-            <h1>Booking Confirmed!</h1>
-            <p style="font-size: 18px; color: var(--text-medium); margin-bottom: 30px;">
-                Thank you for your booking. We look forward to seeing you at camp!
-            </p>
+            <?php if ($bookingData['payment_method'] === 'stripe' && $bookingData['payment_plan'] > 1 && $bookingData['booking_status'] === 'pending'): ?>
+                <!-- Installment booking: payment method saved, first charge may still be processing -->
+                <div class="success-icon" style="background: #f59e0b;">&#10003;</div>
+                <h1>Booking Received!</h1>
+                <p style="font-size: 18px; color: var(--text-medium); margin-bottom: 30px;">
+                    Your payment method has been saved and your first installment is being processed. You will receive a confirmation email once the payment is confirmed.
+                </p>
+            <?php elseif ($bookingData['payment_method'] === 'stripe' && $bookingData['booking_status'] === 'pending'): ?>
+                <!-- One-time Stripe payment still processing -->
+                <div class="success-icon" style="background: #f59e0b;">&#10003;</div>
+                <h1>Payment Processing!</h1>
+                <p style="font-size: 18px; color: var(--text-medium); margin-bottom: 30px;">
+                    Your payment is being processed. You will receive a confirmation email shortly once the payment is confirmed.
+                </p>
+            <?php else: ?>
+                <div class="success-icon">&#10003;</div>
+                <h1>Booking Confirmed!</h1>
+                <p style="font-size: 18px; color: var(--text-medium); margin-bottom: 30px;">
+                    Thank you for your booking. We look forward to seeing you at camp!
+                </p>
+            <?php endif; ?>
 
             <div class="booking-reference">
                 <p style="margin-bottom: 8px; color: var(--text-medium);">Your Booking Reference</p>
@@ -423,12 +467,8 @@ try {
                 <span class="detail-label">Payment Plan:</span>
                 <span class="detail-value">
                     <?php
-                    $plans = [
-                        'full' => 'Pay in Full',
-                        'monthly' => 'Monthly Installments',
-                        'three_payments' => '3 Equal Payments'
-                    ];
-                    echo $plans[$bookingData['payment_plan']] ?? 'Unknown';
+                    $planCount = (int)$bookingData['payment_plan'];
+                    echo $planCount <= 1 ? 'Pay in Full' : $planCount . ' Split Payments';
                     ?>
                 </span>
             </div>
@@ -487,7 +527,7 @@ try {
             <div class="form-section">
                 <h2>Cash Payment</h2>
                 <div class="info-box">
-                    <p>Please hand <strong><?php echo formatCurrency($bookingData['total_amount']); ?></strong> to Jon at church.</p>
+                    <p>Please pay <strong><?php echo formatCurrency($bookingData['total_amount']); ?></strong> in cash to your group leader.</p>
                     <p style="margin-top: 10px;">Reference: <strong><?php echo e($bookingData['booking_reference']); ?></strong></p>
                 </div>
             </div>
@@ -498,7 +538,7 @@ try {
             <h2>What's Next?</h2>
             <p>You will receive a confirmation email shortly with all your booking details.</p>
 
-            <?php if ($bookingData['payment_plan'] !== 'full'): ?>
+            <?php if ($bookingData['payment_plan'] > 1): ?>
                 <p style="margin-top: 15px;">
                     For installment payments, you will receive payment reminders before each due date.
                 </p>
@@ -511,11 +551,11 @@ try {
         </div>
 
         <!-- Download PDF -->
-        <div class="form-section" style="background: #f0f9ff; border: 2px solid #0ea5e9;">
-            <h2>📄 Download Your Booking Confirmation</h2>
-            <p style="margin-bottom: 20px;">Download a PDF with all your booking details. Perfect for printing and bringing to check-in!</p>
+        <div class="form-section" style="background: #121214; border: 1px solid rgba(0, 229, 255, 0.2); color: white;">
+            <h2 style="color: white;">Download Your Booking Confirmation</h2>
+            <p style="margin-bottom: 20px; color: rgba(255,255,255,0.7);">Download a PDF with all your booking details. Perfect for printing and bringing to check-in!</p>
             <a href="<?php echo basePath('download-booking-pdf.php?booking=' . $bookingData['booking_reference']); ?>" class="btn btn-primary" style="display: inline-block;">
-                📥 Download PDF
+                Download PDF
             </a>
         </div>
 

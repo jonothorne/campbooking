@@ -13,8 +13,11 @@ require_once __DIR__ . '/../classes/Booking.php';
 // Set page title
 $pageTitle = 'Bookings';
 
+// Get selected event year
+$eventYear = getAdminEventYear();
+
 // Get filters from query string
-$filters = [];
+$filters = ['event_year' => $eventYear];
 
 if (!empty($_GET['search'])) {
     $filters['search'] = sanitizeString($_GET['search']);
