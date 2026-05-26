@@ -6,7 +6,7 @@
 
 function generateBookingPDF($bookingData, $attendees, $payments) {
     // Load and encode logo as base64
-    $logoPath = dirname(__DIR__) . '/public/assets/images/ECHO-logo-dark.png';
+    $logoPath = dirname(__DIR__) . '/public/assets/images/logo-dark.png';
     $logoData = '';
     if (file_exists($logoPath)) {
         $logoContent = file_get_contents($logoPath);
