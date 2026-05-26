@@ -110,7 +110,7 @@
 <body>
     <div class="email-container">
         <div class="header">
-            <img src="<?php echo url('public/assets/images/echo-logo.png'); ?>" alt="ECHO2027" style="width: 280px; height: auto; margin: 0 auto 20px; display: block; filter: brightness(0) invert(1);">
+            <img src="<?php echo url('public/assets/images/echo-logo.png'); ?>" alt="ECHO2027" style="width: 280px; height: auto; margin: 0 auto 20px; display: block; ">
             <p style="color: rgba(255,255,255,0.95); margin: 8px 0 0 0; font-size: 15px; letter-spacing: 1px;">June 3-6, 2027 • Sizewell Hall, Suffolk</p>
             <p style="color: rgba(255,255,255,0.9); margin: 20px 0 0 0; font-size: 14px; font-style: italic; border-top: 1px solid rgba(255,255,255,0.3); padding-top: 15px;">"The Spirit and the bride say, 'Come!'" - Revelation 22:17</p>
         </div>
