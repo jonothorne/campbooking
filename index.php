@@ -433,6 +433,24 @@ $earlyBirdCutoff = formatDate(EARLY_BIRD_CUTOFF, 'jS F Y');
                 <h2>Payment</h2>
                 <p class="section-description">Choose your payment method and plan</p>
 
+                <!-- Discount Code -->
+                <div class="form-group">
+                    <label for="discount_code">Discount Code</label>
+                    <div style="display: flex; gap: 10px; align-items: flex-start;">
+                        <input
+                            type="text"
+                            id="discount_code"
+                            name="discount_code"
+                            placeholder="Enter code if you have one"
+                            style="text-transform: uppercase; font-family: monospace; letter-spacing: 1px; flex: 1;"
+                        >
+                        <button type="button" id="apply-discount-btn" class="btn" style="white-space: nowrap;">
+                            Apply
+                        </button>
+                    </div>
+                    <div id="discount-feedback" style="margin-top: 8px; display: none;"></div>
+                </div>
+
                 <div class="form-group">
                     <label>Payment Method <span class="required">*</span></label>
                     <div class="radio-group">
@@ -549,6 +567,10 @@ $earlyBirdCutoff = formatDate(EARLY_BIRD_CUTOFF, 'jS F Y');
                         <span class="early-bird-tag">Active</span>
                     </div>
                     <?php endif; ?>
+                    <div class="summary-row discount-row" id="discount-summary-row" style="display: none; color: #28a745;">
+                        <span>Discount (<span id="discount-summary-label"></span>):</span>
+                        <span id="discount-summary-amount">-£0.00</span>
+                    </div>
                     <div class="summary-row total">
                         <span>Total Amount:</span>
                         <span id="total-price">£0.00</span>

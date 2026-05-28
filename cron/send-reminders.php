@@ -32,6 +32,7 @@ try {
         JOIN bookings b ON ps.booking_id = b.id
         WHERE ps.status = 'pending'
         AND ps.due_date = DATE_ADD(CURDATE(), INTERVAL 3 DAY)
+        AND (b.discount_amount < b.total_amount OR b.discount_amount IS NULL OR b.discount_amount = 0)
         ORDER BY b.id ASC"
     );
 

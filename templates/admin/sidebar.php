@@ -24,6 +24,12 @@ $currentPage = basename($_SERVER['PHP_SELF']);
             <span class="sidebar-text">Bookings</span>
         </a>
 
+        <a href="<?php echo url('admin/discount-codes.php'); ?>"
+           class="sidebar-link <?php echo in_array($currentPage, ['discount-codes.php', 'discount-code-edit.php']) ? 'active' : ''; ?>">
+            <span class="sidebar-icon">🏷️</span>
+            <span class="sidebar-text">Discount Codes</span>
+        </a>
+
         <a href="<?php echo url('admin/send-portal-invites.php'); ?>"
            class="sidebar-link <?php echo $currentPage === 'send-portal-invites.php' ? 'active' : ''; ?>">
             <span class="sidebar-icon">📧</span>

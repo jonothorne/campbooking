@@ -23,6 +23,7 @@ if (!$bookingId) {
 }
 
 // Load booking
+$db = Database::getInstance();
 try {
     $booking = new Booking($bookingId);
     $bookingData = $booking->getData();
@@ -80,7 +81,7 @@ include __DIR__ . '/../templates/admin/header.php';
         <div class="detail-item">
             <div class="detail-label">Payment Status</div>
             <div class="detail-value">
-                <?php echo getPaymentStatusBadge($bookingData['payment_status']); ?>
+                <?php echo getPaymentStatusBadge($bookingData['payment_status'], $bookingData); ?>
             </div>
         </div>
 
@@ -91,10 +92,45 @@ include __DIR__ . '/../templates/admin/header.php';
             </div>
         </div>
 
+        <?php
+        $isFullyFunded = !empty($bookingData['discount_amount']) && $bookingData['discount_amount'] >= $bookingData['total_amount'];
+        $discountCodeInfo = null;
+        if ($bookingData['discount_code_id']) {
+            $discountCodeInfo = $db->fetchOne("SELECT code, discount_type FROM discount_codes WHERE id = ?", [$bookingData['discount_code_id']]);
+        }
+        ?>
+
+        <?php if ($isFullyFunded): ?>
+        <div class="detail-item">
+            <div class="detail-label">Ticket Value</div>
+            <div class="detail-value"><?php echo formatCurrency($bookingData['total_amount']); ?></div>
+        </div>
+        <div class="detail-item">
+            <div class="detail-label">Funding</div>
+            <div class="detail-value" style="color: #6f42c1;">
+                Fully Funded
+                <?php if ($discountCodeInfo): ?>
+                    <span style="font-family: monospace; background: #f3e8ff; padding: 2px 8px; border-radius: 4px; font-size: 12px;"><?php echo e($discountCodeInfo['code']); ?></span>
+                <?php endif; ?>
+            </div>
+        </div>
+        <?php else: ?>
         <div class="detail-item">
             <div class="detail-label">Total Amount</div>
             <div class="detail-value"><?php echo formatCurrency($bookingData['total_amount']); ?></div>
         </div>
+
+        <?php if ($bookingData['discount_amount'] > 0): ?>
+        <div class="detail-item">
+            <div class="detail-label">Discount</div>
+            <div class="detail-value" style="color: #28a745;">
+                -<?php echo formatCurrency($bookingData['discount_amount']); ?>
+                <?php if ($discountCodeInfo): ?>
+                    <span style="font-family: monospace; background: #e8f5e9; padding: 2px 8px; border-radius: 4px; font-size: 12px;"><?php echo e($discountCodeInfo['code']); ?></span>
+                <?php endif; ?>
+            </div>
+        </div>
+        <?php endif; ?>
 
         <div class="detail-item">
             <div class="detail-label">Amount Paid</div>
@@ -116,6 +152,7 @@ include __DIR__ . '/../templates/admin/header.php';
                 <?php echo calculatePaymentPercentage($bookingData['total_amount'], $bookingData['amount_paid']); ?>%
             </div>
         </div>
+        <?php endif; ?>
     </div>
 </div>
 
@@ -214,6 +251,25 @@ include __DIR__ . '/../templates/admin/header.php';
             <div class="detail-label">Needs Tent Provided</div>
             <div class="detail-value"><?php echo $bookingData['needs_tent_provided'] ? 'Yes' : 'No'; ?></div>
         </div>
+
+        <?php if (!empty($bookingData['tent_details'])): ?>
+        <div class="detail-item">
+            <div class="detail-label">Tent Details</div>
+            <div class="detail-value"><?php echo e($bookingData['tent_details']); ?></div>
+        </div>
+        <?php endif; ?>
+
+        <div class="detail-item">
+            <div class="detail-label">Needs Transport</div>
+            <div class="detail-value"><?php echo $bookingData['needs_transport'] ? 'Yes' : 'No'; ?></div>
+        </div>
+
+        <?php if (!empty($bookingData['transport_details'])): ?>
+        <div class="detail-item">
+            <div class="detail-label">Transport Details</div>
+            <div class="detail-value"><?php echo e($bookingData['transport_details']); ?></div>
+        </div>
+        <?php endif; ?>
     </div>
 
     <?php if (!empty($bookingData['special_requirements'])): ?>

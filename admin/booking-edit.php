@@ -238,6 +238,40 @@ include __DIR__ . '/../templates/admin/header.php';
         </div>
 
         <div class="form-group">
+            <label class="form-label" for="tent_details">Tent Details</label>
+            <textarea
+                id="tent_details"
+                name="tent_details"
+                class="form-control"
+                rows="2"
+                placeholder="e.g. tent size, any specific requirements"
+            ><?php echo e($bookingData['tent_details']); ?></textarea>
+        </div>
+
+        <div class="form-group">
+            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                <input
+                    type="checkbox"
+                    name="needs_transport"
+                    value="1"
+                    <?php echo $bookingData['needs_transport'] ? 'checked' : ''; ?>
+                >
+                <span>Needs Transport</span>
+            </label>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label" for="transport_details">Transport Details</label>
+            <textarea
+                id="transport_details"
+                name="transport_details"
+                class="form-control"
+                rows="2"
+                placeholder="e.g. pickup location, number of people needing transport"
+            ><?php echo e($bookingData['transport_details']); ?></textarea>
+        </div>
+
+        <div class="form-group">
             <label class="form-label" for="special_requirements">Special Requirements</label>
             <textarea
                 id="special_requirements"

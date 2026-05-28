@@ -35,6 +35,15 @@ try {
     $bookingData = $booking->getData();
     $bookingRef = $bookingData['booking_reference'];
 
+    // Decrement discount code usage if one was applied
+    if (!empty($bookingData['discount_code_id'])) {
+        $db = Database::getInstance();
+        $db->execute(
+            "UPDATE discount_codes SET times_used = GREATEST(0, times_used - 1) WHERE id = ?",
+            [$bookingData['discount_code_id']]
+        );
+    }
+
     // Delete booking (cascades to attendees, payments, etc.)
     $booking->delete();
 

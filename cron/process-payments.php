@@ -38,6 +38,7 @@ try {
             (ps.status = 'pending' AND ps.due_date <= CURDATE())
             OR (ps.status = 'failed' AND ps.next_retry_date IS NOT NULL AND ps.next_retry_date <= CURDATE())
         )
+        AND (b.discount_amount < b.total_amount OR b.discount_amount IS NULL OR b.discount_amount = 0)
         ORDER BY ps.due_date ASC"
     );
 

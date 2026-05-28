@@ -259,6 +259,17 @@
             Total Amount: <?php echo formatCurrency($total_amount); ?>
         </div>
 
+        <?php if (!empty($booking['discount_amount']) && $booking['discount_amount'] > 0): ?>
+        <div style="background: #d4edda; border: 2px solid #28a745; padding: 15px; border-radius: 8px; margin: 15px 0; text-align: center;">
+            <strong style="color: #155724;">
+                Discount Applied: -<?php echo formatCurrency($booking['discount_amount']); ?>
+                <?php if ($booking['discount_amount'] >= $total_amount): ?>
+                    <br><span style="font-size: 16px;">Fully Funded - No payment required!</span>
+                <?php endif; ?>
+            </strong>
+        </div>
+        <?php endif; ?>
+
         <!-- Payment Instructions -->
         <div class="section">
             <h2>Payment Information</h2>

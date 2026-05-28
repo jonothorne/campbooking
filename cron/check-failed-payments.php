@@ -36,6 +36,7 @@ try {
         WHERE ps.status = 'failed'
         AND ps.attempt_count < 3
         AND (ps.next_retry_date IS NULL OR ps.next_retry_date <= CURDATE())
+        AND (b.discount_amount < b.total_amount OR b.discount_amount IS NULL OR b.discount_amount = 0)
         ORDER BY ps.last_attempt_date ASC"
     );
 

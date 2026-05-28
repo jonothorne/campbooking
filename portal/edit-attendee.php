@@ -121,13 +121,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Calculate the difference
             $priceDifference = $ticketPrice - $oldTicketPrice;
 
-            // Update booking total and outstanding amount
+            // Update booking total and outstanding amount (account for discount)
             $db->execute(
                 "UPDATE bookings SET
                     total_amount = ?,
-                    amount_outstanding = amount_outstanding + ?
+                    amount_outstanding = GREATEST(0, ? - COALESCE(discount_amount, 0) - amount_paid)
                 WHERE id = ?",
-                [$newTotal, $priceDifference, $bookingId]
+                [$newTotal, $newTotal, $bookingId]
             );
 
             // Recalculate payment schedule to redistribute outstanding amount

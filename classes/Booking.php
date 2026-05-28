@@ -66,6 +66,10 @@ class Booking {
         $this->db->beginTransaction();
 
         try {
+            // Calculate amounts after discount
+            $discountAmount = (float)($bookingData['discount_amount'] ?? 0);
+            $amountOutstanding = max(0, $totalAmount - $discountAmount);
+
             // Insert booking
             $sql = "INSERT INTO bookings (
                 booking_reference,
@@ -85,10 +89,12 @@ class Booking {
                 total_amount,
                 amount_paid,
                 amount_outstanding,
+                discount_code_id,
+                discount_amount,
                 booking_status,
                 payment_status,
                 event_year
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
             $bookingId = $this->db->insert($sql, [
                 $bookingReference,
@@ -107,7 +113,9 @@ class Booking {
                 $bookingData['payment_plan'],
                 $totalAmount,
                 0.00, // amount_paid
-                $totalAmount, // amount_outstanding
+                $amountOutstanding,
+                $bookingData['discount_code_id'] ?? null,
+                $discountAmount,
                 'pending',
                 'unpaid',
                 EVENT_YEAR
@@ -319,11 +327,13 @@ class Booking {
      */
     public function updatePaymentStatus() {
         $totalAmount = (float)$this->data['total_amount'];
+        $discountAmount = (float)($this->data['discount_amount'] ?? 0);
+        $amountDue = $totalAmount - $discountAmount;
         $amountPaid = (float)$this->data['amount_paid'];
 
         if ($amountPaid <= 0) {
             $status = 'unpaid';
-        } elseif ($amountPaid >= $totalAmount) {
+        } elseif ($amountPaid >= $amountDue) {
             $status = 'paid';
         } else {
             $status = 'partial';
@@ -331,7 +341,7 @@ class Booking {
 
         $this->update([
             'payment_status' => $status,
-            'amount_outstanding' => $totalAmount - $amountPaid
+            'amount_outstanding' => max(0, $amountDue - $amountPaid)
         ]);
     }
 
@@ -373,11 +383,13 @@ class Booking {
         if ($status === 'succeeded') {
             $newAmountPaid = (float)$this->data['amount_paid'] + $amount;
             $totalAmount = (float)$this->data['total_amount'];
+            $discountAmount = (float)($this->data['discount_amount'] ?? 0);
+            $amountDue = $totalAmount - $discountAmount;
 
-            // Overcharge guard: never credit more than the total booking amount
-            if ($newAmountPaid > $totalAmount) {
-                error_log("OVERCHARGE PREVENTED: Booking #{$this->id} - would set amount_paid to £{$newAmountPaid} but total is £{$totalAmount}. Capping at total.");
-                $newAmountPaid = $totalAmount;
+            // Overcharge guard: never credit more than the amount due after discount
+            if ($newAmountPaid > $amountDue) {
+                error_log("OVERCHARGE PREVENTED: Booking #{$this->id} - would set amount_paid to £{$newAmountPaid} but amount due is £{$amountDue}. Capping.");
+                $newAmountPaid = $amountDue;
             }
 
             $this->update(['amount_paid' => $newAmountPaid]);
@@ -393,7 +405,8 @@ class Booking {
      * @param int $numInstallments Number of installments (1-11)
      */
     public function createPaymentSchedule($numInstallments) {
-        $totalAmount = (float)$this->data['total_amount'];
+        // Use amount_outstanding (which accounts for any discount) for the schedule
+        $totalAmount = (float)$this->data['amount_outstanding'];
         $bookingDate = $this->data['created_at'];
 
         // Calculate schedule
@@ -496,12 +509,16 @@ class Booking {
             $attendeeYearFilter = ' AND a.booking_id IN (SELECT id FROM bookings WHERE event_year = ?)';
         }
 
+        // Exclude fully funded bookings (discount_amount >= total_amount) from financial figures
+        $notFunded = ' AND (discount_amount < total_amount OR discount_amount IS NULL OR discount_amount = 0)';
+
         return [
             'total_bookings' => $db->fetchOne("SELECT COUNT(*) as count FROM bookings WHERE 1=1{$yearFilter}", $yearParam)['count'],
             'total_attendees' => $db->fetchOne("SELECT COUNT(*) as count FROM attendees a WHERE 1=1{$attendeeYearFilter}", $yearParam)['count'],
-            'total_revenue' => $db->fetchOne("SELECT COALESCE(SUM(amount_paid), 0) as total FROM bookings WHERE 1=1{$yearFilter}", $yearParam)['total'],
-            'outstanding_amount' => $db->fetchOne("SELECT COALESCE(SUM(amount_outstanding), 0) as total FROM bookings WHERE payment_status != 'paid'{$yearFilter}", $yearParam)['total'],
-            'paid_bookings' => $db->fetchOne("SELECT COUNT(*) as count FROM bookings WHERE payment_status = 'paid'{$yearFilter}", $yearParam)['count'],
+            'total_revenue' => $db->fetchOne("SELECT COALESCE(SUM(amount_paid), 0) as total FROM bookings WHERE 1=1{$notFunded}{$yearFilter}", $yearParam)['total'],
+            'outstanding_amount' => $db->fetchOne("SELECT COALESCE(SUM(amount_outstanding), 0) as total FROM bookings WHERE payment_status != 'paid'{$notFunded}{$yearFilter}", $yearParam)['total'],
+            'funded_bookings' => $db->fetchOne("SELECT COUNT(*) as count FROM bookings WHERE discount_amount >= total_amount AND discount_amount > 0{$yearFilter}", $yearParam)['count'],
+            'paid_bookings' => $db->fetchOne("SELECT COUNT(*) as count FROM bookings WHERE payment_status = 'paid'{$notFunded}{$yearFilter}", $yearParam)['count'],
             'unpaid_bookings' => $db->fetchOne("SELECT COUNT(*) as count FROM bookings WHERE payment_status = 'unpaid'{$yearFilter}", $yearParam)['count'],
             'partial_bookings' => $db->fetchOne("SELECT COUNT(*) as count FROM bookings WHERE payment_status = 'partial'{$yearFilter}", $yearParam)['count']
         ];

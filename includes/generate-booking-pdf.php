@@ -284,7 +284,17 @@ function generateBookingPDF($bookingData, $attendees, $payments) {
             <div class="payment-row">
                 <div class="payment-label">Total Booking Amount:</div>
                 <div class="payment-value">' . formatCurrency($bookingData['total_amount']) . '</div>
-            </div>
+            </div>';
+
+    if (!empty($bookingData['discount_amount']) && $bookingData['discount_amount'] > 0) {
+        $html .= '
+            <div class="payment-row">
+                <div class="payment-label">Discount Applied:</div>
+                <div class="payment-value" style="color: #10b981;">-' . formatCurrency($bookingData['discount_amount']) . '</div>
+            </div>';
+    }
+
+    $html .= '
             <div class="payment-row">
                 <div class="payment-label">Amount Paid:</div>
                 <div class="payment-value" style="color: #10b981;">' . formatCurrency($bookingData['amount_paid']) . '</div>

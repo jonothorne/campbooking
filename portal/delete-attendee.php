@@ -74,13 +74,13 @@ try {
         [$bookingId]
     )['total'] ?? 0;
 
-    // Update booking total and outstanding amount
+    // Update booking total and outstanding amount (account for discount)
     $db->execute(
         "UPDATE bookings SET
             total_amount = ?,
-            amount_outstanding = total_amount - amount_paid
+            amount_outstanding = GREATEST(0, ? - COALESCE(discount_amount, 0) - amount_paid)
         WHERE id = ?",
-        [$newTotal, $bookingId]
+        [$newTotal, $newTotal, $bookingId]
     );
 
     // Recalculate payment schedule to redistribute outstanding amount

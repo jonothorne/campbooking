@@ -122,8 +122,8 @@ function handlePaymentIntentSucceeded($paymentIntent)
 
         logMessage("[$timestamp] Payment succeeded - Booking #{$bookingId}, Amount: £{$amount}", $logFile);
 
-        // Validate payment amount matches expected amount
-        $expectedAmount = $bookingData['total_amount'];
+        // Validate payment amount matches expected amount (account for discounts)
+        $expectedAmount = $bookingData['total_amount'] - (float)($bookingData['discount_amount'] ?? 0);
         $amountDifference = abs($amount - $expectedAmount);
 
         // Allow small rounding differences (1 penny)

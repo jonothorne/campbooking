@@ -394,7 +394,7 @@ if ($hasCurrentBooking) {
                             </div>
                             <div style="color: #6b7280;">
                                 <?php echo formatCurrency($prevBooking['total_amount']); ?> &mdash;
-                                <?php echo getPaymentStatusBadge($prevBooking['payment_status']); ?>
+                                <?php echo getPaymentStatusBadge($prevBooking['payment_status'], $prevBooking); ?>
                             </div>
                         </div>
                     <?php endforeach; ?>
@@ -453,13 +453,20 @@ if ($hasCurrentBooking) {
                 <div class="detail-item">
                     <div class="detail-label">Payment Status</div>
                     <div class="detail-value">
-                        <?php echo getPaymentStatusBadge($bookingData['payment_status']); ?>
+                        <?php echo getPaymentStatusBadge($bookingData['payment_status'], $bookingData); ?>
                     </div>
                 </div>
+                <?php $portalIsFunded = !empty($bookingData['discount_amount']) && $bookingData['discount_amount'] >= $bookingData['total_amount']; ?>
                 <div class="detail-item">
-                    <div class="detail-label">Total Amount</div>
+                    <div class="detail-label"><?php echo $portalIsFunded ? 'Ticket Value' : 'Total Amount'; ?></div>
                     <div class="detail-value"><?php echo formatCurrency($bookingData['total_amount']); ?></div>
                 </div>
+                <?php if ($portalIsFunded): ?>
+                <div class="detail-item">
+                    <div class="detail-label">Funding</div>
+                    <div class="detail-value" style="color: #6f42c1; font-weight: 600;">Fully Funded</div>
+                </div>
+                <?php else: ?>
                 <div class="detail-item">
                     <div class="detail-label">Amount Paid</div>
                     <div class="detail-value" style="color: var(--success-color);">
@@ -472,6 +479,7 @@ if ($hasCurrentBooking) {
                         <?php echo formatCurrency($bookingData['amount_outstanding']); ?>
                     </div>
                 </div>
+                <?php endif; ?>
                 <div class="detail-item">
                     <div class="detail-label">Booking Date</div>
                     <div class="detail-value"><?php echo formatDate($bookingData['created_at'], 'd M Y'); ?></div>

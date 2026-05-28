@@ -420,6 +420,12 @@ try {
                 <p style="font-size: 18px; color: var(--text-medium); margin-bottom: 30px;">
                     Your payment is being processed. You will receive a confirmation email shortly once the payment is confirmed.
                 </p>
+            <?php elseif (!empty($bookingData['discount_amount']) && $bookingData['discount_amount'] >= $bookingData['total_amount']): ?>
+                <div class="success-icon" style="background: linear-gradient(135deg, #10b981, #059669);">&#10003;</div>
+                <h1>Booking Confirmed — Fully Funded!</h1>
+                <p style="font-size: 18px; color: var(--text-medium); margin-bottom: 30px;">
+                    Your booking has been fully funded — no payment is required. We look forward to seeing you at camp!
+                </p>
             <?php else: ?>
                 <div class="success-icon">&#10003;</div>
                 <h1>Booking Confirmed!</h1>
@@ -458,6 +464,23 @@ try {
                 <span class="detail-value"><?php echo formatCurrency($bookingData['total_amount']); ?></span>
             </div>
 
+            <?php if (!empty($bookingData['discount_amount']) && $bookingData['discount_amount'] > 0): ?>
+            <div class="detail-row">
+                <span class="detail-label">Discount Applied:</span>
+                <span class="detail-value" style="color: #10b981;">
+                    -<?php echo formatCurrency($bookingData['discount_amount']); ?>
+                    <?php if ($bookingData['discount_amount'] >= $bookingData['total_amount']): ?>
+                        (Fully Funded)
+                    <?php endif; ?>
+                </span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Amount Due:</span>
+                <span class="detail-value" style="font-weight: 700;"><?php echo formatCurrency($bookingData['amount_outstanding']); ?></span>
+            </div>
+            <?php endif; ?>
+
+            <?php if (empty($bookingData['discount_amount']) || $bookingData['discount_amount'] < $bookingData['total_amount']): ?>
             <div class="detail-row">
                 <span class="detail-label">Payment Method:</span>
                 <span class="detail-value"><?php echo ucwords(str_replace('_', ' ', $bookingData['payment_method'])); ?></span>
@@ -472,6 +495,7 @@ try {
                     ?>
                 </span>
             </div>
+            <?php endif; ?>
         </div>
 
         <!-- Attendees -->
@@ -492,12 +516,13 @@ try {
             </ul>
         </div>
 
-        <!-- Payment Instructions -->
-        <?php if ($bookingData['payment_method'] === 'bank_transfer'): ?>
+        <!-- Payment Instructions (hide for fully funded bookings) -->
+        <?php $isFullyFunded = !empty($bookingData['discount_amount']) && $bookingData['discount_amount'] >= $bookingData['total_amount']; ?>
+        <?php if (!$isFullyFunded && $bookingData['payment_method'] === 'bank_transfer'): ?>
             <div class="form-section">
                 <h2>Bank Transfer Details</h2>
                 <div class="info-box">
-                    <p>Please transfer <strong><?php echo formatCurrency($bookingData['total_amount']); ?></strong> to:</p>
+                    <p>Please transfer <strong><?php echo formatCurrency($bookingData['amount_outstanding']); ?></strong> to:</p>
 
                     <div class="bank-details" style="margin-top: 15px;">
                         <div class="bank-detail-row">
@@ -523,11 +548,11 @@ try {
                     </p>
                 </div>
             </div>
-        <?php elseif ($bookingData['payment_method'] === 'cash'): ?>
+        <?php elseif (!$isFullyFunded && $bookingData['payment_method'] === 'cash'): ?>
             <div class="form-section">
                 <h2>Cash Payment</h2>
                 <div class="info-box">
-                    <p>Please pay <strong><?php echo formatCurrency($bookingData['total_amount']); ?></strong> in cash to your group leader.</p>
+                    <p>Please pay <strong><?php echo formatCurrency($bookingData['amount_outstanding']); ?></strong> in cash to your group leader.</p>
                     <p style="margin-top: 10px;">Reference: <strong><?php echo e($bookingData['booking_reference']); ?></strong></p>
                 </div>
             </div>
@@ -538,7 +563,7 @@ try {
             <h2>What's Next?</h2>
             <p>You will receive a confirmation email shortly with all your booking details.</p>
 
-            <?php if ($bookingData['payment_plan'] > 1): ?>
+            <?php if ($bookingData['payment_plan'] > 1 && !$isFullyFunded): ?>
                 <p style="margin-top: 15px;">
                     For installment payments, you will receive payment reminders before each due date.
                 </p>

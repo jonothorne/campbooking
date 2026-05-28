@@ -193,6 +193,9 @@ function sanitizeBookingData($data) {
     }
     $sanitized['payment_plan'] = max(1, min(MAX_INSTALLMENTS, sanitizeInt($paymentPlan)));
 
+    // Discount code (optional)
+    $sanitized['discount_code'] = strtoupper(trim(sanitizeString($data['discount_code'] ?? '')));
+
     return $sanitized;
 }
 

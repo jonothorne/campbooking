@@ -111,11 +111,59 @@ try {
     }
 
     // ============================================
+    // Step 2b: Validate Discount Code (if provided)
+    // ============================================
+
+    $discountCode = null;
+    $discountAmount = 0;
+
+    if (!empty($bookingData['discount_code'])) {
+        $discountCode = $db->fetchOne(
+            "SELECT * FROM discount_codes WHERE code = ? AND event_year = ? AND is_active = 1",
+            [$bookingData['discount_code'], EVENT_YEAR]
+        );
+
+        if (!$discountCode) {
+            throw new Exception('Invalid or inactive discount code.');
+        }
+
+        if ($discountCode['expires_at'] && strtotime($discountCode['expires_at']) < time()) {
+            throw new Exception('This discount code has expired.');
+        }
+
+        if ($discountCode['max_uses'] && $discountCode['times_used'] >= $discountCode['max_uses']) {
+            throw new Exception('This discount code has reached its maximum uses.');
+        }
+
+        // Calculate discount
+        switch ($discountCode['discount_type']) {
+            case 'full':
+                $discountAmount = $totalAmount;
+                break;
+            case 'percentage':
+                $discountAmount = round($totalAmount * $discountCode['discount_value'] / 100, 2);
+                break;
+            case 'fixed':
+                $discountAmount = min($totalAmount, (float)$discountCode['discount_value']);
+                break;
+        }
+
+        $bookingData['discount_code_id'] = $discountCode['id'];
+        $bookingData['discount_amount'] = $discountAmount;
+    }
+
+    // ============================================
     // Step 3: Validate Payment Method & Plan
     // ============================================
 
     // For non-Stripe payments, only allow single payment
     if ($bookingData['payment_method'] !== 'stripe' && $bookingData['payment_plan'] > 1) {
+        $bookingData['payment_plan'] = 1;
+    }
+
+    // If fully funded, force single payment (no installments needed)
+    $isFullyFunded = ($discountAmount >= $totalAmount);
+    if ($isFullyFunded) {
         $bookingData['payment_plan'] = 1;
     }
 
@@ -127,6 +175,19 @@ try {
     $booking = new Booking();
     $bookingId = $booking->create($bookingData, $attendees);
 
+    // Increment discount code usage atomically (prevents race condition exceeding max_uses)
+    if ($discountCode) {
+        $rowsAffected = $db->execute(
+            "UPDATE discount_codes SET times_used = times_used + 1 WHERE id = ? AND (max_uses IS NULL OR max_uses = 0 OR times_used < max_uses)",
+            [$discountCode['id']]
+        );
+        if ($rowsAffected === 0) {
+            // Code was used up between validation and here - clean up and fail
+            $booking->delete();
+            throw new Exception('This discount code has reached its maximum uses. Please try again without a discount code.');
+        }
+    }
+
     // Create payment schedule if multiple installments selected
     if ($bookingData['payment_plan'] > 1) {
         $booking->createPaymentSchedule($bookingData['payment_plan']);
@@ -135,6 +196,37 @@ try {
     // ============================================
     // Step 5: Handle Payment Method
     // ============================================
+
+    // Fully funded bookings - create discount payment and mark as paid
+    if ($isFullyFunded) {
+        $db->insert(
+            "INSERT INTO payments (booking_id, amount, payment_method, payment_type, status, admin_notes, payment_date)
+             VALUES (?, ?, ?, 'discount', 'succeeded', ?, NOW())",
+            [
+                $bookingId,
+                $totalAmount,
+                $bookingData['payment_method'],
+                'Fully funded via discount code: ' . $discountCode['code']
+            ]
+        );
+
+        $booking->update([
+            'booking_status' => 'confirmed',
+            'payment_status' => 'paid',
+            'amount_paid' => $totalAmount,
+            'amount_outstanding' => 0.00,
+        ]);
+
+        // Send confirmation email
+        try {
+            $email = new Email();
+            $email->sendBookingConfirmation($bookingId);
+        } catch (Exception $e) {
+            error_log("Email Error: " . $e->getMessage());
+        }
+
+        redirect(url('payment-success.php?booking=' . $booking->getReference()));
+    }
 
     if ($bookingData['payment_method'] === 'stripe') {
         // Stripe payment processing
@@ -155,9 +247,9 @@ try {
             ];
 
             if ($bookingData['payment_plan'] == 1) {
-                // One-time payment - create Payment Intent
+                // One-time payment - create Payment Intent (use amount_outstanding which accounts for any discount)
                 $result = $stripe->createPaymentIntent(
-                    $bookerData['total_amount'],
+                    $bookerData['amount_outstanding'],
                     $bookingId,
                     $bookerData['booker_email'],
                     "Camp Booking {$bookingRef}"

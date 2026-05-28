@@ -135,10 +135,25 @@ include __DIR__ . '/../templates/admin/header.php';
                                 </div>
                             </td>
                             <td class="text-center"><?php echo $booking['attendee_count']; ?></td>
-                            <td><?php echo formatCurrency($booking['total_amount']); ?></td>
-                            <td><?php echo formatCurrency($booking['amount_paid']); ?></td>
+                            <?php $isFunded = !empty($booking['discount_amount']) && $booking['discount_amount'] >= $booking['total_amount']; ?>
                             <td>
-                                <?php if ($booking['amount_outstanding'] > 0): ?>
+                                <?php if ($isFunded): ?>
+                                    <span style="color: #6f42c1;"><?php echo formatCurrency($booking['total_amount']); ?></span>
+                                <?php else: ?>
+                                    <?php echo formatCurrency($booking['total_amount']); ?>
+                                <?php endif; ?>
+                            </td>
+                            <td>
+                                <?php if ($isFunded): ?>
+                                    <span style="color: #6f42c1;">Funded</span>
+                                <?php else: ?>
+                                    <?php echo formatCurrency($booking['amount_paid']); ?>
+                                <?php endif; ?>
+                            </td>
+                            <td>
+                                <?php if ($isFunded): ?>
+                                    <span style="color: var(--text-medium);">-</span>
+                                <?php elseif ($booking['amount_outstanding'] > 0): ?>
                                     <span style="color: var(--danger-color); font-weight: 600;">
                                         <?php echo formatCurrency($booking['amount_outstanding']); ?>
                                     </span>
@@ -146,7 +161,7 @@ include __DIR__ . '/../templates/admin/header.php';
                                     <span style="color: var(--text-medium);">-</span>
                                 <?php endif; ?>
                             </td>
-                            <td><?php echo getPaymentStatusBadge($booking['payment_status']); ?></td>
+                            <td><?php echo getPaymentStatusBadge($booking['payment_status'], $booking); ?></td>
                             <td><?php echo getBookingStatusBadge($booking['booking_status']); ?></td>
                             <td>
                                 <?php echo formatDate($booking['created_at'], 'd/m/Y'); ?>

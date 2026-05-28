@@ -100,6 +100,15 @@ include __DIR__ . '/../templates/admin/header.php';
                 <?php echo $stats['unpaid_bookings']; ?>
             </div>
         </div>
+
+        <?php if ($stats['funded_bookings'] > 0): ?>
+        <div class="detail-item">
+            <div class="detail-label">Funded Bookings</div>
+            <div class="detail-value" style="color: #6f42c1;">
+                <?php echo $stats['funded_bookings']; ?>
+            </div>
+        </div>
+        <?php endif; ?>
     </div>
 </div>
 
@@ -187,7 +196,7 @@ include __DIR__ . '/../templates/admin/header.php';
                             <td><?php echo $booking['attendee_count']; ?></td>
                             <td><?php echo formatCurrency($booking['total_amount']); ?></td>
                             <td><?php echo formatCurrency($booking['amount_paid']); ?></td>
-                            <td><?php echo getPaymentStatusBadge($booking['payment_status']); ?></td>
+                            <td><?php echo getPaymentStatusBadge($booking['payment_status'], $booking); ?></td>
                             <td><?php echo formatDateTime($booking['created_at'], 'd/m/Y H:i'); ?></td>
                             <td>
                                 <div class="table-actions">

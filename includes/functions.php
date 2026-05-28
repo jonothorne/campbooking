@@ -160,7 +160,12 @@ function calculateTotalAmount($attendees) {
  * @param string $status
  * @return string
  */
-function getPaymentStatusBadge($status) {
+function getPaymentStatusBadge($status, $booking = null) {
+    // Check if this is a fully funded booking
+    if ($booking && !empty($booking['discount_amount']) && $booking['discount_amount'] >= $booking['total_amount']) {
+        return '<span class="badge badge-info" style="background: #6f42c1; color: white;">Funded</span>';
+    }
+
     $badges = [
         'unpaid' => '<span class="badge badge-danger">Unpaid</span>',
         'partial' => '<span class="badge badge-warning">Partial</span>',

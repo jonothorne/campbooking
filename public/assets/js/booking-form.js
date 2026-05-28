@@ -60,6 +60,7 @@ class VideoModal {
 class BookingForm {
     constructor() {
         this.attendeeCount = 1;
+        this.discount = null; // Active discount: { code, discount_type, discount_value, description }
 
         // Read prices from the DOM data attributes (set by PHP)
         const firstTicketSelect = document.getElementById('attendee_ticket_type_0');
@@ -87,6 +88,7 @@ class BookingForm {
         this.setupPaymentMethodListeners();
         this.setupPaymentPlanListeners();
         this.setupBookerNameListener();
+        this.setupDiscountCode();
         this.setupFormSubmit();
         this.setupAttendeeListeners(0);
         this.updateTotalPrice();
@@ -266,10 +268,28 @@ class BookingForm {
         return total;
     }
 
+    calculateDiscountAmount(subtotal) {
+        if (!this.discount) return 0;
+        switch (this.discount.discount_type) {
+            case 'full': return subtotal;
+            case 'percentage': return Math.min(subtotal, subtotal * this.discount.discount_value / 100);
+            case 'fixed': return Math.min(subtotal, this.discount.discount_value);
+            default: return 0;
+        }
+    }
+
+    getDiscountedTotal() {
+        const subtotal = this.calculateTotal();
+        return Math.max(0, subtotal - this.calculateDiscountAmount(subtotal));
+    }
+
     updateTotalPrice() {
-        const total = this.calculateTotal();
+        const subtotal = this.calculateTotal();
+        const discountAmount = this.calculateDiscountAmount(subtotal);
+        const total = Math.max(0, subtotal - discountAmount);
         const totalElement = document.getElementById('total-price');
         const peopleCountElement = document.getElementById('summary-people-count');
+        const discountRow = document.getElementById('discount-summary-row');
 
         if (totalElement) {
             totalElement.textContent = '£' + total.toFixed(2);
@@ -278,6 +298,16 @@ class BookingForm {
         if (peopleCountElement) {
             const attendeeCount = document.querySelectorAll('.attendee-card').length;
             peopleCountElement.textContent = attendeeCount;
+        }
+
+        if (discountRow) {
+            if (this.discount && discountAmount > 0) {
+                discountRow.style.display = '';
+                document.getElementById('discount-summary-label').textContent = this.discount.code;
+                document.getElementById('discount-summary-amount').textContent = '-£' + discountAmount.toFixed(2);
+            } else {
+                discountRow.style.display = 'none';
+            }
         }
 
         this.updateInstallmentPreview();
@@ -378,7 +408,7 @@ class BookingForm {
         if (!previewDiv || !detailsDiv) return;
 
         const numInstallments = this.getSelectedInstallments();
-        const total = this.calculateTotal();
+        const total = this.getDiscountedTotal();
 
         if (numInstallments <= 1 || total === 0) {
             previewDiv.style.display = 'none';
@@ -431,6 +461,77 @@ class BookingForm {
         });
     }
 
+    setupDiscountCode() {
+        const applyBtn = document.getElementById('apply-discount-btn');
+        const codeInput = document.getElementById('discount_code');
+        const feedback = document.getElementById('discount-feedback');
+
+        if (!applyBtn || !codeInput) return;
+
+        const form = document.getElementById('booking-form');
+        const apiUrl = form.getAttribute('action').replace('process-booking.php', 'api/validate-discount-code.php');
+
+        applyBtn.addEventListener('click', async () => {
+            const code = codeInput.value.trim();
+
+            // If discount is active and user clicks again, remove it
+            if (this.discount) {
+                this.discount = null;
+                codeInput.value = '';
+                codeInput.readOnly = false;
+                applyBtn.textContent = 'Apply';
+                feedback.style.display = 'none';
+                this.updateTotalPrice();
+                return;
+            }
+
+            if (!code) {
+                feedback.style.display = 'block';
+                feedback.innerHTML = '<span style="color: #dc3545;">Please enter a discount code.</span>';
+                return;
+            }
+
+            applyBtn.disabled = true;
+            applyBtn.textContent = 'Checking...';
+
+            try {
+                const formData = new FormData();
+                formData.append('code', code);
+
+                const response = await fetch(apiUrl, { method: 'POST', body: formData });
+                const data = await response.json();
+
+                if (data.valid) {
+                    this.discount = data;
+                    codeInput.readOnly = true;
+                    applyBtn.textContent = 'Remove';
+                    applyBtn.disabled = false;
+
+                    let label = '';
+                    switch (data.discount_type) {
+                        case 'full': label = 'Fully Funded'; break;
+                        case 'percentage': label = data.discount_value + '% off'; break;
+                        case 'fixed': label = '£' + parseFloat(data.discount_value).toFixed(2) + ' off'; break;
+                    }
+
+                    feedback.style.display = 'block';
+                    feedback.innerHTML = '<span style="color: #28a745; font-weight: 600;">&#10003; ' + label + (data.description ? ' — ' + data.description : '') + '</span>';
+                    this.updateTotalPrice();
+                } else {
+                    feedback.style.display = 'block';
+                    feedback.innerHTML = '<span style="color: #dc3545;">' + (data.error || 'Invalid code.') + '</span>';
+                    applyBtn.disabled = false;
+                    applyBtn.textContent = 'Apply';
+                }
+            } catch (err) {
+                feedback.style.display = 'block';
+                feedback.innerHTML = '<span style="color: #dc3545;">Error validating code. Please try again.</span>';
+                applyBtn.disabled = false;
+                applyBtn.textContent = 'Apply';
+            }
+        });
+    }
+
     setupFormSubmit() {
         const form = document.getElementById('booking-form');
         const submitBtn = document.getElementById('submit-btn');
@@ -444,9 +545,10 @@ class BookingForm {
             }
 
             // Validate total amount first
-            const total = this.calculateTotal();
-            if (total === 0) {
-                alert('Please add at least one paid attendee to your booking.');
+            const subtotal = this.calculateTotal();
+            const total = this.getDiscountedTotal();
+            if (subtotal === 0) {
+                alert('Please add at least one attendee to your booking.');
                 e.preventDefault();
                 return false;
             }

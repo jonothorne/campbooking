@@ -76,6 +76,8 @@ CREATE TABLE `bookings` (
   `total_amount` DECIMAL(10,2) NOT NULL,
   `amount_paid` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
   `amount_outstanding` DECIMAL(10,2) NOT NULL,
+  `discount_code_id` INT(11) UNSIGNED DEFAULT NULL,
+  `discount_amount` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
 
   -- Stripe-specific fields
   `stripe_customer_id` VARCHAR(100) DEFAULT NULL,
@@ -101,7 +103,9 @@ CREATE TABLE `bookings` (
   KEY `idx_stripe_customer` (`stripe_customer_id`),
   KEY `idx_event_year` (`event_year`),
   KEY `idx_portal_user` (`portal_user_id`),
-  CONSTRAINT `fk_bookings_portal_user` FOREIGN KEY (`portal_user_id`) REFERENCES `portal_users` (`id`) ON DELETE SET NULL
+  KEY `idx_discount_code` (`discount_code_id`),
+  CONSTRAINT `fk_bookings_portal_user` FOREIGN KEY (`portal_user_id`) REFERENCES `portal_users` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_bookings_discount_code` FOREIGN KEY (`discount_code_id`) REFERENCES `discount_codes` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -138,7 +142,7 @@ CREATE TABLE `payments` (
   `booking_id` INT(11) UNSIGNED NOT NULL,
   `amount` DECIMAL(10,2) NOT NULL,
   `payment_method` ENUM('cash', 'bank_transfer', 'stripe') NOT NULL,
-  `payment_type` ENUM('full', 'installment', 'manual', 'portal_payment') NOT NULL,
+  `payment_type` ENUM('full', 'installment', 'manual', 'portal_payment', 'discount') NOT NULL,
 
   -- Stripe specific
   `stripe_payment_intent_id` VARCHAR(100) DEFAULT NULL,
@@ -271,6 +275,29 @@ CREATE TABLE `webhook_events` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `idx_stripe_event` (`stripe_event_id`),
   KEY `idx_event_lookup` (`stripe_event_id`, `processed_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+-- Table structure for table `discount_codes`
+-- Discount/funding codes for bookings
+-- --------------------------------------------------------
+
+CREATE TABLE `discount_codes` (
+  `id` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `code` VARCHAR(50) NOT NULL,
+  `description` VARCHAR(255) DEFAULT NULL,
+  `discount_type` ENUM('percentage', 'fixed', 'full') NOT NULL,
+  `discount_value` DECIMAL(10,2) NOT NULL DEFAULT 0.00 COMMENT 'Percentage (0-100) or fixed amount. Ignored for full type.',
+  `max_uses` INT(11) UNSIGNED DEFAULT NULL COMMENT 'NULL = unlimited',
+  `times_used` INT(11) UNSIGNED NOT NULL DEFAULT 0,
+  `expires_at` DATETIME DEFAULT NULL COMMENT 'NULL = no expiry',
+  `event_year` SMALLINT UNSIGNED NOT NULL,
+  `is_active` TINYINT(1) NOT NULL DEFAULT 1,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `idx_code_year` (`code`, `event_year`),
+  KEY `idx_active` (`is_active`, `event_year`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
